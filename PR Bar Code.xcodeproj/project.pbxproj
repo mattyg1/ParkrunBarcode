@@ -45,6 +45,11 @@
 			path = "PR Bar CodeUITests";
 			sourceTree = "<group>";
 		};
+		C9648A5A2D11FB7100D43D7F /* Models */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Models;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -75,6 +80,7 @@
 		C9648A0F2D0DAFD900D43D7F = {
 			isa = PBXGroup;
 			children = (
+				C9648A5A2D11FB7100D43D7F /* Models */,
 				C9648A1A2D0DAFD900D43D7F /* PR Bar Code */,
 				C9648A2C2D0DAFDA00D43D7F /* PR Bar CodeTests */,
 				C9648A362D0DAFDA00D43D7F /* PR Bar CodeUITests */,
@@ -109,6 +115,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				C9648A1A2D0DAFD900D43D7F /* PR Bar Code */,
+				C9648A5A2D11FB7100D43D7F /* Models */,
 			);
 			name = "PR Bar Code";
 			packageProductDependencies = (
