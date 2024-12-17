@@ -11,7 +11,7 @@ import SwiftUI
 struct PR_Bar_CodeApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            QRCodeBarcodeView()
         }
     }
 }
