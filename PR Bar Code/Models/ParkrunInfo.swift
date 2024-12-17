@@ -1,3 +1,11 @@
+//
+//  ParkrunInfo.swift
+//  PR Bar Code
+//
+//  Created by Matthew Gardner on 17/12/2024.
+//
+
+
 import SwiftUI
 import SwiftData
 
