@@ -14,10 +14,12 @@ class ParkrunInfo {
     @Attribute(.unique) var parkrunID: String
     var name: String
     var homeParkrun: String
+    var country: Int?
 
-    init(parkrunID: String, name: String = "", homeParkrun: String = "") {
+    init(parkrunID: String, name: String, homeParkrun: String, country: Int? = nil) {
         self.parkrunID = parkrunID
         self.name = name
         self.homeParkrun = homeParkrun
+        self.country = country
     }
 }

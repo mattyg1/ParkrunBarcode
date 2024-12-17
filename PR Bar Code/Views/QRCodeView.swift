@@ -5,10 +5,11 @@ import SwiftData
 struct QRCodeBarcodeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var parkrunInfoList: [ParkrunInfo]
-    
+
     @State private var inputText: String = ""
     @State private var name: String = ""
     @State private var homeParkrun: String = ""
+    @State private var selectedCountryCode: Int = Country.unitedKingdom.rawValue // Default to UK
     @State private var isEditing: Bool = false
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
@@ -28,6 +29,12 @@ struct QRCodeBarcodeView: View {
                                 .keyboardType(.asciiCapable)
                             TextField("Name", text: $name)
                             TextField("Home Parkrun", text: $homeParkrun)
+
+                            Picker("Country", selection: $selectedCountryCode) {
+                                ForEach(Country.allCases, id: \.rawValue) { country in
+                                    Text(country.name).tag(country.rawValue)
+                                }
+                            }
                         }
                     }
                     .navigationTitle(isEditing ? "Edit Parkrun Info" : "Add Parkrun Info")
@@ -46,7 +53,14 @@ struct QRCodeBarcodeView: View {
                             .font(.title2)
                         Text("Name: \(parkrunInfoList.first?.name ?? "")")
                         Text("Home Parkrun: \(parkrunInfoList.first?.homeParkrun ?? "")")
-                        
+
+                        if let code = parkrunInfoList.first?.country,
+                           let country = Country(rawValue: code) {
+                            Text("Country: \(country.name)")
+                        } else {
+                            Text("Country: Unknown")
+                        }
+
                         // QR Code and Barcode Preview
                         CodeSectionView(
                             title: "QR Code",
@@ -59,7 +73,7 @@ struct QRCodeBarcodeView: View {
                             size: CGSize(width: 300, height: 100)
                         )
                     }
-                    .navigationTitle("parkrun Info")
+                    .navigationTitle("Parkrun Info")
                     .navigationBarItems(trailing: Button("Edit") {
                         startEdit()
                     })
@@ -75,15 +89,16 @@ struct QRCodeBarcodeView: View {
     }
 
     // MARK: - Functions
-    
+
     private func loadInitialData() {
         if let savedInfo = parkrunInfoList.first {
             inputText = savedInfo.parkrunID
             name = savedInfo.name
             homeParkrun = savedInfo.homeParkrun
+            selectedCountryCode = savedInfo.country ?? Country.unitedKingdom.rawValue
         }
     }
-    
+
     private func saveParkrunInfo() {
         // Validate Parkrun ID
         guard !inputText.isEmpty, inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil else {
@@ -91,17 +106,18 @@ struct QRCodeBarcodeView: View {
             showAlert = true
             return
         }
-        
+
         // Insert or update data
         if let existingInfo = parkrunInfoList.first {
             existingInfo.parkrunID = inputText
             existingInfo.name = name
             existingInfo.homeParkrun = homeParkrun
+            existingInfo.country = selectedCountryCode
         } else {
-            let newInfo = ParkrunInfo(parkrunID: inputText, name: name, homeParkrun: homeParkrun)
+            let newInfo = ParkrunInfo(parkrunID: inputText, name: name, homeParkrun: homeParkrun, country: selectedCountryCode)
             modelContext.insert(newInfo)
         }
-        
+
         do {
             try modelContext.save()
             isEditing = false
@@ -110,24 +126,25 @@ struct QRCodeBarcodeView: View {
             showAlert = true
         }
     }
-    
+
     private func startEdit() {
         isEditing = true
     }
-    
+
     private func cancelEdit() {
         isEditing = false
         loadInitialData()
     }
 
-    // QR Code and Barcode Generators
+    // MARK: - QR & Barcode Generation
+
     private func generateQRCode(from string: String) -> UIImage? {
         guard !string.isEmpty else { return nil }
         qrCodeFilter.message = Data(string.utf8)
         guard let ciImage = qrCodeFilter.outputImage else { return nil }
         return convertToUIImage(from: ciImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10)))
     }
-    
+
     private func generateBarcode(from string: String) -> UIImage? {
         guard !string.isEmpty else { return nil }
         barcodeFilter.message = Data(string.utf8)
@@ -141,7 +158,7 @@ struct QRCodeBarcodeView: View {
     }
 }
 
-// Reusable CodeSectionView
+// MARK: - Reusable CodeSectionView
 struct CodeSectionView: View {
     let title: String
     let image: UIImage?
