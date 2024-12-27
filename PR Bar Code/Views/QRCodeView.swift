@@ -13,10 +13,18 @@ struct QRCodeBarcodeView: View {
     @State private var isEditing: Bool = false
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
+    @State private var selectedTab: Tab = .qrCode
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
     private let barcodeFilter = CIFilter.code128BarcodeGenerator()
+
+    enum Tab: String, CaseIterable, Identifiable {
+        case qrCode = "QR Code"
+        case barcode = "Barcode"
+
+        var id: String { rawValue }
+    }
 
     var body: some View {
         NavigationView {
@@ -61,17 +69,29 @@ struct QRCodeBarcodeView: View {
                             Text("Country: Unknown")
                         }
 
-                        // QR Code and Barcode Preview
-                        CodeSectionView(
-                            title: "QR Code",
-                            image: generateQRCode(from: parkrunInfoList.first?.parkrunID ?? ""),
-                            size: CGSize(width: 200, height: 200)
-                        )
-                        CodeSectionView(
-                            title: "Barcode",
-                            image: generateBarcode(from: parkrunInfoList.first?.parkrunID ?? ""),
-                            size: CGSize(width: 300, height: 100)
-                        )
+                        // Tab Selector for QR Code and Barcode
+                        Picker("Code Type", selection: $selectedTab) {
+                            ForEach(Tab.allCases) { tab in
+                                Text(tab.rawValue).tag(tab)
+                            }
+                        }
+                        .pickerStyle(SegmentedPickerStyle())
+                        .padding()
+
+                        // Display the selected code
+                        if selectedTab == .qrCode {
+                            CodeSectionView(
+                                title: "QR Code",
+                                image: generateQRCode(from: parkrunInfoList.first?.parkrunID ?? ""),
+                                size: CGSize(width: 200, height: 200)
+                            )
+                        } else {
+                            CodeSectionView(
+                                title: "Barcode",
+                                image: generateBarcode(from: parkrunInfoList.first?.parkrunID ?? ""),
+                                size: CGSize(width: 300, height: 100)
+                            )
+                        }
                     }
                     .navigationTitle("Parkrun Info")
                     .navigationBarItems(trailing: Button("Edit") {
