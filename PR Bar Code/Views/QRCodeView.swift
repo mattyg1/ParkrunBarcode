@@ -13,37 +13,38 @@ struct QRCodeBarcodeView: View {
     @State private var isEditing: Bool = false
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
-    @State private var selectedTab: Tab = .qrCode
+    @State private var selectedTab: Int = 0 // 0 = Personal Info, 1 = Location Info
+    @State private var selectedCodeType: Int = 0 // 0 = QR Code, 1 = Barcode
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
     private let barcodeFilter = CIFilter.code128BarcodeGenerator()
 
-    enum Tab: String, CaseIterable, Identifiable {
-        case qrCode = "QR Code"
-        case barcode = "Barcode"
-
-        var id: String { rawValue }
-    }
-
     var body: some View {
         NavigationView {
             VStack(spacing: 20) {
                 if isEditing || parkrunInfoList.isEmpty {
-                    // Edit Mode or No Saved Data
-                    Form {
-                        Section(header: Text("Parkrun Details")) {
-                            TextField("Parkrun ID (e.g., A12345)", text: $inputText)
-                                .keyboardType(.asciiCapable)
-                            TextField("Name", text: $name)
-                            TextField("Home Parkrun", text: $homeParkrun)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            // Selector for Personal and Location Information
+                            Picker("Section", selection: $selectedTab) {
+                                Text("Personal Info").tag(0)
+                                Text("Location Info").tag(1)
+                            }
+                            .pickerStyle(SegmentedPickerStyle())
+                            .padding()
 
-                            Picker("Country", selection: $selectedCountryCode) {
-                                ForEach(Country.allCases, id: \.rawValue) { country in
-                                    Text(country.name).tag(country.rawValue)
-                                }
+                            // Display Selected Section
+                            if selectedTab == 0 {
+                                personalInfoSection
+                            } else if selectedTab == 1 {
+                                locationInfoSection
                             }
                         }
+                        .padding()
+
+                        // QR Code and Barcode Selector and Display
+                        qrCodeAndBarcodeSection
                     }
                     .navigationTitle(isEditing ? "Edit Parkrun Info" : "Add Parkrun Info")
                     .navigationBarItems(
@@ -56,42 +57,27 @@ struct QRCodeBarcodeView: View {
                     )
                 } else {
                     // Display Saved Data
-                    VStack(spacing: 20) {
-                        Text("Parkrun ID: \(parkrunInfoList.first?.parkrunID ?? "")")
-                            .font(.title2)
-                        Text("Name: \(parkrunInfoList.first?.name ?? "")")
-                        Text("Home Parkrun: \(parkrunInfoList.first?.homeParkrun ?? "")")
-
-                        if let code = parkrunInfoList.first?.country,
-                           let country = Country(rawValue: code) {
-                            Text("Country: \(country.name)")
-                        } else {
-                            Text("Country: Unknown")
-                        }
-
-                        // Tab Selector for QR Code and Barcode
-                        Picker("Code Type", selection: $selectedTab) {
-                            ForEach(Tab.allCases) { tab in
-                                Text(tab.rawValue).tag(tab)
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 20) {
+                            // Selector for Personal and Location Information
+                            Picker("Section", selection: $selectedTab) {
+                                Text("Personal Info").tag(0)
+                                Text("Location Info").tag(1)
                             }
-                        }
-                        .pickerStyle(SegmentedPickerStyle())
-                        .padding()
+                            .pickerStyle(SegmentedPickerStyle())
+                            .padding()
 
-                        // Display the selected code
-                        if selectedTab == .qrCode {
-                            CodeSectionView(
-                                title: "QR Code",
-                                image: generateQRCode(from: parkrunInfoList.first?.parkrunID ?? ""),
-                                size: CGSize(width: 200, height: 200)
-                            )
-                        } else {
-                            CodeSectionView(
-                                title: "Barcode",
-                                image: generateBarcode(from: parkrunInfoList.first?.parkrunID ?? ""),
-                                size: CGSize(width: 300, height: 100)
-                            )
+                            // Display Selected Section
+                            if selectedTab == 0 {
+                                personalInfoSection
+                            } else if selectedTab == 1 {
+                                locationInfoSection
+                            }
+
+                            // QR Code and Barcode Selector and Display
+                            qrCodeAndBarcodeSection
                         }
+                        .padding()
                     }
                     .navigationTitle("Parkrun Info")
                     .navigationBarItems(trailing: Button("Edit") {
@@ -108,8 +94,99 @@ struct QRCodeBarcodeView: View {
         }
     }
 
-    // MARK: - Functions
+    // MARK: - Personal Info Section
+    private var personalInfoSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Personal Information")
+                .font(.headline)
+                .padding(.bottom, 5)
 
+            TextField("Enter Name", text: $name)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(10)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(10)
+
+            TextField("Parkrun ID (e.g., A12345)", text: $inputText)
+                .keyboardType(.asciiCapable)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(10)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(10)
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(15)
+        .shadow(radius: 5)
+        .frame(maxWidth: .infinity) // Stretches section to fit the screen
+    }
+
+    // MARK: - Location Info Section
+    private var locationInfoSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Location Information")
+                .font(.headline)
+                .padding(.bottom, 5)
+
+            TextField("Enter Home Parkrun", text: $homeParkrun)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding(10)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(10)
+
+            Picker("Country", selection: $selectedCountryCode) {
+                ForEach(Country.allCases, id: \.rawValue) { country in
+                    Text(country.name).tag(country.rawValue)
+                }
+            }
+            .pickerStyle(MenuPickerStyle())
+            .padding(10)
+            .background(Color(.secondarySystemBackground))
+            .cornerRadius(10)
+        }
+        .padding()
+        .background(Color(.systemBackground))
+        .cornerRadius(15)
+        .shadow(radius: 5)
+        .frame(maxWidth: .infinity) // Stretches section to fit the screen
+    }
+
+    // MARK: - QR Code and Barcode Section
+    private var qrCodeAndBarcodeSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Parkrun Codes")
+                .font(.headline)
+                .padding(.bottom, 5)
+
+            Picker("Code Type", selection: $selectedCodeType) {
+                Text("QR Code").tag(0)
+                Text("Barcode").tag(1)
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .padding()
+
+            HStack {
+                if selectedCodeType == 0 {
+                    CodeSectionView(
+                        title: "QR Code",
+                        image: generateQRCode(from: inputText),
+                        size: CGSize(width: 200, height: 200)
+                    )
+                } else {
+                    CodeSectionView(
+                        title: "Barcode",
+                        image: generateBarcode(from: inputText),
+                        size: CGSize(width: 300, height: 100)
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity) // Center align QR/Barcode
+            .padding()
+        }
+        .padding()
+    }
+
+    // MARK: - Functions
     private func loadInitialData() {
         if let savedInfo = parkrunInfoList.first {
             inputText = savedInfo.parkrunID
@@ -120,14 +197,12 @@ struct QRCodeBarcodeView: View {
     }
 
     private func saveParkrunInfo() {
-        // Validate Parkrun ID
         guard !inputText.isEmpty, inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil else {
             alertMessage = "Parkrun ID must start with 'A' followed by numbers (e.g., A12345)."
             showAlert = true
             return
         }
 
-        // Insert or update data
         if let existingInfo = parkrunInfoList.first {
             existingInfo.parkrunID = inputText
             existingInfo.name = name
@@ -157,7 +232,6 @@ struct QRCodeBarcodeView: View {
     }
 
     // MARK: - QR & Barcode Generation
-
     private func generateQRCode(from string: String) -> UIImage? {
         guard !string.isEmpty else { return nil }
         qrCodeFilter.message = Data(string.utf8)
@@ -205,8 +279,8 @@ struct CodeSectionView: View {
         }
     }
 }
-// MARK: - SwiftUI Preview
 
+// MARK: - SwiftUI Preview
 struct QRCodeBarcodeView_Previews: PreviewProvider {
     static var previews: some View {
         do {
@@ -214,7 +288,7 @@ struct QRCodeBarcodeView_Previews: PreviewProvider {
             let context = previewContainer.mainContext
 
             // Insert sample data for preview
-            let previewParkrunInfo = ParkrunInfo(parkrunID: "A12345", name: "John Doe", homeParkrun: "Southampton Parkrun")
+            let previewParkrunInfo = ParkrunInfo(parkrunID: "A12345", name: "John Doe", homeParkrun: "Southampton Parkrun", country: Country.unitedKingdom.rawValue)
             context.insert(previewParkrunInfo)
 
             return QRCodeBarcodeView()
