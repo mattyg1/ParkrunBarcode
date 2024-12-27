@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct PR_Bar_CodeApp: App {
@@ -13,5 +14,6 @@ struct PR_Bar_CodeApp: App {
         WindowGroup {
             QRCodeBarcodeView()
         }
+        .modelContainer(for: ParkrunInfo.self) // Attach SwiftData Model Container
     }
 }
