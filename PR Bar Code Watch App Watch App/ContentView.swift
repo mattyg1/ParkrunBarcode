@@ -15,7 +15,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var qrCodeImage: UIImage? = nil
     @Published var isConnected: Bool = false
     
-    private override init() { super.init() }
+    private let userDefaults = UserDefaults.standard
+    private let parkrunIDKey = "SavedParkrunID"
+    private let qrCodeImageKey = "SavedQRCodeImage"
+    
+    private override init() { 
+        super.init()
+        loadSavedData()
+    }
     
     func startSession() {
         print("Watch: Starting WC session")
@@ -40,18 +47,24 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     
     func session(_ session: WCSession, didReceiveMessage message: [String: Any]) {
         print("Watch: Received message: \(message)")
+        var dataUpdated = false
+        
         if let parkrunID = message["parkrunID"] as? String {
             print("Watch: Setting parkrunID to: \(parkrunID)")
-            DispatchQueue.main.async {
-                self.parkrunID = parkrunID
-            }
+            self.parkrunID = parkrunID
+            dataUpdated = true
         }
         
         if let imageData = message["qrCodeImageData"] as? Data,
            let qrImage = UIImage(data: imageData) {
             print("Watch: Setting QR code image")
+            self.qrCodeImage = qrImage
+            dataUpdated = true
+        }
+        
+        if dataUpdated {
             DispatchQueue.main.async {
-                self.qrCodeImage = qrImage
+                self.saveData()
             }
         }
     }
@@ -65,11 +78,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     
     func session(_ session: WCSession, didReceiveUserInfo userInfo: [String : Any]) {
         print("Watch: Received user info: \(userInfo)")
+        var dataUpdated = false
+        
         if let parkrunID = userInfo["parkrunID"] as? String {
             print("Watch: Setting parkrunID from userInfo to: \(parkrunID)")
             DispatchQueue.main.async {
                 self.parkrunID = parkrunID
             }
+            dataUpdated = true
         }
         
         if let imageData = userInfo["qrCodeImageData"] as? Data,
@@ -78,16 +94,26 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             DispatchQueue.main.async {
                 self.qrCodeImage = qrImage
             }
+            dataUpdated = true
+        }
+        
+        if dataUpdated {
+            DispatchQueue.main.async {
+                self.saveData()
+            }
         }
     }
     
     func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
         print("Watch: Received message with reply handler: \(message)")
+        var dataUpdated = false
+        
         if let parkrunID = message["parkrunID"] as? String {
             print("Watch: Setting parkrunID from message to: \(parkrunID)")
             DispatchQueue.main.async {
                 self.parkrunID = parkrunID
             }
+            dataUpdated = true
         }
         
         if let imageData = message["qrCodeImageData"] as? Data,
@@ -96,10 +122,52 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             DispatchQueue.main.async {
                 self.qrCodeImage = qrImage
             }
+            dataUpdated = true
+        }
+        
+        if dataUpdated {
+            DispatchQueue.main.async {
+                self.saveData()
+            }
         }
         
         // Send acknowledgment back
         replyHandler(["status": "received"])
+    }
+    
+    // MARK: - Local Storage Functions
+    private func loadSavedData() {
+        // Load saved Parkrun ID
+        if let savedID = userDefaults.string(forKey: parkrunIDKey), !savedID.isEmpty {
+            print("Watch: Loading saved Parkrun ID: \(savedID)")
+            DispatchQueue.main.async {
+                self.parkrunID = savedID
+            }
+        }
+        
+        // Load saved QR code image
+        if let imageData = userDefaults.data(forKey: qrCodeImageKey),
+           let savedImage = UIImage(data: imageData) {
+            print("Watch: Loading saved QR code image")
+            DispatchQueue.main.async {
+                self.qrCodeImage = savedImage
+            }
+        }
+    }
+    
+    private func saveData() {
+        // Save Parkrun ID
+        userDefaults.set(parkrunID, forKey: parkrunIDKey)
+        print("Watch: Saved Parkrun ID: \(parkrunID)")
+        
+        // Save QR code image
+        if let qrImage = qrCodeImage,
+           let imageData = qrImage.pngData() {
+            userDefaults.set(imageData, forKey: qrCodeImageKey)
+            print("Watch: Saved QR code image")
+        }
+        
+        userDefaults.synchronize()
     }
 }
 
@@ -145,6 +213,18 @@ struct ContentView: View {
                 Text("Show to scanner")
                     .font(.caption2)
                     .foregroundColor(.secondary)
+                
+                // Connection status indicator
+                HStack(spacing: 4) {
+                    Image(systemName: watchManager.isConnected ? "iphone.and.watch" : "applewatch")
+                        .font(.caption2)
+                        .foregroundColor(watchManager.isConnected ? .green : .orange)
+                    
+                    Text(watchManager.isConnected ? "Live" : "Saved")
+                        .font(.caption2)
+                        .foregroundColor(watchManager.isConnected ? .green : .orange)
+                }
+                .padding(.top, 2)
             } else {
                 Image(systemName: "barcode")
                     .font(.system(size: 30))
