@@ -173,6 +173,7 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
 
 struct ContentView: View {
     @StateObject private var watchManager = WatchConnectivityManager.shared
+    @State private var showFullScreenQR = false
     
     var body: some View {
         VStack(spacing: 8) {
@@ -194,6 +195,9 @@ struct ContentView: View {
                             RoundedRectangle(cornerRadius: 8)
                                 .stroke(Color.gray, lineWidth: 1)
                         )
+                        .onTapGesture {
+                            showFullScreenQR = true
+                        }
                 } else {
                     // Fallback to text display
                     Text(watchManager.parkrunID)
@@ -203,6 +207,9 @@ struct ContentView: View {
                         .padding(8)
                         .background(Color.gray.opacity(0.1))
                         .cornerRadius(8)
+                        .onTapGesture {
+                            showFullScreenQR = true
+                        }
                 }
                 
                 Text(watchManager.parkrunID)
@@ -242,8 +249,66 @@ struct ContentView: View {
         .onAppear {
             watchManager.startSession()
         }
+        .sheet(isPresented: $showFullScreenQR) {
+            FullScreenQRView(
+                qrImage: watchManager.qrCodeImage, 
+                parkrunID: watchManager.parkrunID,
+                isPresented: $showFullScreenQR
+            )
+        }
     }
     
+}
+
+struct FullScreenQRView: View {
+    let qrImage: UIImage?
+    let parkrunID: String
+    @Binding var isPresented: Bool
+    
+    var body: some View {
+        ZStack {
+            Color.black.ignoresSafeArea()
+            
+            VStack {
+                if let qrImage = qrImage {
+                    Image(uiImage: qrImage)
+                        .resizable()
+                        .interpolation(.none)
+                        .scaledToFit()
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .padding()
+                } else {
+                    // Fallback when no QR image available
+                    VStack(spacing: 8) {
+                        Text("Parkrun ID")
+                            .font(.caption)
+                            .foregroundColor(.white)
+                        
+                        Text(parkrunID)
+                            .font(.largeTitle)
+                            .fontWeight(.bold)
+                            .foregroundColor(.white)
+                            .padding()
+                            .background(Color.gray.opacity(0.3))
+                            .cornerRadius(12)
+                    }
+                    .padding()
+                }
+            }
+        }
+        .onTapGesture {
+            isPresented = false
+        }
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.height > 100 {
+                        isPresented = false
+                    }
+                }
+        )
+    }
 }
 
 
