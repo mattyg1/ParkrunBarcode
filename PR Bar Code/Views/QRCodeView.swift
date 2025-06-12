@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreImage.CIFilterBuiltins
 import SwiftData
+import WatchConnectivity
 
 struct QRCodeBarcodeView: View {
     @Environment(\.modelContext) private var modelContext
@@ -90,6 +91,7 @@ struct QRCodeBarcodeView: View {
             }
             .onAppear {
                 loadInitialData()
+                WatchSessionManager.shared.startSession()
             }
         }
     }
@@ -101,24 +103,53 @@ struct QRCodeBarcodeView: View {
                 .font(.headline)
                 .padding(.bottom, 5)
 
-            TextField("Enter Name", text: $name)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding(10)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(10)
+            if isEditing {
+                TextField("Enter Name", text: $name)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(10)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(10)
 
-            TextField("Parkrun ID (e.g., A12345)", text: $inputText)
-                .keyboardType(.asciiCapable)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding(10)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(10)
+                TextField("Parkrun ID (e.g., A12345)", text: $inputText)
+                    .keyboardType(.asciiCapable)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(10)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(10)
+            } else {
+                // Read-only display
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Name")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(name.isEmpty ? "Not set" : name)
+                        .font(.body)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.tertiarySystemBackground))
+                        .cornerRadius(10)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Parkrun ID")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(inputText.isEmpty ? "Not set" : inputText)
+                        .font(.body)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.blue)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.tertiarySystemBackground))
+                        .cornerRadius(10)
+                }
+            }
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(15)
         .shadow(radius: 5)
-        .frame(maxWidth: .infinity) // Stretches section to fit the screen
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - Location Info Section
@@ -128,27 +159,54 @@ struct QRCodeBarcodeView: View {
                 .font(.headline)
                 .padding(.bottom, 5)
 
-            TextField("Enter Home Parkrun", text: $homeParkrun)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
+            if isEditing {
+                TextField("Enter Home Parkrun", text: $homeParkrun)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .padding(10)
+                    .background(Color(.secondarySystemBackground))
+                    .cornerRadius(10)
+
+                Picker("Country", selection: $selectedCountryCode) {
+                    ForEach(Country.allCases, id: \.rawValue) { country in
+                        Text(country.name).tag(country.rawValue)
+                    }
+                }
+                .pickerStyle(MenuPickerStyle())
                 .padding(10)
                 .background(Color(.secondarySystemBackground))
                 .cornerRadius(10)
-
-            Picker("Country", selection: $selectedCountryCode) {
-                ForEach(Country.allCases, id: \.rawValue) { country in
-                    Text(country.name).tag(country.rawValue)
+            } else {
+                // Read-only display
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Home Parkrun")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(homeParkrun.isEmpty ? "Not set" : homeParkrun)
+                        .font(.body)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.tertiarySystemBackground))
+                        .cornerRadius(10)
+                }
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Country")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text(Country.allCases.first(where: { $0.rawValue == selectedCountryCode })?.name ?? "United Kingdom")
+                        .font(.body)
+                        .padding(10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(.tertiarySystemBackground))
+                        .cornerRadius(10)
                 }
             }
-            .pickerStyle(MenuPickerStyle())
-            .padding(10)
-            .background(Color(.secondarySystemBackground))
-            .cornerRadius(10)
         }
         .padding()
         .background(Color(.systemBackground))
         .cornerRadius(15)
         .shadow(radius: 5)
-        .frame(maxWidth: .infinity) // Stretches section to fit the screen
+        .frame(maxWidth: .infinity)
     }
 
     // MARK: - QR Code and Barcode Section
@@ -197,7 +255,9 @@ struct QRCodeBarcodeView: View {
     }
 
     private func saveParkrunInfo() {
+        print("iOS: saveParkrunInfo called with inputText: '\(inputText)'")
         guard !inputText.isEmpty, inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil else {
+            print("iOS: Validation failed - Parkrun ID must start with 'A' followed by numbers")
             alertMessage = "Parkrun ID must start with 'A' followed by numbers (e.g., A12345)."
             showAlert = true
             return
@@ -215,8 +275,11 @@ struct QRCodeBarcodeView: View {
 
         do {
             try modelContext.save()
+            print("iOS: Data saved successfully, now sending to watch")
             isEditing = false
+            WatchSessionManager.shared.sendParkrunID(inputText)
         } catch {
+            print("iOS: Failed to save data: \(error)")
             alertMessage = "Failed to save data. Please try again."
             showAlert = true
         }
@@ -296,5 +359,66 @@ struct QRCodeBarcodeView_Previews: PreviewProvider {
         } catch {
             fatalError("Failed to create SwiftData container for preview: \(error)")
         }
+    }
+}
+
+class WatchSessionManager: NSObject, WCSessionDelegate {
+    static let shared = WatchSessionManager()
+    private override init() { super.init() }
+    
+    func startSession() {
+        if WCSession.isSupported() {
+            WCSession.default.delegate = self
+            WCSession.default.activate()
+        }
+    }
+    
+    func sendParkrunID(_ id: String) {
+        print("Attempting to send Parkrun ID: \(id)")
+        print("Session supported: \(WCSession.isSupported())")
+        print("Session reachable: \(WCSession.default.isReachable)")
+        print("Session activated: \(WCSession.default.activationState == .activated)")
+        
+        // Try both methods - transferUserInfo works even when not reachable
+        if WCSession.default.activationState == .activated {
+            // Method 1: transferUserInfo (works when not immediately reachable)
+            WCSession.default.transferUserInfo(["parkrunID": id])
+            print("User info transferred: \(id)")
+            
+            // Method 2: sendMessage (only works when reachable)
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(["parkrunID": id], replyHandler: { response in
+                    print("Message sent successfully: \(response)")
+                }, errorHandler: { error in
+                    print("Error sending message: \(error)")
+                })
+            } else {
+                print("Watch is not reachable for immediate messaging")
+            }
+        } else {
+            print("Session not activated")
+        }
+    }
+    
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        print("iOS: Session activated with state: \(activationState.rawValue)")
+        if let error = error {
+            print("iOS: Activation error: \(error)")
+        }
+        print("iOS: Session reachable: \(session.isReachable)")
+        print("iOS: Session paired: \(session.isPaired)")
+        print("iOS: Session installed: \(session.isWatchAppInstalled)")
+    }
+    
+    func sessionDidBecomeInactive(_ session: WCSession) {
+        print("iOS: Session became inactive")
+    }
+    
+    func sessionDidDeactivate(_ session: WCSession) {
+        print("iOS: Session deactivated")
+    }
+    
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        print("iOS: Reachability changed to: \(session.isReachable)")
     }
 }
