@@ -12,6 +12,7 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     static let shared = WatchConnectivityManager()
     
     @Published var parkrunID: String = ""
+    @Published var qrCodeImage: UIImage? = nil
     @Published var isConnected: Bool = false
     
     private override init() { super.init() }
@@ -45,6 +46,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                 self.parkrunID = parkrunID
             }
         }
+        
+        if let imageData = message["qrCodeImageData"] as? Data,
+           let qrImage = UIImage(data: imageData) {
+            print("Watch: Setting QR code image")
+            DispatchQueue.main.async {
+                self.qrCodeImage = qrImage
+            }
+        }
     }
     
     func sessionReachabilityDidChange(_ session: WCSession) {
@@ -62,6 +71,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                 self.parkrunID = parkrunID
             }
         }
+        
+        if let imageData = userInfo["qrCodeImageData"] as? Data,
+           let qrImage = UIImage(data: imageData) {
+            print("Watch: Setting QR code image from userInfo")
+            DispatchQueue.main.async {
+                self.qrCodeImage = qrImage
+            }
+        }
     }
     
     func session(_ session: WCSession, didReceiveMessage message: [String : Any], replyHandler: @escaping ([String : Any]) -> Void) {
@@ -72,6 +89,15 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                 self.parkrunID = parkrunID
             }
         }
+        
+        if let imageData = message["qrCodeImageData"] as? Data,
+           let qrImage = UIImage(data: imageData) {
+            print("Watch: Setting QR code image from message")
+            DispatchQueue.main.async {
+                self.qrCodeImage = qrImage
+            }
+        }
+        
         // Send acknowledgment back
         replyHandler(["status": "received"])
     }
@@ -81,30 +107,51 @@ struct ContentView: View {
     @StateObject private var watchManager = WatchConnectivityManager.shared
     
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 8) {
             if !watchManager.parkrunID.isEmpty {
                 Text("Parkrun ID")
-                    .font(.headline)
+                    .font(.caption)
                     .foregroundColor(.primary)
                 
+                // Display QR code image received from iOS
+                if let qrImage = watchManager.qrCodeImage {
+                    Image(uiImage: qrImage)
+                        .resizable()
+                        .interpolation(.none)
+                        .scaledToFit()
+                        .frame(width: 100, height: 100)
+                        .background(Color.white)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color.gray, lineWidth: 1)
+                        )
+                } else {
+                    // Fallback to text display
+                    Text(watchManager.parkrunID)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                        .foregroundColor(.blue)
+                        .padding(8)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(8)
+                }
+                
                 Text(watchManager.parkrunID)
-                    .font(.title)
+                    .font(.caption)
                     .fontWeight(.bold)
                     .foregroundColor(.blue)
-                    .padding()
-                    .background(Color.gray.opacity(0.1))
-                    .cornerRadius(10)
                 
-                Text("Show this to scanner")
-                    .font(.caption)
+                Text("Show to scanner")
+                    .font(.caption2)
                     .foregroundColor(.secondary)
             } else {
                 Image(systemName: "barcode")
-                    .font(.system(size: 40))
+                    .font(.system(size: 30))
                     .foregroundColor(.gray)
                 
                 Text("Waiting for Parkrun ID")
-                    .font(.caption)
+                    .font(.caption2)
                     .multilineTextAlignment(.center)
                 
                 Text(watchManager.isConnected ? "Connected to iPhone" : "Not connected")
@@ -116,7 +163,9 @@ struct ContentView: View {
             watchManager.startSession()
         }
     }
+    
 }
+
 
 #Preview {
     ContentView()
