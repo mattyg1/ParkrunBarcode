@@ -379,15 +379,27 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         print("Session reachable: \(WCSession.default.isReachable)")
         print("Session activated: \(WCSession.default.activationState == .activated)")
         
+        // Generate QR code image data
+        guard let qrImage = generateQRCodeImage(from: id),
+              let imageData = qrImage.pngData() else {
+            print("Failed to generate QR code image")
+            return
+        }
+        
         // Try both methods - transferUserInfo works even when not reachable
         if WCSession.default.activationState == .activated {
+            let data: [String: Any] = [
+                "parkrunID": id,
+                "qrCodeImageData": imageData
+            ]
+            
             // Method 1: transferUserInfo (works when not immediately reachable)
-            WCSession.default.transferUserInfo(["parkrunID": id])
-            print("User info transferred: \(id)")
+            WCSession.default.transferUserInfo(data)
+            print("User info transferred: \(id) with QR code image")
             
             // Method 2: sendMessage (only works when reachable)
             if WCSession.default.isReachable {
-                WCSession.default.sendMessage(["parkrunID": id], replyHandler: { response in
+                WCSession.default.sendMessage(data, replyHandler: { response in
                     print("Message sent successfully: \(response)")
                 }, errorHandler: { error in
                     print("Error sending message: \(error)")
@@ -398,6 +410,19 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         } else {
             print("Session not activated")
         }
+    }
+    
+    private func generateQRCodeImage(from string: String) -> UIImage? {
+        guard !string.isEmpty else { return nil }
+        
+        let context = CIContext()
+        let qrCodeFilter = CIFilter.qrCodeGenerator()
+        qrCodeFilter.message = Data(string.utf8)
+        
+        guard let ciImage = qrCodeFilter.outputImage else { return nil }
+        let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
+        guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
     }
     
     func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
