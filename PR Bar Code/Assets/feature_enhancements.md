@@ -19,7 +19,7 @@
 
 5. **User Experience Enhancements:**
    - a. Add a splash screen to improve app launch experience. (Priority: 6)
-   - b. Implement a dark mode theme for better visibility in low-light conditions. (Priority: 6)
+   - b. Implement a dark mode theme for better visibility in low-light conditions. (Priority: 6) ✅
    - c. Add haptic feedback when the QR code is displayed or updated.
 
 6. **Functionality Improvements:**

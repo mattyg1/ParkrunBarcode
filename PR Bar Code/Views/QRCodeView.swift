@@ -26,24 +26,76 @@ struct AnimationConstants {
     static let easeAnimation = Animation.easeInOut(duration: 0.2)
 }
 
-// Add custom color scheme
+// Add custom color scheme with dark mode support
 extension Color {
     static let parkrunGreen = Color(red: 0.2, green: 0.6, blue: 0.2)
     static let parkrunLightGreen = Color(red: 0.9, green: 1.0, blue: 0.9)
     static let cardBackground = Color(.systemBackground)
     static let secondaryCardBackground = Color(.secondarySystemBackground)
+    
+    // Dark mode enhanced colors
+    static let parkrunGreenDark = Color(red: 0.3, green: 0.7, blue: 0.3)
+    static let parkrunLightGreenDark = Color(red: 0.1, green: 0.2, blue: 0.1)
+    static let cardBackgroundDark = Color(red: 0.1, green: 0.1, blue: 0.1)
+    static let secondaryCardBackgroundDark = Color(red: 0.15, green: 0.15, blue: 0.15)
+    
+    // Adaptive colors that work with both light and dark modes
+    static var adaptiveParkrunGreen: Color {
+        Color(UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(Color.parkrunGreenDark) : UIColor(Color.parkrunGreen)
+        })
+    }
+    
+    static var adaptiveParkrunBackground: Color {
+        Color(UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(Color.parkrunLightGreenDark) : UIColor(Color.parkrunLightGreen)
+        })
+    }
+    
+    static var adaptiveCardBackground: Color {
+        Color(UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(Color.cardBackgroundDark) : UIColor(Color.cardBackground)
+        })
+    }
+    
+    static var adaptiveSecondaryCardBackground: Color {
+        Color(UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor(Color.secondaryCardBackgroundDark) : UIColor(Color.secondaryCardBackground)
+        })
+    }
+    
+    // Enhanced text colors for better dark mode readability
+    static var adaptivePrimaryText: Color {
+        Color(UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor.white : UIColor.black
+        })
+    }
+    
+    static var adaptiveSecondaryText: Color {
+        Color(UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? UIColor.lightGray : UIColor.gray
+        })
+    }
 }
 
 // Add custom view modifiers
 struct CardModifier: ViewModifier {
     @State private var isPressed = false
+    @Environment(\.colorScheme) var colorScheme
     
     func body(content: Content) -> some View {
         content
             .padding()
-            .background(Color.cardBackground)
+            .background(Color.adaptiveCardBackground)
             .cornerRadius(16)
-            .shadow(color: Color.black.opacity(isPressed ? 0.05 : 0.1), radius: isPressed ? 3 : 5, x: 0, y: isPressed ? 1 : 2)
+            .shadow(
+                color: colorScheme == .dark ? 
+                    Color.white.opacity(isPressed ? 0.02 : 0.05) : 
+                    Color.black.opacity(isPressed ? 0.05 : 0.1), 
+                radius: isPressed ? 3 : 5, 
+                x: 0, 
+                y: isPressed ? 1 : 2
+            )
             .scaleEffect(isPressed ? 0.98 : 1.0)
             .animation(AnimationConstants.springAnimation, value: isPressed)
             .onTapGesture {
@@ -73,6 +125,7 @@ enum WatchSyncStatus {
 struct QRCodeBarcodeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var parkrunInfoList: [ParkrunInfo]
+    @Environment(\.colorScheme) var colorScheme
 
     @State private var inputText: String = ""
     @State private var name: String = ""
@@ -92,6 +145,7 @@ struct QRCodeBarcodeView: View {
     @State private var watchSyncStatus: WatchSyncStatus = .idle
     @State private var showOnboarding: Bool = false
     @State private var isAnimating = false
+    @State private var preferredColorScheme: ColorScheme?
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
@@ -129,7 +183,7 @@ struct QRCodeBarcodeView: View {
                             Text("Personal Information")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.parkrunGreen)
+                                .foregroundColor(.adaptiveParkrunGreen)
                             
                             personalInfoSection
                         }
@@ -141,7 +195,7 @@ struct QRCodeBarcodeView: View {
                             Text("Your Code")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.parkrunGreen)
+                                .foregroundColor(.adaptiveParkrunGreen)
                             
                             qrCodeAndBarcodeSection
                         }
@@ -158,7 +212,7 @@ struct QRCodeBarcodeView: View {
                             Text("Watch Sync")
                                 .font(.title2)
                                 .fontWeight(.bold)
-                                .foregroundColor(.parkrunGreen)
+                                .foregroundColor(.adaptiveParkrunGreen)
                             
                             watchSyncIndicator
                         }
@@ -172,7 +226,7 @@ struct QRCodeBarcodeView: View {
                                 Text("Personal Information")
                                     .font(.title2)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.parkrunGreen)
+                                    .foregroundColor(.adaptiveParkrunGreen)
                                 
                                 personalInfoSection
                             }
@@ -183,7 +237,7 @@ struct QRCodeBarcodeView: View {
                                 Text("Your Code")
                                     .font(.title2)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.parkrunGreen)
+                                    .foregroundColor(.adaptiveParkrunGreen)
                                 
                                 qrCodeAndBarcodeSection
                             }
@@ -198,7 +252,7 @@ struct QRCodeBarcodeView: View {
                                 Text("Watch Sync")
                                     .font(.title2)
                                     .fontWeight(.bold)
-                                    .foregroundColor(.parkrunGreen)
+                                    .foregroundColor(.adaptiveParkrunGreen)
                                 
                                 watchSyncIndicator
                             }
@@ -215,7 +269,11 @@ struct QRCodeBarcodeView: View {
                     withAnimation(AnimationConstants.springAnimation) {
                         cancelEdit()
                     }
-                } : nil,
+                } : Button(action: toggleTheme) {
+                    Image(systemName: colorScheme == .dark ? "sun.max.fill" : "moon.fill")
+                        .foregroundColor(.adaptiveParkrunGreen)
+                        .font(.title3)
+                },
                 trailing: isEditing ? Button("Save") {
                     withAnimation(AnimationConstants.springAnimation) {
                         // Refresh user details and show confirmation dialog without saving
@@ -232,6 +290,7 @@ struct QRCodeBarcodeView: View {
                 }
             )
             .background(Color(.systemGroupedBackground))
+            .preferredColorScheme(preferredColorScheme)
         }
         .alert(isPresented: $showAlert) {
             Alert(title: Text("Invalid Input"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
@@ -592,7 +651,7 @@ struct QRCodeBarcodeView: View {
             }
         }
         .padding(10)
-        .background(Color(.systemBackground))
+        .background(Color.adaptiveCardBackground)
         .cornerRadius(10)
         .shadow(radius: 2)
         .frame(maxWidth: .infinity)
@@ -626,7 +685,7 @@ struct QRCodeBarcodeView: View {
             .frame(maxWidth: .infinity)
         }
         .padding(10)
-        .background(Color(.systemBackground))
+        .background(Color.adaptiveCardBackground)
         .cornerRadius(10)
         .shadow(radius: 2)
         .frame(maxWidth: .infinity)
@@ -684,7 +743,7 @@ struct QRCodeBarcodeView: View {
             .padding(.horizontal)
             .padding(.bottom, 16)
         }
-        .background(Color(.systemBackground))
+        .background(Color.adaptiveCardBackground)
     }
     
     // MARK: - Send to Watch Section
@@ -711,7 +770,7 @@ struct QRCodeBarcodeView: View {
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
                 .padding()
-                .background(watchSyncStatus == .sending ? Color.gray : Color.parkrunGreen)
+                .background(watchSyncStatus == .sending ? Color.gray : Color.adaptiveParkrunGreen)
                 .cornerRadius(12)
             }
             .disabled(watchSyncStatus == .sending || inputText.isEmpty)
@@ -720,6 +779,19 @@ struct QRCodeBarcodeView: View {
     }
 
     // MARK: - Functions
+    private func toggleTheme() {
+        withAnimation(AnimationConstants.springAnimation) {
+            switch preferredColorScheme {
+            case .none:
+                preferredColorScheme = colorScheme == .dark ? .light : .dark
+            case .light:
+                preferredColorScheme = .dark
+            case .dark:
+                preferredColorScheme = .light
+            }
+        }
+    }
+    
     private func loadInitialData() {
         if let savedInfo = parkrunInfoList.first {
             inputText = savedInfo.parkrunID
