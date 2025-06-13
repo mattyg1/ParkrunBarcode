@@ -1,4 +1,0 @@
-Target dependency graph (2 targets)
-Target 'PR Bar Code' in project 'PR Bar Code'
-➜ Explicit dependency on target 'PR Bar Code Watch App Watch App' in project 'PR Bar Code'
-Target 'PR Bar Code Watch App Watch App' in project 'PR Bar Code' (no dependencies)

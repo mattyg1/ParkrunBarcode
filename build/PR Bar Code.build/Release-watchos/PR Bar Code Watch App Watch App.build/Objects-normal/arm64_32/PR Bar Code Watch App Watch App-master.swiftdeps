@@ -1,9 +1,0 @@
-version: "Apple Swift version 6.1.2 (swiftlang-6.1.2.1.2 clang-1700.0.13.5)"
-options: "90dcbc5f28f28e3359a37103265fe503eca491b44b42bc6187c46807fb405586"
-build_start_time: [1749761758, 664337000]
-build_end_time: [1749761765, 11467000]
-inputs:
-  "/Users/matt/Documents/GitHub/PR Bar Code/PR Bar Code Watch App Watch App/ContentView.swift": !dirty [1749761672, 623176376]
-  "/Users/matt/Documents/GitHub/PR Bar Code/PR Bar Code Watch App Watch App/PR_Bar_Code_Watch_AppApp.swift": !dirty [1749760942, 371329972]
-  ? "/Users/matt/Documents/GitHub/PR Bar Code/build/PR Bar Code.build/Release-watchos/PR Bar Code Watch App Watch App.build/DerivedSources/GeneratedAssetSymbols.swift"
-  : !dirty [1749761758, 578270197]
