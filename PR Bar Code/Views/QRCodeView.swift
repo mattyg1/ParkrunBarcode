@@ -364,14 +364,29 @@ struct QRCodeBarcodeView: View {
                         Text("Parkrun ID")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text(inputText.isEmpty ? "Not set" : inputText)
-                            .font(.body)
-                            .fontWeight(.semibold)
-                            .foregroundColor(.blue)
+                        
+                        Button(action: {
+                            openParkrunProfile()
+                        }) {
+                            HStack {
+                                Text(inputText.isEmpty ? "Not set" : inputText)
+                                    .font(.body)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.blue)
+                                
+                                if !inputText.isEmpty {
+                                    Image(systemName: "safari")
+                                        .font(.caption)
+                                        .foregroundColor(.blue)
+                                }
+                            }
                             .padding(6)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color(.tertiarySystemBackground))
                             .cornerRadius(6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        .disabled(inputText.isEmpty)
                     }
                     
                     VStack(alignment: .leading, spacing: 2) {
@@ -391,12 +406,28 @@ struct QRCodeBarcodeView: View {
                     Text("Name")
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text(name.isEmpty ? "Not set" : name)
-                        .font(.body)
+                    
+                    Button(action: {
+                        openParkrunProfile()
+                    }) {
+                        HStack {
+                            Text(name.isEmpty ? "Not set" : name)
+                                .font(.body)
+                                .foregroundColor(name.isEmpty ? .secondary : .blue)
+                            
+                            if !name.isEmpty && !inputText.isEmpty {
+                                Image(systemName: "safari")
+                                    .font(.caption)
+                                    .foregroundColor(.blue)
+                            }
+                        }
                         .padding(6)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color(.tertiarySystemBackground))
                         .cornerRadius(6)
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(name.isEmpty || inputText.isEmpty)
                 }
                 
                 if !lastParkrunDate.isEmpty && !lastParkrunTime.isEmpty && !lastParkrunEvent.isEmpty {
@@ -725,6 +756,35 @@ struct QRCodeBarcodeView: View {
                 }
             }
         }
+    }
+    
+    private func openParkrunProfile() {
+        guard !inputText.isEmpty, inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil else {
+            alertMessage = "Invalid Parkrun ID. Cannot open profile page."
+            showAlert = true
+            return
+        }
+        
+        // Extract numeric part from ID (remove 'A' prefix)
+        let numericId = String(inputText.dropFirst())
+        let profileURL = "https://www.parkrun.org.uk/parkrunner/\(numericId)/all/"
+        
+        guard let url = URL(string: profileURL) else {
+            alertMessage = "Unable to create profile URL."
+            showAlert = true
+            return
+        }
+        
+        #if os(iOS)
+        UIApplication.shared.open(url) { success in
+            if !success {
+                DispatchQueue.main.async {
+                    self.alertMessage = "Unable to open parkrun profile page."
+                    self.showAlert = true
+                }
+            }
+        }
+        #endif
     }
     
     private func openWatchQRCode() {
