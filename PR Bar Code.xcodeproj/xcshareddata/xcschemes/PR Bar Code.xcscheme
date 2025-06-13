@@ -16,8 +16,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C9648A172D0DAFD900D43D7F"
-               BuildableName = "PR Bar Code.app"
-               BlueprintName = "PR Bar Code"
+               BuildableName = "5K QR Code.app"
+               BlueprintName = "5K QR Code"
                ReferencedContainer = "container:PR Bar Code.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -36,8 +36,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C9648A282D0DAFDA00D43D7F"
-               BuildableName = "PR Bar CodeTests.xctest"
-               BlueprintName = "PR Bar CodeTests"
+               BuildableName = "5K QR CodeTests.xctest"
+               BlueprintName = "5K QR CodeTests"
                ReferencedContainer = "container:PR Bar Code.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -47,8 +47,8 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "C9648A322D0DAFDA00D43D7F"
-               BuildableName = "PR Bar CodeUITests.xctest"
-               BlueprintName = "PR Bar CodeUITests"
+               BuildableName = "5K QR CodeUITests.xctest"
+               BlueprintName = "5K QR CodeUITests"
                ReferencedContainer = "container:PR Bar Code.xcodeproj">
             </BuildableReference>
          </TestableReference>
@@ -69,8 +69,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C9648A172D0DAFD900D43D7F"
-            BuildableName = "PR Bar Code.app"
-            BlueprintName = "PR Bar Code"
+            BuildableName = "5K QR Code.app"
+            BlueprintName = "5K QR Code"
             ReferencedContainer = "container:PR Bar Code.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
@@ -86,8 +86,8 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "C9648A172D0DAFD900D43D7F"
-            BuildableName = "PR Bar Code.app"
-            BlueprintName = "PR Bar Code"
+            BuildableName = "5K QR Code.app"
+            BlueprintName = "5K QR Code"
             ReferencedContainer = "container:PR Bar Code.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>

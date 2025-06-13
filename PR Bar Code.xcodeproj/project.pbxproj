@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C97FF5C82DFB732F007FBC7F /* PR Bar Code Watch App Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C97FF5A82DFB732E007FBC7F /* PR Bar Code Watch App Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C97FF5C82DFB732F007FBC7F /* 5K QR Code Watch App Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C97FF5A82DFB732E007FBC7F /* 5K QR Code Watch App Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,7 +55,7 @@
 			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
 			dstSubfolderSpec = 16;
 			files = (
-				C97FF5C82DFB732F007FBC7F /* PR Bar Code Watch App Watch App.app in Embed Watch Content */,
+				C97FF5C82DFB732F007FBC7F /* 5K QR Code Watch App Watch App.app in Embed Watch Content */,
 			);
 			name = "Embed Watch Content";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -63,12 +63,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		C9648A182D0DAFD900D43D7F /* PR Bar Code.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PR Bar Code.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C9648A292D0DAFDA00D43D7F /* PR Bar CodeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PR Bar CodeTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C9648A332D0DAFDA00D43D7F /* PR Bar CodeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PR Bar CodeUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C97FF5A82DFB732E007FBC7F /* PR Bar Code Watch App Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PR Bar Code Watch App Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C97FF5B42DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PR Bar Code Watch App Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
-		C97FF5BE2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PR Bar Code Watch App Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C9648A182D0DAFD900D43D7F /* 5K QR Code.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "5K QR Code.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C9648A292D0DAFDA00D43D7F /* 5K QR CodeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "5K QR CodeTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C9648A332D0DAFDA00D43D7F /* 5K QR CodeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "5K QR CodeUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C97FF5A82DFB732E007FBC7F /* 5K QR Code Watch App Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "5K QR Code Watch App Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C97FF5B42DFB732F007FBC7F /* 5K QR Code Watch App Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "5K QR Code Watch App Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C97FF5BE2DFB732F007FBC7F /* 5K QR Code Watch App Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "5K QR Code Watch App Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -166,12 +166,12 @@
 		C9648A192D0DAFD900D43D7F /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				C9648A182D0DAFD900D43D7F /* PR Bar Code.app */,
-				C9648A292D0DAFDA00D43D7F /* PR Bar CodeTests.xctest */,
-				C9648A332D0DAFDA00D43D7F /* PR Bar CodeUITests.xctest */,
-				C97FF5A82DFB732E007FBC7F /* PR Bar Code Watch App Watch App.app */,
-				C97FF5B42DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests.xctest */,
-				C97FF5BE2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests.xctest */,
+				C9648A182D0DAFD900D43D7F /* 5K QR Code.app */,
+				C9648A292D0DAFDA00D43D7F /* 5K QR CodeTests.xctest */,
+				C9648A332D0DAFDA00D43D7F /* 5K QR CodeUITests.xctest */,
+				C97FF5A82DFB732E007FBC7F /* 5K QR Code Watch App Watch App.app */,
+				C97FF5B42DFB732F007FBC7F /* 5K QR Code Watch App Watch AppTests.xctest */,
+				C97FF5BE2DFB732F007FBC7F /* 5K QR Code Watch App Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -179,9 +179,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		C9648A172D0DAFD900D43D7F /* PR Bar Code */ = {
+		C9648A172D0DAFD900D43D7F /* 5K QR Code */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C9648A3D2D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "PR Bar Code" */;
+			buildConfigurationList = C9648A3D2D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "5K QR Code" */;
 			buildPhases = (
 				C9648A142D0DAFD900D43D7F /* Sources */,
 				C9648A152D0DAFD900D43D7F /* Frameworks */,
@@ -196,16 +196,16 @@
 			fileSystemSynchronizedGroups = (
 				C9648A1A2D0DAFD900D43D7F /* PR Bar Code */,
 			);
-			name = "PR Bar Code";
+			name = "5K QR Code";
 			packageProductDependencies = (
 			);
 			productName = "PR Bar Code";
-			productReference = C9648A182D0DAFD900D43D7F /* PR Bar Code.app */;
+			productReference = C9648A182D0DAFD900D43D7F /* 5K QR Code.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C9648A282D0DAFDA00D43D7F /* PR Bar CodeTests */ = {
+		C9648A282D0DAFDA00D43D7F /* 5K QR CodeTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C9648A402D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "PR Bar CodeTests" */;
+			buildConfigurationList = C9648A402D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "5K QR CodeTests" */;
 			buildPhases = (
 				C9648A252D0DAFDA00D43D7F /* Sources */,
 				C9648A262D0DAFDA00D43D7F /* Frameworks */,
@@ -219,16 +219,16 @@
 			fileSystemSynchronizedGroups = (
 				C9648A2C2D0DAFDA00D43D7F /* PR Bar CodeTests */,
 			);
-			name = "PR Bar CodeTests";
+			name = "5K QR CodeTests";
 			packageProductDependencies = (
 			);
 			productName = "PR Bar CodeTests";
-			productReference = C9648A292D0DAFDA00D43D7F /* PR Bar CodeTests.xctest */;
+			productReference = C9648A292D0DAFDA00D43D7F /* 5K QR CodeTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C9648A322D0DAFDA00D43D7F /* PR Bar CodeUITests */ = {
+		C9648A322D0DAFDA00D43D7F /* 5K QR CodeUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C9648A432D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "PR Bar CodeUITests" */;
+			buildConfigurationList = C9648A432D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "5K QR CodeUITests" */;
 			buildPhases = (
 				C9648A2F2D0DAFDA00D43D7F /* Sources */,
 				C9648A302D0DAFDA00D43D7F /* Frameworks */,
@@ -242,16 +242,16 @@
 			fileSystemSynchronizedGroups = (
 				C9648A362D0DAFDA00D43D7F /* PR Bar CodeUITests */,
 			);
-			name = "PR Bar CodeUITests";
+			name = "5K QR CodeUITests";
 			packageProductDependencies = (
 			);
 			productName = "PR Bar CodeUITests";
-			productReference = C9648A332D0DAFDA00D43D7F /* PR Bar CodeUITests.xctest */;
+			productReference = C9648A332D0DAFDA00D43D7F /* 5K QR CodeUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
-		C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */ = {
+		C97FF5A72DFB732E007FBC7F /* 5K QR Code Watch App Watch App */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C97FF5C92DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch App" */;
+			buildConfigurationList = C97FF5C92DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "5K QR Code Watch App Watch App" */;
 			buildPhases = (
 				C97FF5A42DFB732E007FBC7F /* Sources */,
 				C97FF5A52DFB732E007FBC7F /* Frameworks */,
@@ -264,16 +264,16 @@
 			fileSystemSynchronizedGroups = (
 				C97FF5A92DFB732E007FBC7F /* PR Bar Code Watch App Watch App */,
 			);
-			name = "PR Bar Code Watch App Watch App";
+			name = "5K QR Code Watch App Watch App";
 			packageProductDependencies = (
 			);
 			productName = "PR Bar Code Watch App Watch App";
-			productReference = C97FF5A82DFB732E007FBC7F /* PR Bar Code Watch App Watch App.app */;
+			productReference = C97FF5A82DFB732E007FBC7F /* 5K QR Code Watch App Watch App.app */;
 			productType = "com.apple.product-type.application";
 		};
-		C97FF5B32DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests */ = {
+		C97FF5B32DFB732F007FBC7F /* 5K QR Code Watch App Watch AppTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C97FF5CD2DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch AppTests" */;
+			buildConfigurationList = C97FF5CD2DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "5K QR Code Watch App Watch AppTests" */;
 			buildPhases = (
 				C97FF5B02DFB732F007FBC7F /* Sources */,
 				C97FF5B12DFB732F007FBC7F /* Frameworks */,
@@ -287,16 +287,16 @@
 			fileSystemSynchronizedGroups = (
 				C97FF5B72DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests */,
 			);
-			name = "PR Bar Code Watch App Watch AppTests";
+			name = "5K QR Code Watch App Watch AppTests";
 			packageProductDependencies = (
 			);
 			productName = "PR Bar Code Watch App Watch AppTests";
-			productReference = C97FF5B42DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests.xctest */;
+			productReference = C97FF5B42DFB732F007FBC7F /* 5K QR Code Watch App Watch AppTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		C97FF5BD2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests */ = {
+		C97FF5BD2DFB732F007FBC7F /* 5K QR Code Watch App Watch AppUITests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C97FF5D02DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch AppUITests" */;
+			buildConfigurationList = C97FF5D02DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "5K QR Code Watch App Watch AppUITests" */;
 			buildPhases = (
 				C97FF5BA2DFB732F007FBC7F /* Sources */,
 				C97FF5BB2DFB732F007FBC7F /* Frameworks */,
@@ -310,11 +310,11 @@
 			fileSystemSynchronizedGroups = (
 				C97FF5C12DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests */,
 			);
-			name = "PR Bar Code Watch App Watch AppUITests";
+			name = "5K QR Code Watch App Watch AppUITests";
 			packageProductDependencies = (
 			);
 			productName = "PR Bar Code Watch App Watch AppUITests";
-			productReference = C97FF5BE2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests.xctest */;
+			productReference = C97FF5BE2DFB732F007FBC7F /* 5K QR Code Watch App Watch AppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
@@ -365,12 +365,12 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				C9648A172D0DAFD900D43D7F /* PR Bar Code */,
-				C9648A282D0DAFDA00D43D7F /* PR Bar CodeTests */,
-				C9648A322D0DAFDA00D43D7F /* PR Bar CodeUITests */,
-				C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */,
-				C97FF5B32DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests */,
-				C97FF5BD2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests */,
+				C9648A172D0DAFD900D43D7F /* 5K QR Code */,
+				C9648A282D0DAFDA00D43D7F /* 5K QR CodeTests */,
+				C9648A322D0DAFDA00D43D7F /* 5K QR CodeUITests */,
+				C97FF5A72DFB732E007FBC7F /* 5K QR Code Watch App Watch App */,
+				C97FF5B32DFB732F007FBC7F /* 5K QR Code Watch App Watch AppTests */,
+				C97FF5BD2DFB732F007FBC7F /* 5K QR Code Watch App Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -468,27 +468,27 @@
 /* Begin PBXTargetDependency section */
 		C9648A2B2D0DAFDA00D43D7F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C9648A172D0DAFD900D43D7F /* PR Bar Code */;
+			target = C9648A172D0DAFD900D43D7F /* 5K QR Code */;
 			targetProxy = C9648A2A2D0DAFDA00D43D7F /* PBXContainerItemProxy */;
 		};
 		C9648A352D0DAFDA00D43D7F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C9648A172D0DAFD900D43D7F /* PR Bar Code */;
+			target = C9648A172D0DAFD900D43D7F /* 5K QR Code */;
 			targetProxy = C9648A342D0DAFDA00D43D7F /* PBXContainerItemProxy */;
 		};
 		C97FF5B62DFB732F007FBC7F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */;
+			target = C97FF5A72DFB732E007FBC7F /* 5K QR Code Watch App Watch App */;
 			targetProxy = C97FF5B52DFB732F007FBC7F /* PBXContainerItemProxy */;
 		};
 		C97FF5C02DFB732F007FBC7F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */;
+			target = C97FF5A72DFB732E007FBC7F /* 5K QR Code Watch App Watch App */;
 			targetProxy = C97FF5BF2DFB732F007FBC7F /* PBXContainerItemProxy */;
 		};
 		C97FF5C72DFB732F007FBC7F /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */;
+			target = C97FF5A72DFB732E007FBC7F /* 5K QR Code Watch App Watch App */;
 			targetProxy = C97FF5C62DFB732F007FBC7F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -546,6 +546,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "5K QR Code";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
@@ -601,6 +602,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				"INFOPLIST_KEY_CFBundleDisplayName[sdk=*]" = "5K QR Code";
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
@@ -786,7 +788,7 @@
 				DEVELOPMENT_TEAM = J23B2B6ZCV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "PR Bar Code Watch App";
+				INFOPLIST_KEY_CFBundleDisplayName = "5K QR Code";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.prbarcode.app.PR-Bar-Code";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -801,7 +803,7 @@
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
-				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+				WATCHOS_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Debug;
 		};
@@ -815,7 +817,7 @@
 				DEVELOPMENT_TEAM = J23B2B6ZCV;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "PR Bar Code Watch App";
+				INFOPLIST_KEY_CFBundleDisplayName = "5K QR Code";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.prbarcode.app.PR-Bar-Code";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -831,7 +833,7 @@
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = 4;
 				VALIDATE_PRODUCT = YES;
-				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+				WATCHOS_DEPLOYMENT_TARGET = 10.6;
 			};
 			name = Release;
 		};
@@ -927,7 +929,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C9648A3D2D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "PR Bar Code" */ = {
+		C9648A3D2D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "5K QR Code" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9648A3E2D0DAFDA00D43D7F /* Debug */,
@@ -936,7 +938,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C9648A402D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "PR Bar CodeTests" */ = {
+		C9648A402D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "5K QR CodeTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9648A412D0DAFDA00D43D7F /* Debug */,
@@ -945,7 +947,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C9648A432D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "PR Bar CodeUITests" */ = {
+		C9648A432D0DAFDA00D43D7F /* Build configuration list for PBXNativeTarget "5K QR CodeUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C9648A442D0DAFDA00D43D7F /* Debug */,
@@ -954,7 +956,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C97FF5C92DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch App" */ = {
+		C97FF5C92DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "5K QR Code Watch App Watch App" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C97FF5CA2DFB732F007FBC7F /* Debug */,
@@ -963,7 +965,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C97FF5CD2DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch AppTests" */ = {
+		C97FF5CD2DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "5K QR Code Watch App Watch AppTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C97FF5CE2DFB732F007FBC7F /* Debug */,
@@ -972,7 +974,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C97FF5D02DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch AppUITests" */ = {
+		C97FF5D02DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "5K QR Code Watch App Watch AppUITests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C97FF5D12DFB732F007FBC7F /* Debug */,
