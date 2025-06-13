@@ -156,6 +156,11 @@ struct QRCodeBarcodeView: View {
                 loadInitialData()
                 WatchSessionManager.shared.startSession()
                 checkForOnboarding()
+                refreshEventDataIfNeeded()
+            }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                // Refresh data when app comes back to foreground
+                refreshEventDataIfNeeded()
             }
             .sheet(isPresented: $showOnboarding) {
                 OnboardingView(isPresented: $showOnboarding)
@@ -713,6 +718,47 @@ struct QRCodeBarcodeView: View {
             showOnboarding = true
         }
     }
+    
+    private func refreshEventDataIfNeeded() {
+        // Only refresh if we have a valid parkrun ID and we're not currently editing
+        guard !inputText.isEmpty, 
+              inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil,
+              !isEditing,
+              !isLoadingName else {
+            print("DEBUG - refreshEventDataIfNeeded: Skipping refresh - invalid ID or currently editing")
+            return
+        }
+        
+        print("DEBUG - refreshEventDataIfNeeded: Refreshing event data for ID: \(inputText)")
+        
+        // Refresh the parkrun data in background without showing loading indicators
+        fetchParkrunnerName(id: inputText, showLoadingIndicator: false) {
+            print("DEBUG - refreshEventDataIfNeeded: Background refresh completed")
+            // Auto-save the updated data
+            DispatchQueue.main.async {
+                self.saveUpdatedDataSilently()
+            }
+        }
+    }
+    
+    private func saveUpdatedDataSilently() {
+        // Save updated data without triggering UI changes or watch sync
+        if let existingInfo = parkrunInfoList.first {
+            existingInfo.name = name
+            existingInfo.totalParkruns = totalParkruns.isEmpty ? nil : totalParkruns
+            existingInfo.lastParkrunDate = lastParkrunDate.isEmpty ? nil : lastParkrunDate
+            existingInfo.lastParkrunTime = lastParkrunTime.isEmpty ? nil : lastParkrunTime
+            existingInfo.lastParkrunEvent = lastParkrunEvent.isEmpty ? nil : lastParkrunEvent
+            existingInfo.lastParkrunEventURL = lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL
+            
+            do {
+                try modelContext.save()
+                print("DEBUG - saveUpdatedDataSilently: Successfully saved refreshed data")
+            } catch {
+                print("DEBUG - saveUpdatedDataSilently: Failed to save refreshed data: \(error)")
+            }
+        }
+    }
 
     private func saveParkrunInfo() {
         guard !inputText.isEmpty, inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil else {
@@ -756,7 +802,7 @@ struct QRCodeBarcodeView: View {
             
             // Send to watch with status tracking
             watchSyncStatus = .sending
-            WatchSessionManager.shared.sendParkrunID(inputText) { success in
+            WatchSessionManager.shared.sendParkrunID(inputText, userName: name) { success in
                 DispatchQueue.main.async {
                     self.watchSyncStatus = success ? .success : .failed
                     
@@ -790,7 +836,7 @@ struct QRCodeBarcodeView: View {
         
         // Send to watch with status tracking
         watchSyncStatus = .sending
-        WatchSessionManager.shared.sendParkrunID(inputText) { success in
+        WatchSessionManager.shared.sendParkrunID(inputText, userName: name) { success in
             DispatchQueue.main.async {
                 self.watchSyncStatus = success ? .success : .failed
                 
@@ -873,7 +919,7 @@ struct QRCodeBarcodeView: View {
                 if success {
                     print("Successfully opened watch app")
                     // Send the parkrun ID with a special flag to show QR immediately
-                    WatchSessionManager.shared.sendParkrunIDForQRDisplay(inputText)
+                    WatchSessionManager.shared.sendParkrunIDForQRDisplay(inputText, userName: name)
                 } else {
                     print("Failed to open watch app")
                     DispatchQueue.main.async {
@@ -884,7 +930,7 @@ struct QRCodeBarcodeView: View {
             }
         } else {
             // Fallback: try to send data and hope watch app opens
-            WatchSessionManager.shared.sendParkrunIDForQRDisplay(inputText)
+            WatchSessionManager.shared.sendParkrunIDForQRDisplay(inputText, userName: name)
             alertMessage = "QR code sent to watch. Please open the Parkrun app on your Apple Watch."
             showAlert = true
         }
@@ -892,15 +938,19 @@ struct QRCodeBarcodeView: View {
     }
     
     // MARK: - Parkrun API Functions
-    private func fetchParkrunnerName(id: String, completion: (() -> Void)? = nil) {
+    private func fetchParkrunnerName(id: String, showLoadingIndicator: Bool = true, completion: (() -> Void)? = nil) {
         // Extract numeric part from ID (remove 'A' prefix)
         let numericId = String(id.dropFirst())
         
-        isLoadingName = true
+        if showLoadingIndicator {
+            isLoadingName = true
+        }
         
         let urlString = "https://www.parkrun.org.uk/parkrunner/\(numericId)/"
         guard let url = URL(string: urlString) else {
-            isLoadingName = false
+            if showLoadingIndicator {
+                isLoadingName = false
+            }
             completion?()
             return
         }
@@ -915,7 +965,9 @@ struct QRCodeBarcodeView: View {
         
         URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
-                self.isLoadingName = false
+                if showLoadingIndicator {
+                    self.isLoadingName = false
+                }
             }
             
             if let error = error {
@@ -1256,8 +1308,8 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         }
     }
     
-    func sendParkrunID(_ id: String, completion: ((Bool) -> Void)? = nil) {
-        print("Attempting to send Parkrun ID: \(id)")
+    func sendParkrunID(_ id: String, userName: String = "", completion: ((Bool) -> Void)? = nil) {
+        print("Attempting to send Parkrun ID: \(id), userName: \(userName)")
         print("Session supported: \(WCSession.isSupported())")
         print("Session reachable: \(WCSession.default.isReachable)")
         print("Session activated: \(WCSession.default.activationState == .activated)")
@@ -1272,10 +1324,15 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         
         // Try both methods - transferUserInfo works even when not reachable
         if WCSession.default.activationState == .activated {
-            let data: [String: Any] = [
+            var data: [String: Any] = [
                 "parkrunID": id,
                 "qrCodeImageData": imageData
             ]
+            
+            // Add user name if available
+            if !userName.isEmpty {
+                data["userName"] = userName
+            }
             
             // Method 1: transferUserInfo (works when not immediately reachable)
             WCSession.default.transferUserInfo(data)
@@ -1301,8 +1358,8 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         }
     }
     
-    func sendParkrunIDForQRDisplay(_ id: String) {
-        print("Sending Parkrun ID for QR display: \(id)")
+    func sendParkrunIDForQRDisplay(_ id: String, userName: String = "") {
+        print("Sending Parkrun ID for QR display: \(id), userName: \(userName)")
         
         // Generate QR code image data
         guard let qrImage = generateQRCodeImage(from: id),
@@ -1312,11 +1369,16 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         }
         
         if WCSession.default.activationState == .activated {
-            let data: [String: Any] = [
+            var data: [String: Any] = [
                 "parkrunID": id,
                 "qrCodeImageData": imageData,
                 "showQRImmediately": true  // Special flag for immediate QR display
             ]
+            
+            // Add user name if available
+            if !userName.isEmpty {
+                data["userName"] = userName
+            }
             
             // Use transferUserInfo for reliability when watch might not be immediately reachable
             WCSession.default.transferUserInfo(data)
