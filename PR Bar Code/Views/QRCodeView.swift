@@ -116,18 +116,23 @@ struct QRCodeBarcodeView: View {
                     )
                 } else {
                     // Display Saved Data
-                    ScrollView {
-                        VStack(alignment: .leading, spacing: 15) {
-                            // Personal Information Section
-                            personalInfoSection
-                            
-                            // QR Code and Barcode Selector and Display
-                            qrCodeAndBarcodeSection
-                            
-                            // Watch sync status indicator
-                            watchSyncIndicator
+                    VStack(spacing: 0) {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: 15) {
+                                // Personal Information Section
+                                personalInfoSection
+                                
+                                // QR Code and Barcode Selector and Display
+                                qrCodeAndBarcodeSection
+                                
+                                // Watch sync status indicator
+                                watchSyncIndicator
+                            }
+                            .padding()
                         }
-                        .padding()
+                        
+                        // Send to Watch Button Section
+                        sendToWatchSection
                     }
                     .navigationTitle("Parkrun Info")
                     .navigationBarItems(trailing: Button("Edit") {
@@ -530,6 +535,64 @@ struct QRCodeBarcodeView: View {
             }
         }
     }
+    
+    // MARK: - Send to Watch Section
+    private var sendToWatchSection: some View {
+        VStack(spacing: 12) {
+            Divider()
+                .padding(.horizontal)
+            
+            VStack(spacing: 8) {
+                Button(action: {
+                    sendToWatch()
+                }) {
+                    HStack(spacing: 8) {
+                        if watchSyncStatus == .sending {
+                            ProgressView()
+                                .scaleEffect(0.8)
+                                .foregroundColor(.white)
+                        } else {
+                            Image(systemName: "applewatch")
+                                .font(.title3)
+                        }
+                        
+                        Text(watchSyncStatus == .sending ? "Sending..." : "Send to Watch")
+                            .font(.headline)
+                            .fontWeight(.medium)
+                    }
+                    .foregroundColor(.white)
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(watchSyncStatus == .sending ? Color.gray : Color.blue)
+                    .cornerRadius(12)
+                }
+                .disabled(watchSyncStatus == .sending || inputText.isEmpty)
+                
+                if WCSession.default.isReachable {
+                    HStack(spacing: 4) {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.caption)
+                        Text("Watch Connected")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    }
+                } else {
+                    HStack(spacing: 4) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(.orange)
+                            .font(.caption)
+                        Text("Watch Not Connected")
+                            .font(.caption)
+                            .foregroundColor(.orange)
+                    }
+                }
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 16)
+        }
+        .background(Color(.systemBackground))
+    }
 
     // MARK: - Functions
     private func loadInitialData() {
@@ -621,6 +684,27 @@ struct QRCodeBarcodeView: View {
     private func cancelEdit() {
         isEditing = false
         loadInitialData()
+    }
+    
+    private func sendToWatch() {
+        guard !inputText.isEmpty else {
+            alertMessage = "No Parkrun ID available to send."
+            showAlert = true
+            return
+        }
+        
+        // Send to watch with status tracking
+        watchSyncStatus = .sending
+        WatchSessionManager.shared.sendParkrunID(inputText) { success in
+            DispatchQueue.main.async {
+                self.watchSyncStatus = success ? .success : .failed
+                
+                // Reset status after 3 seconds
+                DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                    self.watchSyncStatus = .idle
+                }
+            }
+        }
     }
     
     // MARK: - Parkrun API Functions
