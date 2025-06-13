@@ -15,6 +15,7 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var qrCodeImage: UIImage? = nil
     @Published var isConnected: Bool = false
     @Published var shouldShowQRImmediately: Bool = false
+    @Published var userName: String = ""
     
     private let userDefaults = UserDefaults.standard
     private let parkrunIDKey = "SavedParkrunID"
@@ -53,6 +54,12 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         if let parkrunID = message["parkrunID"] as? String {
             print("Watch: Setting parkrunID to: \(parkrunID)")
             self.parkrunID = parkrunID
+            dataUpdated = true
+        }
+        
+        if let userName = message["userName"] as? String {
+            print("Watch: Setting userName to: \(userName)")
+            self.userName = userName
             dataUpdated = true
         }
         
@@ -97,6 +104,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             dataUpdated = true
         }
         
+        if let userName = userInfo["userName"] as? String {
+            print("Watch: Setting userName from userInfo to: \(userName)")
+            DispatchQueue.main.async {
+                self.userName = userName
+            }
+            dataUpdated = true
+        }
+        
         if let imageData = userInfo["qrCodeImageData"] as? Data,
            let qrImage = UIImage(data: imageData) {
             print("Watch: Setting QR code image from userInfo")
@@ -129,6 +144,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             print("Watch: Setting parkrunID from message to: \(parkrunID)")
             DispatchQueue.main.async {
                 self.parkrunID = parkrunID
+            }
+            dataUpdated = true
+        }
+        
+        if let userName = message["userName"] as? String {
+            print("Watch: Setting userName from message to: \(userName)")
+            DispatchQueue.main.async {
+                self.userName = userName
             }
             dataUpdated = true
         }
@@ -240,11 +263,12 @@ struct ContentView: View {
                 Text(watchManager.parkrunID)
                     .font(.caption)
                     .fontWeight(.bold)
-                    .foregroundColor(.blue)
+                    .foregroundColor(.parkrunGreen)
                 
-                Text("Show to scanner")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                // Display the user's name
+                Text(watchManager.userName)
+                    .font(.caption)
+                    .foregroundColor(.primary)
                 
                 // Connection status indicator
                 HStack(spacing: 4) {
@@ -344,6 +368,9 @@ struct FullScreenQRView: View {
     }
 }
 
+extension Color {
+    static let parkrunGreen = Color(red: 0.0, green: 0.5, blue: 0.0)
+}
 
 #Preview {
     ContentView()
