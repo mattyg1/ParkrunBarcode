@@ -11,6 +11,31 @@ import AppKit
 typealias PlatformImage = NSImage
 #endif
 
+// Add custom color scheme
+extension Color {
+    static let parkrunGreen = Color(red: 0.2, green: 0.6, blue: 0.2)
+    static let parkrunLightGreen = Color(red: 0.9, green: 1.0, blue: 0.9)
+    static let cardBackground = Color(.systemBackground)
+    static let secondaryCardBackground = Color(.secondarySystemBackground)
+}
+
+// Add custom view modifiers
+struct CardModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding()
+            .background(Color.cardBackground)
+            .cornerRadius(16)
+            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+    }
+}
+
+extension View {
+    func cardStyle() -> some View {
+        modifier(CardModifier())
+    }
+}
+
 enum WatchSyncStatus {
     case idle
     case sending
@@ -68,142 +93,156 @@ struct QRCodeBarcodeView: View {
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 12) {
-                if isEditing || parkrunInfoList.isEmpty {
-                    ScrollView {
+            ScrollView {
+                VStack(spacing: 20) {
+                    if isEditing || parkrunInfoList.isEmpty {
+                        // Personal Information Card
                         VStack(alignment: .leading, spacing: 12) {
-                            // Personal Information Section
+                            Text("Personal Information")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.parkrunGreen)
+                            
                             personalInfoSection
+                        }
+                        .cardStyle()
+                        
+                        // QR Code Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Your Code")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.parkrunGreen)
                             
-                            // QR Code and Barcode Selector and Display
                             qrCodeAndBarcodeSection
+                        }
+                        .cardStyle()
+                        
+                        // Send to Watch Button
+                        sendToWatchSection
+                            .cardStyle()
+                        
+                        // Watch Sync Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Watch Sync")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.parkrunGreen)
                             
-                            // Watch sync status indicator
                             watchSyncIndicator
                         }
-                        .padding()
-                    }
-                    .navigationTitle(isEditing ? "Edit parkrun Info" : "Add parkrun Info")
-                    .navigationBarItems(
-                        leading: Button("Cancel") {
-                            cancelEdit()
-                        }.disabled(parkrunInfoList.isEmpty),
-                        trailing: Button("Confirm") {
-                            print("Confirm button pressed with inputText: '\(inputText)'")
-                            if !inputText.isEmpty && inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
-                                print("Valid Parkrun ID format detected")
-                                if name.isEmpty && !isLoadingName {
-                                    print("Name is empty and not loading, triggering API lookup...")
-                                    // Fetch data first, then show confirmation dialog
-                                    fetchParkrunnerName(id: inputText) {
-                                        print("API lookup completed, showing confirmation dialog")
-                                        self.showConfirmationDialog = true
-                                    }
-                                } else if isLoadingName {
-                                    print("Currently loading data, please wait...")
-                                    // Do nothing, data is being fetched
-                                } else {
-                                    print("Name already available: '\(name)', showing confirmation dialog")
-                                    print("Current data - name: '\(name)', totalParkruns: '\(totalParkruns)', lastEvent: '\(lastParkrunEvent)'")
-                                    // Data already available, show confirmation dialog
-                                    showConfirmationDialog = true
-                                }
-                            } else {
-                                print("Invalid Parkrun ID format")
-                                alertMessage = "Please enter a valid Parkrun ID first."
-                                showAlert = true
-                            }
-                        }
-                    )
-                } else {
-                    // Display Saved Data
-                    VStack(spacing: 0) {
-                        ScrollView {
-                            VStack(alignment: .leading, spacing: 15) {
-                                // Personal Information Section
+                        .cardStyle()
+                    } else {
+                        // Display Saved Data
+                        VStack(spacing: 20) {
+                            // Personal Information Card
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Personal Information")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.parkrunGreen)
+                                
                                 personalInfoSection
+                            }
+                            .cardStyle()
+                            
+                            // QR Code Card
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Your Code")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.parkrunGreen)
                                 
-                                // QR Code and Barcode Selector and Display
                                 qrCodeAndBarcodeSection
+                            }
+                            .cardStyle()
+                            
+                            // Send to Watch Button
+                            sendToWatchSection
+                                .cardStyle()
+                            
+                            // Watch Sync Card
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Watch Sync")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.parkrunGreen)
                                 
-                                // Watch sync status indicator
                                 watchSyncIndicator
                             }
-                            .padding()
+                            .cardStyle()
                         }
-                        
-                        // Send to Watch Button Section
-                        sendToWatchSection
                     }
-                    .navigationTitle("parkrun Info")
-                    .navigationBarItems(trailing: Button("Edit") {
-                        startEdit()
-                    })
                 }
+                .padding()
             }
-            .alert(isPresented: $showAlert) {
-                Alert(title: Text("Invalid Input"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+            .navigationBarItems(trailing: !isEditing ? Button("Edit") {
+                startEdit()
+            } : nil)
+            .background(Color(.systemGroupedBackground))
+        }
+        .alert(isPresented: $showAlert) {
+            Alert(title: Text("Invalid Input"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
+        .confirmationDialog("Confirm Details", isPresented: $showConfirmationDialog, titleVisibility: .visible) {
+            Button("Save") {
+                saveParkrunInfo()
             }
-            .confirmationDialog("Confirm Details", isPresented: $showConfirmationDialog, titleVisibility: .visible) {
-                Button("Save") {
-                    saveParkrunInfo()
-                }
-                Button("Cancel", role: .cancel) { }
-            } message: {
-                Text(confirmationMessage)
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text(confirmationMessage)
+        }
+        .onAppear {
+            loadInitialData()
+            WatchSessionManager.shared.startSession()
+            checkForOnboarding()
+            refreshEventDataIfNeeded()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+            // Refresh data when app comes back to foreground
+            refreshEventDataIfNeeded()
+        }
+        .sheet(isPresented: $showOnboarding) {
+            OnboardingView(isPresented: $showOnboarding)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunID"))) { notification in
+            if let parkrunID = notification.object as? String {
+                inputText = parkrunID
+                // Clear existing data and trigger API lookup
+                name = ""
+                totalParkruns = ""
+                lastParkrunDate = ""
+                lastParkrunTime = ""
+                lastParkrunEvent = ""
+                lastParkrunEventURL = ""
+                
+                // Trigger edit mode to show the new ID
+                isEditing = true
+                
+                // Fetch data for the ID
+                fetchParkrunnerName(id: parkrunID)
             }
-            .onAppear {
-                loadInitialData()
-                WatchSessionManager.shared.startSession()
-                checkForOnboarding()
-                refreshEventDataIfNeeded()
-            }
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
-                // Refresh data when app comes back to foreground
-                refreshEventDataIfNeeded()
-            }
-            .sheet(isPresented: $showOnboarding) {
-                OnboardingView(isPresented: $showOnboarding)
-            }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunID"))) { notification in
-                if let parkrunID = notification.object as? String {
-                    inputText = parkrunID
-                    // Clear existing data and trigger API lookup
-                    name = ""
-                    totalParkruns = ""
-                    lastParkrunDate = ""
-                    lastParkrunTime = ""
-                    lastParkrunEvent = ""
-                    lastParkrunEventURL = ""
-                    
-                    // Trigger edit mode to show the new ID
-                    isEditing = true
-                    
-                    // Fetch data for the ID
-                    fetchParkrunnerName(id: parkrunID)
-                }
-            }
-            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunIDWithConfirmation"))) { notification in
-                if let parkrunID = notification.object as? String {
-                    inputText = parkrunID
-                    // Clear existing data and trigger API lookup
-                    name = ""
-                    totalParkruns = ""
-                    lastParkrunDate = ""
-                    lastParkrunTime = ""
-                    lastParkrunEvent = ""
-                    lastParkrunEventURL = ""
-                    
-                    // Trigger edit mode to show the new ID
-                    isEditing = true
-                    
-                    // Fetch data for the ID and show confirmation dialog when done
-                    fetchParkrunnerName(id: parkrunID) {
-                        // Show confirmation dialog after API call completes
-                        print("Onboarding: API lookup completed, showing confirmation dialog")
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            self.showConfirmationDialog = true
-                        }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunIDWithConfirmation"))) { notification in
+            if let parkrunID = notification.object as? String {
+                inputText = parkrunID
+                // Clear existing data and trigger API lookup
+                name = ""
+                totalParkruns = ""
+                lastParkrunDate = ""
+                lastParkrunTime = ""
+                lastParkrunEvent = ""
+                lastParkrunEventURL = ""
+                
+                // Trigger edit mode to show the new ID
+                isEditing = true
+                
+                // Fetch data for the ID and show confirmation dialog when done
+                fetchParkrunnerName(id: parkrunID) {
+                    // Show confirmation dialog after API call completes
+                    print("Onboarding: API lookup completed, showing confirmation dialog")
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                        self.showConfirmationDialog = true
                     }
                 }
             }
@@ -212,29 +251,18 @@ struct QRCodeBarcodeView: View {
 
     // MARK: - Personal Info Section
     private var personalInfoSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text("Personal Information")
-                .font(.headline)
-                .padding(.bottom, 1)
-
+        VStack(alignment: .leading, spacing: 12) {
             if isEditing {
-                VStack(alignment: .leading, spacing: 5) {
-                    VStack(alignment: .leading, spacing: 3) {
+                VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Parkrun ID")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        
                         HStack {
                             TextField("Parkrun ID (e.g., A12345)", text: $inputText)
-                                .keyboardType(.asciiCapable)
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .onChange(of: inputText) { oldValue, newValue in
-                                    // Clear data when ID changes or becomes invalid
-                                    if newValue != oldValue {
-                                        self.name = ""
-                                        self.totalParkruns = ""
-                                        self.lastParkrunDate = ""
-                                        self.lastParkrunTime = ""
-                                        self.lastParkrunEvent = ""
-                                        self.lastParkrunEventURL = ""
-                                    }
-                                }
+                                .keyboardType(.asciiCapable)
                             
                             if isLoadingName {
                                 ProgressView()
@@ -251,32 +279,6 @@ struct QRCodeBarcodeView: View {
                                 Image(systemName: "exclamationmark.circle.fill")
                                     .foregroundColor(.red)
                             }
-                        }
-                        .padding(6)
-                        .background(Color(.secondarySystemBackground))
-                        .cornerRadius(6)
-                        
-                        // Helper text
-                        if !inputText.isEmpty && inputText.range(of: #"^A\d+$"#, options: .regularExpression) == nil {
-                            Text("ID must start with 'A' followed by numbers")
-                                .font(.caption)
-                                .foregroundColor(.red)
-                                .padding(.leading, 6)
-                        } else if isLoadingName {
-                            Text("Looking up runner details...")
-                                .font(.caption)
-                                .foregroundColor(.blue)
-                                .padding(.leading, 6)
-                        } else if !name.isEmpty && inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
-                            Text("Details found - ready to save")
-                                .font(.caption)
-                                .foregroundColor(.green)
-                                .padding(.leading, 6)
-                        } else if inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
-                            Text("Press Confirm to lookup details")
-                                .font(.caption)
-                                .foregroundColor(.blue)
-                                .padding(.leading, 6)
                         }
                     }
                     
@@ -543,14 +545,13 @@ struct QRCodeBarcodeView: View {
 
     // MARK: - QR Code and Barcode Section
     private var qrCodeAndBarcodeSection: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(spacing: 16) {
             Picker("Code Type", selection: $selectedCodeType) {
                 Text("QR Code").tag(0)
                 Text("Barcode").tag(1)
             }
             .pickerStyle(SegmentedPickerStyle())
-            .padding(.bottom, 8)
-
+            
             HStack {
                 if selectedCodeType == 0 {
                     CodeSectionView(
@@ -566,84 +567,17 @@ struct QRCodeBarcodeView: View {
                     )
                 }
             }
-            .frame(maxWidth: .infinity) // Center align QR/Barcode
+            .frame(maxWidth: .infinity)
         }
-        .padding(10)
-        .background(Color(.systemBackground))
-        .cornerRadius(10)
-        .shadow(radius: 2)
-        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Watch Sync Indicator
     private var watchSyncIndicator: some View {
-        Group {
-            if watchSyncStatus != .idle {
-                HStack(spacing: 8) {
-                    switch watchSyncStatus {
-                    case .sending:
-                        ProgressView()
-                            .scaleEffect(0.8)
-                        Text("Sending to Watch...")
-                            .font(.caption)
-                            .foregroundColor(.blue)
-                    case .success:
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.green)
-                        Text("Sent to Watch")
-                            .font(.caption)
-                            .foregroundColor(.green)
-                    case .failed:
-                        Image(systemName: "exclamationmark.circle.fill")
-                            .foregroundColor(.red)
-                        Text("Failed to send to Watch")
-                            .font(.caption)
-                            .foregroundColor(.red)
-                    case .idle:
-                        EmptyView()
-                    }
-                }
-                .padding(8)
-                .background(Color(.secondarySystemBackground))
-                .cornerRadius(8)
-                .transition(.opacity)
-                .animation(.easeInOut(duration: 0.3), value: watchSyncStatus)
-            }
-        }
-    }
-    
-    // MARK: - Send to Watch Section
-    private var sendToWatchSection: some View {
         VStack(spacing: 12) {
             Divider()
                 .padding(.horizontal)
             
             VStack(spacing: 8) {
-                Button(action: {
-                    sendToWatch()
-                }) {
-                    HStack(spacing: 8) {
-                        if watchSyncStatus == .sending {
-                            ProgressView()
-                                .scaleEffect(0.8)
-                                .foregroundColor(.white)
-                        } else {
-                            Image(systemName: "applewatch")
-                                .font(.title3)
-                        }
-                        
-                        Text(watchSyncStatus == .sending ? "Sending..." : "Send to Watch")
-                            .font(.headline)
-                            .fontWeight(.medium)
-                    }
-                    .foregroundColor(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding()
-                    .background(watchSyncStatus == .sending ? Color.gray : Color.blue)
-                    .cornerRadius(12)
-                }
-                .disabled(watchSyncStatus == .sending || inputText.isEmpty)
-                
                 if WCSession.default.isReachable {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
@@ -688,6 +622,36 @@ struct QRCodeBarcodeView: View {
             .padding(.bottom, 16)
         }
         .background(Color(.systemBackground))
+    }
+    
+    // MARK: - Send to Watch Section
+    private var sendToWatchSection: some View {
+        VStack(spacing: 12) {
+            Button(action: {
+                sendToWatch()
+            }) {
+                HStack(spacing: 8) {
+                    if watchSyncStatus == .sending {
+                        ProgressView()
+                            .scaleEffect(0.8)
+                            .foregroundColor(.white)
+                    } else {
+                        Image(systemName: "applewatch")
+                            .font(.title3)
+                    }
+                    
+                    Text(watchSyncStatus == .sending ? "Sending..." : "Send to Watch")
+                        .font(.headline)
+                        .fontWeight(.medium)
+                }
+                .foregroundColor(.white)
+                .frame(maxWidth: .infinity)
+                .padding()
+                .background(watchSyncStatus == .sending ? Color.gray : Color.parkrunGreen)
+                .cornerRadius(12)
+            }
+            .disabled(watchSyncStatus == .sending || inputText.isEmpty)
+        }
     }
 
     // MARK: - Functions
@@ -1258,8 +1222,8 @@ struct CodeSectionView: View {
                     .scaledToFit()
                     .frame(width: size.width, height: size.height)
                     .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .shadow(radius: 5)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 #elseif os(macOS)
                 Image(nsImage: image)
                     .resizable()
@@ -1267,8 +1231,8 @@ struct CodeSectionView: View {
                     .scaledToFit()
                     .frame(width: size.width, height: size.height)
                     .background(Color.white)
-                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                    .shadow(radius: 5)
+                    .clipShape(RoundedRectangle(cornerRadius: 16))
+                    .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
                 #endif
             } else {
                 Text("Failed to generate \(title)")
