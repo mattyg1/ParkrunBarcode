@@ -248,7 +248,7 @@ struct ContentView: View {
                 
                 // Connection status indicator
                 HStack(spacing: 4) {
-                    Image(systemName: watchManager.isConnected ? "iphone.and.watch" : "applewatch")
+                    Image(systemName: watchManager.isConnected ? "applewatch" : "applewatch.slash")
                         .font(.caption2)
                         .foregroundColor(watchManager.isConnected ? .green : .orange)
                     
