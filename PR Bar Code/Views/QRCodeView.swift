@@ -36,6 +36,7 @@ struct QRCodeBarcodeView: View {
     @State private var lastParkrunDate: String = ""
     @State private var lastParkrunTime: String = ""
     @State private var lastParkrunEvent: String = ""
+    @State private var lastParkrunEventURL: String = ""
     @State private var watchSyncStatus: WatchSyncStatus = .idle
     @State private var showOnboarding: Bool = false
 
@@ -82,7 +83,7 @@ struct QRCodeBarcodeView: View {
                         }
                         .padding()
                     }
-                    .navigationTitle(isEditing ? "Edit Parkrun Info" : "Add Parkrun Info")
+                    .navigationTitle(isEditing ? "Edit parkrun Info" : "Add parkrun Info")
                     .navigationBarItems(
                         leading: Button("Cancel") {
                             cancelEdit()
@@ -134,7 +135,7 @@ struct QRCodeBarcodeView: View {
                         // Send to Watch Button Section
                         sendToWatchSection
                     }
-                    .navigationTitle("Parkrun Info")
+                    .navigationTitle("parkrun Info")
                     .navigationBarItems(trailing: Button("Edit") {
                         startEdit()
                     })
@@ -168,6 +169,7 @@ struct QRCodeBarcodeView: View {
                     lastParkrunDate = ""
                     lastParkrunTime = ""
                     lastParkrunEvent = ""
+                    lastParkrunEventURL = ""
                     
                     // Trigger edit mode to show the new ID
                     isEditing = true
@@ -185,6 +187,7 @@ struct QRCodeBarcodeView: View {
                     lastParkrunDate = ""
                     lastParkrunTime = ""
                     lastParkrunEvent = ""
+                    lastParkrunEventURL = ""
                     
                     // Trigger edit mode to show the new ID
                     isEditing = true
@@ -224,6 +227,7 @@ struct QRCodeBarcodeView: View {
                                         self.lastParkrunDate = ""
                                         self.lastParkrunTime = ""
                                         self.lastParkrunEvent = ""
+                                        self.lastParkrunEventURL = ""
                                     }
                                 }
                             
@@ -331,11 +335,29 @@ struct QRCodeBarcodeView: View {
                                 
                                 // Data row
                                 HStack(alignment: .center) {
-                                    Text(lastParkrunEvent)
-                                        .font(.body)
+                                    Button(action: {
+                                        openEventResults()
+                                    }) {
+                                        HStack {
+                                            Text(lastParkrunEvent)
+                                                .font(.body)
+                                                .foregroundColor(.blue)
+                                                .lineLimit(2)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                            
+                                            if !lastParkrunEventURL.isEmpty {
+                                                Image(systemName: "safari")
+                                                    .font(.caption2)
+                                                    .foregroundColor(.blue)
+                                            }
+                                        }
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                        .lineLimit(2)
-                                        .fixedSize(horizontal: false, vertical: true)
+                                    }
+                                    .buttonStyle(PlainButtonStyle())
+                                    .disabled(lastParkrunEventURL.isEmpty)
+                                    .onAppear {
+                                        print("DEBUG - Button 1 render: lastParkrunEvent='\(lastParkrunEvent)', lastParkrunEventURL='\(lastParkrunEventURL)', disabled=\(lastParkrunEventURL.isEmpty)")
+                                    }
                                     Text(lastParkrunDate)
                                         .font(.body)
                                         .frame(width: 90, alignment: .center)
@@ -344,7 +366,7 @@ struct QRCodeBarcodeView: View {
                                     Text(lastParkrunTime)
                                         .font(.body)
                                         .fontWeight(.semibold)
-                                        .foregroundColor(.blue)
+                                        .foregroundColor(.primary)
                                         .frame(width: 70, alignment: .center)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
@@ -461,11 +483,29 @@ struct QRCodeBarcodeView: View {
                             
                             // Data row
                             HStack(alignment: .center) {
-                                Text(lastParkrunEvent)
-                                    .font(.body)
+                                Button(action: {
+                                    openEventResults()
+                                }) {
+                                    HStack {
+                                        Text(lastParkrunEvent)
+                                            .font(.body)
+                                            .foregroundColor(.blue)
+                                            .lineLimit(2)
+                                            .fixedSize(horizontal: false, vertical: true)
+                                        
+                                        if !lastParkrunEventURL.isEmpty {
+                                            Image(systemName: "safari")
+                                                .font(.caption2)
+                                                .foregroundColor(.blue)
+                                        }
+                                    }
                                     .frame(maxWidth: .infinity, alignment: .leading)
-                                    .lineLimit(2)
-                                    .fixedSize(horizontal: false, vertical: true)
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                                .disabled(lastParkrunEventURL.isEmpty)
+                                .onAppear {
+                                    print("DEBUG - Button 2 render: lastParkrunEvent='\(lastParkrunEvent)', lastParkrunEventURL='\(lastParkrunEventURL)', disabled=\(lastParkrunEventURL.isEmpty)")
+                                }
                                 Text(lastParkrunDate)
                                     .font(.body)
                                     .frame(width: 90, alignment: .center)
@@ -474,7 +514,7 @@ struct QRCodeBarcodeView: View {
                                 Text(lastParkrunTime)
                                     .font(.body)
                                     .fontWeight(.semibold)
-                                    .foregroundColor(.blue)
+                                    .foregroundColor(.primary)
                                     .frame(width: 70, alignment: .center)
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
@@ -656,10 +696,12 @@ struct QRCodeBarcodeView: View {
             lastParkrunDate = savedInfo.lastParkrunDate ?? ""
             lastParkrunTime = savedInfo.lastParkrunTime ?? ""
             lastParkrunEvent = savedInfo.lastParkrunEvent ?? ""
+            lastParkrunEventURL = savedInfo.lastParkrunEventURL ?? ""
             
             print("DEBUG - loadInitialData: parkrunID='\(savedInfo.parkrunID)', name='\(savedInfo.name)'")
             print("DEBUG - loadInitialData: totalParkruns='\(savedInfo.totalParkruns ?? "nil")', lastEvent='\(savedInfo.lastParkrunEvent ?? "nil")'")
             print("DEBUG - loadInitialData: lastDate='\(savedInfo.lastParkrunDate ?? "nil")', lastTime='\(savedInfo.lastParkrunTime ?? "nil")'")
+            print("DEBUG - loadInitialData: lastParkrunEventURL='\(savedInfo.lastParkrunEventURL ?? "nil")' -> '\(lastParkrunEventURL)'")
         } else {
             print("DEBUG - loadInitialData: No saved parkrun info found")
         }
@@ -692,6 +734,7 @@ struct QRCodeBarcodeView: View {
             existingInfo.lastParkrunDate = lastParkrunDate.isEmpty ? nil : lastParkrunDate
             existingInfo.lastParkrunTime = lastParkrunTime.isEmpty ? nil : lastParkrunTime
             existingInfo.lastParkrunEvent = lastParkrunEvent.isEmpty ? nil : lastParkrunEvent
+            existingInfo.lastParkrunEventURL = lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL
         } else {
             let newInfo = ParkrunInfo(
                 parkrunID: inputText, 
@@ -701,7 +744,8 @@ struct QRCodeBarcodeView: View {
                 totalParkruns: totalParkruns.isEmpty ? nil : totalParkruns,
                 lastParkrunDate: lastParkrunDate.isEmpty ? nil : lastParkrunDate,
                 lastParkrunTime: lastParkrunTime.isEmpty ? nil : lastParkrunTime,
-                lastParkrunEvent: lastParkrunEvent.isEmpty ? nil : lastParkrunEvent
+                lastParkrunEvent: lastParkrunEvent.isEmpty ? nil : lastParkrunEvent,
+                lastParkrunEventURL: lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL
             )
             modelContext.insert(newInfo)
         }
@@ -756,6 +800,33 @@ struct QRCodeBarcodeView: View {
                 }
             }
         }
+    }
+    
+    private func openEventResults() {
+        print("DEBUG - openEventResults called with URL: '\(lastParkrunEventURL)'")
+        guard !lastParkrunEventURL.isEmpty else {
+            print("DEBUG - openEventResults failed: URL is empty")
+            alertMessage = "No event results URL available."
+            showAlert = true
+            return
+        }
+        
+        guard let url = URL(string: lastParkrunEventURL) else {
+            alertMessage = "Invalid event results URL."
+            showAlert = true
+            return
+        }
+        
+        #if os(iOS)
+        UIApplication.shared.open(url) { success in
+            if !success {
+                DispatchQueue.main.async {
+                    self.alertMessage = "Unable to open event results page."
+                    self.showAlert = true
+                }
+            }
+        }
+        #endif
     }
     
     private func openParkrunProfile() {
@@ -908,17 +979,25 @@ struct QRCodeBarcodeView: View {
                     self.lastParkrunEvent = lastEvent
                     print("Last parkrun event: \(lastEvent)")
                 }
+                if let lastEventURL = extractedData.lastEventURL {
+                    self.lastParkrunEventURL = lastEventURL
+                    print("Last parkrun event URL: \(lastEventURL)")
+                    print("DEBUG - lastParkrunEventURL is now set to: '\(self.lastParkrunEventURL)'")
+                } else {
+                    print("DEBUG - No lastEventURL found in extracted data, lastParkrunEventURL remains: '\(self.lastParkrunEventURL)'")
+                }
                 completion?()
             }
         }.resume()
     }
     
-    private func extractParkrunnerDataFromHTML(_ html: String) -> (name: String?, totalRuns: String?, lastDate: String?, lastTime: String?, lastEvent: String?) {
+    private func extractParkrunnerDataFromHTML(_ html: String) -> (name: String?, totalRuns: String?, lastDate: String?, lastTime: String?, lastEvent: String?, lastEventURL: String?) {
         var name: String?
         var totalRuns: String?
         var lastDate: String?
         var lastTime: String?
         var lastEvent: String?
+        var lastEventURL: String?
         
         print("DEBUG - Starting HTML parsing, HTML length: \(html.count)")
         
@@ -1008,6 +1087,28 @@ struct QRCodeBarcodeView: View {
             }
         }
         
+        // Look for event results URL from date link pattern: <td><a href="https://www.parkrun.org.uk/gangerfarm/results/133/" target="_top">07/06/2025</a></td>
+        // Support multiple parkrun domains: .org.uk, .com, .us, .au, etc.
+        if let eventURLRegex = try? NSRegularExpression(pattern: #"<td><a href="(https://www\.parkrun\.(?:org\.uk|com|us|au|org\.nz|co\.za|it|se|dk|pl|ie|ca|fi|fr|sg|de|no|ru|my)/[^/]+/results/\d+/)"[^>]*>\d{2}/\d{2}/\d{4}</a></td>"#, options: [.caseInsensitive]) {
+            let urlMatches = eventURLRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            if let match = urlMatches.first, let urlRange = Range(match.range(at: 1), in: html) {
+                lastEventURL = String(html[urlRange])
+                print("DEBUG - Extracted lastEventURL: '\(lastEventURL ?? "nil")' using corrected pattern with <td> wrapper")
+            } else {
+                print("DEBUG - No event URL match found with <td> wrapper pattern, trying simpler pattern")
+                // Try without <td> wrapper
+                if let simpleURLRegex = try? NSRegularExpression(pattern: #"<a href="(https://www\.parkrun\.(?:org\.uk|com|us|au|org\.nz|co\.za|it|se|dk|pl|ie|ca|fi|fr|sg|de|no|ru|my)/[^/]+/results/\d+/)"[^>]*>\d{2}/\d{2}/\d{4}</a>"#, options: [.caseInsensitive]) {
+                    let simpleMatches = simpleURLRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                    if let match = simpleMatches.first, let urlRange = Range(match.range(at: 1), in: html) {
+                        lastEventURL = String(html[urlRange])
+                        print("DEBUG - Extracted lastEventURL: '\(lastEventURL ?? "nil")' using simple pattern without <td>")
+                    } else {
+                        print("DEBUG - No event URL match found with simple pattern either")
+                    }
+                }
+            }
+        }
+        
         // If simple patterns didn't work, try the complex pattern
         if lastEvent == nil || lastDate == nil || lastTime == nil {
             print("DEBUG - Trying complex table pattern as fallback")
@@ -1025,6 +1126,15 @@ struct QRCodeBarcodeView: View {
                     if lastTime == nil, let timeRange = Range(match.range(at: 3), in: html) {
                         lastTime = String(html[timeRange])
                         print("DEBUG - Extracted lastTime: '\(lastTime ?? "nil")' using complex pattern")
+                    }
+                    
+                    // Also try to extract URL if not already found
+                    if lastEventURL == nil {
+                        let fullMatch = String(html[Range(match.range(at: 0), in: html)!])
+                        if let urlMatch = fullMatch.range(of: #"https://www\.parkrun\.(?:org\.uk|com|us|au|org\.nz|co\.za|it|se|dk|pl|ie|ca|fi|fr|sg|de|no|ru|my)/[^/]+/results/\d+/"#, options: .regularExpression) {
+                            lastEventURL = String(fullMatch[urlMatch])
+                            print("DEBUG - Extracted lastEventURL: '\(lastEventURL ?? "nil")' from complex pattern")
+                        }
                     }
                 } else {
                     print("DEBUG - No recent parkrun match found with complex pattern")
@@ -1048,8 +1158,8 @@ struct QRCodeBarcodeView: View {
             }
         }
         
-        print("DEBUG - Final extracted data: name='\(name ?? "nil")', totalRuns='\(totalRuns ?? "nil")', lastEvent='\(lastEvent ?? "nil")', lastDate='\(lastDate ?? "nil")', lastTime='\(lastTime ?? "nil")'")
-        return (name: name, totalRuns: totalRuns, lastDate: lastDate, lastTime: lastTime, lastEvent: lastEvent)
+        print("DEBUG - Final extracted data: name='\(name ?? "nil")', totalRuns='\(totalRuns ?? "nil")', lastEvent='\(lastEvent ?? "nil")', lastDate='\(lastDate ?? "nil")', lastTime='\(lastTime ?? "nil")', lastEventURL='\(lastEventURL ?? "nil")'")
+        return (name: name, totalRuns: totalRuns, lastDate: lastDate, lastTime: lastTime, lastEvent: lastEvent, lastEventURL: lastEventURL)
     }
 
     // MARK: - QR & Barcode Generation

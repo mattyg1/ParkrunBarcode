@@ -3,7 +3,7 @@
   <rect x="0" y="0" width="1024" height="1024" rx="200" ry="200" fill="#B8D477"/>
   
   <!-- QR Code -->
-  <g transform="translate(100, 100)">
+  <g transform="translate(212, 212)">
     <!-- QR code background -->
     <rect x="0" y="0" width="600" height="600" fill="#B8D477"/>
     
@@ -110,7 +110,5 @@
   </g>
   
 
-  
-  <!-- Text "5KQR" -->
-  <text x="512" y="850" font-family="Arial, sans-serif" font-size="120" font-weight="normal" text-anchor="middle" fill="#2D4A22">5KQR</text>
+
 </svg>
