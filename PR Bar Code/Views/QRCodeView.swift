@@ -148,10 +148,43 @@ struct QRCodeBarcodeView: View {
     @State private var isAnimating = false
     @State private var preferredColorScheme: ColorScheme?
     @State private var showNotificationSettings = false
+    @State private var showUserSelection = false
+    @State private var showAddUser = false
+    @State private var selectedUserID: String = ""
+    @State private var currentlyViewingUserID: String = "" // Currently displayed user (can be different from default)
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
     private let barcodeFilter = CIFilter.code128BarcodeGenerator()
+    
+    // Computed properties for user management
+    private var currentUser: ParkrunInfo? {
+        // If we're viewing a specific user, return that user
+        if !currentlyViewingUserID.isEmpty {
+            return parkrunInfoList.first(where: { $0.parkrunID == currentlyViewingUserID })
+        }
+        
+        // Otherwise, return the default user
+        if let defaultUser = parkrunInfoList.first(where: { $0.isDefault }) {
+            return defaultUser
+        }
+        return parkrunInfoList.first
+    }
+    
+    private var defaultUser: ParkrunInfo? {
+        if let defaultUser = parkrunInfoList.first(where: { $0.isDefault }) {
+            return defaultUser
+        }
+        return parkrunInfoList.first
+    }
+    
+    private var hasMultipleUsers: Bool {
+        parkrunInfoList.count > 1
+    }
+    
+    private var availableUsers: [ParkrunInfo] {
+        parkrunInfoList.sorted { $0.createdDate < $1.createdDate }
+    }
     
     private var confirmationMessage: String {
         var message = "Please confirm your details:\n\nParkrun ID: \(inputText)"
@@ -179,6 +212,7 @@ struct QRCodeBarcodeView: View {
         NavigationView {
             ScrollView {
                 VStack(spacing: 20) {
+                    
                     if isEditing || parkrunInfoList.isEmpty {
                         // Personal Information Card
                         VStack(alignment: .leading, spacing: 12) {
@@ -282,6 +316,32 @@ struct QRCodeBarcodeView: View {
                                 notificationSettingsSection
                             }
                             .cardStyle()
+                            
+                            // User Selection Card (show at bottom)
+                            if !parkrunInfoList.isEmpty {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        Text("Parkrun Users")
+                                            .font(.title2)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.adaptiveParkrunGreen)
+                                        
+                                        Spacer()
+                                        
+                                        // User count indicator
+                                        Text("\(parkrunInfoList.count)")
+                                            .font(.caption)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(.white)
+                                            .frame(minWidth: 20, minHeight: 20)
+                                            .background(Color.adaptiveParkrunGreen)
+                                            .clipShape(Circle())
+                                    }
+                                    
+                                    userSelectionSection
+                                }
+                                .cardStyle()
+                            }
                         }
                         .transition(AnimationConstants.slideTransition)
                     }
@@ -356,6 +416,27 @@ struct QRCodeBarcodeView: View {
         }
         .sheet(isPresented: $showOnboarding) {
             OnboardingView(isPresented: $showOnboarding)
+        }
+        .sheet(isPresented: $showUserSelection) {
+            UserSelectionView(
+                users: availableUsers,
+                currentUser: currentUser,
+                isPresented: $showUserSelection,
+                onUserSelected: { user in
+                    switchToUser(user)
+                },
+                onDeleteUser: { user in
+                    deleteUser(user)
+                },
+                onSetDefault: { user in
+                    setDefaultUser(user)
+                }
+            )
+        }
+        .sheet(isPresented: $showAddUser) {
+            AddUserView(isPresented: $showAddUser) { parkrunID in
+                addNewUser(parkrunID: parkrunID)
+            }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunID"))) { notification in
             if let parkrunID = notification.object as? String {
@@ -825,6 +906,79 @@ struct QRCodeBarcodeView: View {
         }
     }
     
+    // MARK: - User Selection Section
+    private var userSelectionSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Active User")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Menu {
+                        // User selection options
+                        ForEach(availableUsers, id: \.parkrunID) { user in
+                            Button(action: {
+                                switchToUser(user)
+                            }) {
+                                HStack {
+                                    Text(user.displayName)
+                                    if user.parkrunID == currentUser?.parkrunID {
+                                        Image(systemName: "eye.fill") // Currently viewing
+                                    }
+                                    if user.isDefault {
+                                        Image(systemName: "star.fill") // Default user
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if !availableUsers.isEmpty {
+                            Divider()
+                        }
+                        
+                        // Management options
+                        Button(action: {
+                            showAddUser = true
+                        }) {
+                            Label("Add User", systemImage: "plus.circle")
+                        }
+                        
+                        if hasMultipleUsers {
+                            Button(action: {
+                                showUserSelection = true
+                            }) {
+                                Label("Manage Users", systemImage: "person.2.circle")
+                            }
+                        }
+                        
+                    } label: {
+                        HStack {
+                            Text(currentUser?.displayName ?? "No User Selected")
+                                .font(.body)
+                                .fontWeight(.medium)
+                                .foregroundColor(.primary)
+                            
+                            Spacer()
+                            
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        .padding(.vertical, 8)
+                        .padding(.horizontal, 12)
+                        .background(Color(.tertiarySystemBackground))
+                        .cornerRadius(8)
+                    }
+                }
+                
+                Spacer()
+            }
+            .padding(.horizontal)
+        }
+        .background(Color.adaptiveCardBackground)
+    }
+    
     // MARK: - Notification Settings Section
     private var notificationSettingsSection: some View {
         VStack(spacing: 12) {
@@ -890,6 +1044,9 @@ struct QRCodeBarcodeView: View {
                         Toggle("", isOn: $notificationManager.isNotificationsEnabled)
                             .labelsHidden()
                             .onChange(of: notificationManager.isNotificationsEnabled) { oldValue, newValue in
+                                // Save the setting
+                                UserDefaults.standard.set(newValue, forKey: "isNotificationsEnabled")
+                                
                                 if newValue {
                                     notificationManager.scheduleSaturdayReminders()
                                     setupNotificationsForCurrentUser()
@@ -950,8 +1107,117 @@ struct QRCodeBarcodeView: View {
         print("Notifications set up for user: \(name.isEmpty ? inputText : name)")
     }
     
+    // MARK: - User Management Functions
+    
+    private func switchToUser(_ user: ParkrunInfo) {
+        // Temporarily switch to viewing this user (don't change default)
+        currentlyViewingUserID = user.parkrunID
+        loadInitialData()
+        print("Temporarily viewing user: \(user.displayName)")
+    }
+    
+    private func setDefaultUser(_ user: ParkrunInfo) {
+        // Remove default flag from all users
+        for parkrunUser in parkrunInfoList {
+            parkrunUser.isDefault = false
+        }
+        
+        // Set the chosen user as default
+        user.isDefault = true
+        
+        // Save changes
+        do {
+            try modelContext.save()
+            print("Set default user: \(user.displayName)")
+        } catch {
+            print("Failed to set default user: \(error)")
+        }
+    }
+    
+    private func addNewUser(parkrunID: String) {
+        // Don't change default user when adding - new user is not default unless explicitly set
+        
+        // Create new user with the given ID (not default by default)
+        let newUser = ParkrunInfo(
+            parkrunID: parkrunID,
+            name: "", // Will be filled when user saves
+            homeParkrun: "",
+            country: Country.unitedKingdom.rawValue,
+            isDefault: false
+        )
+        
+        modelContext.insert(newUser)
+        
+        do {
+            try modelContext.save()
+            
+            // Temporarily switch to the new user for editing (but don't make them default yet)
+            switchToUser(newUser)
+            
+            // Switch to editing mode for the new user
+            isEditing = true
+            
+            // Fetch data for the new user
+            fetchParkrunnerName(id: parkrunID)
+            
+            print("Added new user with ID: \(parkrunID)")
+        } catch {
+            print("Failed to add new user: \(error)")
+        }
+    }
+    
+    private func deleteUser(_ user: ParkrunInfo) {
+        // Don't allow deleting the last user
+        guard parkrunInfoList.count > 1 else {
+            print("Cannot delete the last user")
+            return
+        }
+        
+        let wasDefault = user.isDefault
+        
+        // Cancel notifications for this user
+        notificationManager.cancelResultNotifications(for: user.parkrunID)
+        
+        // Delete the user
+        modelContext.delete(user)
+        
+        do {
+            try modelContext.save()
+            
+            // If the deleted user was the default, make the first remaining user default
+            if wasDefault, let firstUser = parkrunInfoList.first {
+                firstUser.isDefault = true
+                try modelContext.save()
+                loadInitialData()
+            }
+            
+            print("Deleted user: \(user.displayName)")
+        } catch {
+            print("Failed to delete user: \(error)")
+        }
+    }
+    
     private func loadInitialData() {
-        if let savedInfo = parkrunInfoList.first {
+        print("DEBUG - loadInitialData: Found \(parkrunInfoList.count) users")
+        
+        // Migrate existing data if needed
+        migrateExistingUsersIfNeeded()
+        
+        // Reset to default user on app startup (clear any temporary viewing)
+        if currentlyViewingUserID.isEmpty {
+            // If no default user exists but users exist, set the first one as default
+            if defaultUser == nil && !parkrunInfoList.isEmpty {
+                parkrunInfoList.first?.isDefault = true
+                do {
+                    try modelContext.save()
+                    print("DEBUG - Auto-set first user as default")
+                } catch {
+                    print("Failed to set default user: \(error)")
+                }
+            }
+        }
+        
+        if let savedInfo = currentUser {
             inputText = savedInfo.parkrunID
             name = savedInfo.name
             homeParkrun = savedInfo.homeParkrun
@@ -962,12 +1228,37 @@ struct QRCodeBarcodeView: View {
             lastParkrunEvent = savedInfo.lastParkrunEvent ?? ""
             lastParkrunEventURL = savedInfo.lastParkrunEventURL ?? ""
             
-            print("DEBUG - loadInitialData: parkrunID='\(savedInfo.parkrunID)', name='\(savedInfo.name)'")
+            print("DEBUG - loadInitialData: Loaded user - parkrunID='\(savedInfo.parkrunID)', name='\(savedInfo.name)'")
             print("DEBUG - loadInitialData: totalParkruns='\(savedInfo.totalParkruns ?? "nil")', lastEvent='\(savedInfo.lastParkrunEvent ?? "nil")'")
-            print("DEBUG - loadInitialData: lastDate='\(savedInfo.lastParkrunDate ?? "nil")', lastTime='\(savedInfo.lastParkrunTime ?? "nil")'")
-            print("DEBUG - loadInitialData: lastParkrunEventURL='\(savedInfo.lastParkrunEventURL ?? "nil")' -> '\(lastParkrunEventURL)'")
         } else {
-            print("DEBUG - loadInitialData: No saved parkrun info found")
+            print("DEBUG - loadInitialData: No current user found")
+        }
+    }
+    
+    private func migrateExistingUsersIfNeeded() {
+        // Update display names and ensure proper defaults for existing users
+        var needsSave = false
+        
+        for user in parkrunInfoList {
+            if user.displayName.isEmpty {
+                user.updateDisplayName()
+                needsSave = true
+            }
+        }
+        
+        // If no user is marked as default, make the first one default
+        if !parkrunInfoList.contains(where: { $0.isDefault }) && !parkrunInfoList.isEmpty {
+            parkrunInfoList.first?.isDefault = true
+            needsSave = true
+        }
+        
+        if needsSave {
+            do {
+                try modelContext.save()
+                print("DEBUG - Migrated existing user data and set default user")
+            } catch {
+                print("Failed to migrate user data: \(error)")
+            }
         }
     }
     
@@ -1030,7 +1321,7 @@ struct QRCodeBarcodeView: View {
     }
     
     private func completeSave() {
-        if let existingInfo = parkrunInfoList.first {
+        if let existingInfo = currentUser {
             existingInfo.parkrunID = inputText
             existingInfo.name = name
             existingInfo.homeParkrun = homeParkrun
@@ -1040,7 +1331,11 @@ struct QRCodeBarcodeView: View {
             existingInfo.lastParkrunTime = lastParkrunTime.isEmpty ? nil : lastParkrunTime
             existingInfo.lastParkrunEvent = lastParkrunEvent.isEmpty ? nil : lastParkrunEvent
             existingInfo.lastParkrunEventURL = lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL
+            existingInfo.updateDisplayName() // Update display name
         } else {
+            // For new users, only make them default if this is the first user
+            let isFirstUser = parkrunInfoList.isEmpty
+            
             let newInfo = ParkrunInfo(
                 parkrunID: inputText, 
                 name: name, 
@@ -1050,7 +1345,8 @@ struct QRCodeBarcodeView: View {
                 lastParkrunDate: lastParkrunDate.isEmpty ? nil : lastParkrunDate,
                 lastParkrunTime: lastParkrunTime.isEmpty ? nil : lastParkrunTime,
                 lastParkrunEvent: lastParkrunEvent.isEmpty ? nil : lastParkrunEvent,
-                lastParkrunEventURL: lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL
+                lastParkrunEventURL: lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL,
+                isDefault: isFirstUser // Only first user is default automatically
             )
             modelContext.insert(newInfo)
         }
@@ -1064,17 +1360,24 @@ struct QRCodeBarcodeView: View {
                 setupNotificationsForCurrentUser()
             }
             
-            // Send to watch with status tracking
-            watchSyncStatus = .sending
-            WatchSessionManager.shared.sendParkrunID(inputText, userName: name) { success in
-                DispatchQueue.main.async {
-                    self.watchSyncStatus = success ? .success : .failed
-                    
-                    // Reset status after 3 seconds
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                        self.watchSyncStatus = .idle
+            // Only automatically send to watch for the first user
+            if parkrunInfoList.count == 1 {
+                // Send to watch with status tracking (first user only)
+                watchSyncStatus = .sending
+                WatchSessionManager.shared.sendParkrunID(inputText, userName: name) { success in
+                    DispatchQueue.main.async {
+                        self.watchSyncStatus = success ? .success : .failed
+                        
+                        // Reset status after 3 seconds
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                            self.watchSyncStatus = .idle
+                        }
                     }
                 }
+            } else {
+                // For additional users, just reset watch sync status
+                watchSyncStatus = .idle
+                print("Additional user saved. Use 'Send to Watch' button to sync QR code to watch.")
             }
         } catch {
             alertMessage = "Failed to save data. Please try again."
