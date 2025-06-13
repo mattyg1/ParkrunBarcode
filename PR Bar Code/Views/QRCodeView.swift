@@ -210,11 +210,27 @@ struct QRCodeBarcodeView: View {
                 .padding()
                 .animation(AnimationConstants.springAnimation, value: isEditing)
             }
-            .navigationBarItems(trailing: !isEditing ? Button("Edit") {
-                withAnimation(AnimationConstants.springAnimation) {
-                    startEdit()
+            .navigationBarItems(
+                leading: isEditing ? Button("Cancel") {
+                    withAnimation(AnimationConstants.springAnimation) {
+                        cancelEdit()
+                    }
+                } : nil,
+                trailing: isEditing ? Button("Save") {
+                    withAnimation(AnimationConstants.springAnimation) {
+                        // Refresh user details and show confirmation dialog without saving
+                        fetchParkrunnerName(id: inputText) {
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                self.showConfirmationDialog = true
+                            }
+                        }
+                    }
+                } : Button("Edit") {
+                    withAnimation(AnimationConstants.springAnimation) {
+                        startEdit()
+                    }
                 }
-            } : nil)
+            )
             .background(Color(.systemGroupedBackground))
         }
         .alert(isPresented: $showAlert) {
@@ -224,7 +240,10 @@ struct QRCodeBarcodeView: View {
             Button("Save") {
                 saveParkrunInfo()
             }
-            Button("Cancel", role: .cancel) { }
+            Button("Cancel", role: .cancel) {
+                // Revert Parkrun details back to original
+                loadInitialData()
+            }
         } message: {
             Text(confirmationMessage)
         }
@@ -571,7 +590,6 @@ struct QRCodeBarcodeView: View {
                     }
                 }
             }
-            .transition(AnimationConstants.fadeTransition)
         }
         .padding(10)
         .background(Color(.systemBackground))
@@ -589,7 +607,6 @@ struct QRCodeBarcodeView: View {
                 Text("Barcode").tag(1)
             }
             .pickerStyle(SegmentedPickerStyle())
-            .transition(AnimationConstants.fadeTransition)
             
             HStack {
                 if selectedCodeType == 0 {
@@ -598,19 +615,21 @@ struct QRCodeBarcodeView: View {
                         image: generateQRCode(from: inputText),
                         size: CGSize(width: 200, height: 200)
                     )
-                    .transition(AnimationConstants.fadeTransition)
                 } else {
                     CodeSectionView(
                         title: "",
                         image: generateBarcode(from: inputText),
                         size: CGSize(width: 300, height: 100)
                     )
-                    .transition(AnimationConstants.fadeTransition)
                 }
             }
             .frame(maxWidth: .infinity)
-            .animation(AnimationConstants.springAnimation, value: selectedCodeType)
         }
+        .padding(10)
+        .background(Color(.systemBackground))
+        .cornerRadius(10)
+        .shadow(radius: 2)
+        .frame(maxWidth: .infinity)
     }
     
     // MARK: - Watch Sync Indicator
@@ -618,7 +637,6 @@ struct QRCodeBarcodeView: View {
         VStack(spacing: 12) {
             Divider()
                 .padding(.horizontal)
-                .transition(AnimationConstants.fadeTransition)
             
             VStack(spacing: 8) {
                 if WCSession.default.isReachable {
@@ -630,7 +648,6 @@ struct QRCodeBarcodeView: View {
                             .font(.caption)
                             .foregroundColor(.green)
                     }
-                    .transition(AnimationConstants.fadeTransition)
                 } else {
                     VStack(spacing: 8) {
                         HStack(spacing: 4) {
@@ -641,7 +658,6 @@ struct QRCodeBarcodeView: View {
                                 .font(.caption)
                                 .foregroundColor(.orange)
                         }
-                        .transition(AnimationConstants.fadeTransition)
                         
                         Button(action: {
                             withAnimation(AnimationConstants.springAnimation) {
@@ -662,13 +678,11 @@ struct QRCodeBarcodeView: View {
                             .cornerRadius(8)
                         }
                         .disabled(inputText.isEmpty)
-                        .transition(AnimationConstants.fadeTransition)
                     }
                 }
             }
             .padding(.horizontal)
             .padding(.bottom, 16)
-            .animation(AnimationConstants.springAnimation, value: WCSession.default.isReachable)
         }
         .background(Color(.systemBackground))
     }
@@ -685,18 +699,14 @@ struct QRCodeBarcodeView: View {
                     if watchSyncStatus == .sending {
                         ProgressView()
                             .scaleEffect(0.8)
-                            .foregroundColor(.white)
-                            .transition(AnimationConstants.fadeTransition)
                     } else {
                         Image(systemName: "applewatch")
                             .font(.title3)
-                            .transition(AnimationConstants.fadeTransition)
                     }
                     
                     Text(watchSyncStatus == .sending ? "Sending..." : "Send to Watch")
                         .font(.headline)
                         .fontWeight(.medium)
-                        .transition(AnimationConstants.fadeTransition)
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -1305,7 +1315,6 @@ struct CodeSectionView: View {
             } else {
                 Text("Failed to generate \(title)")
                     .foregroundColor(.red)
-                    .transition(AnimationConstants.fadeTransition)
             }
         }
     }
