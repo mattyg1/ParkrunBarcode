@@ -6,28 +6,28 @@
    - c. Add animations to make the app feel more responsive and engaging. (Priority: 1)
 
 2. **Functionality Improvements:**
-   - Allow users to save multiple Parkrun IDs and switch between them. (Priority: 2)
-   - Implement push notifications to keep users engaged with updates and reminders. Can it check for result updates in the background notify. Reminder for parkrun on Saturday morning. (Priority: 2)
+   - a. Allow users to save multiple Parkrun IDs and switch between them. (Priority: 2)
+   - b. Implement push notifications to keep users engaged with updates and reminders. Can it check for result updates in the background notify. Reminder for parkrun on Saturday morning. (Priority: 2)
 
 3. **Testing and Quality Assurance:**
-   - Conduct user testing to gather feedback and identify areas for improvement. (Priority: 3)
-   - Implement automated testing to ensure app stability and performance. (Priority: 3)
+   - a. Conduct user testing to gather feedback and identify areas for improvement. (Priority: 3)
+   - b. Implement automated testing to ensure app stability and performance. (Priority: 3)
 
 4. **Documentation and Support:**
-   - Provide a user guide or help section within the app. (Priority: 4)
-   - Add a feedback mechanism for users to report issues or suggest features. (Priority: 4)
+   - a. Provide a user guide or help section within the app. (Priority: 4)
+   - b. Add a feedback mechanism for users to report issues or suggest features. (Priority: 4)
 
 5. **User Experience Enhancements:**
-   - Add a splash screen to improve app launch experience. (Priority: 6)
-   - Implement a dark mode theme for better visibility in low-light conditions. (Priority: 6)
-   - Add haptic feedback when the QR code is displayed or updated.
+   - a. Add a splash screen to improve app launch experience. (Priority: 6)
+   - b. Implement a dark mode theme for better visibility in low-light conditions. (Priority: 6)
+   - c. Add haptic feedback when the QR code is displayed or updated.
 
 6. **Functionality Improvements:**
-   - Implement a search feature to quickly find specific Parkrun events. (Priority: 6)
+   - a. Implement a search feature to quickly find specific Parkrun events. (Priority: 6)
 
 7. **Performance Optimizations:**
-   - Optimize QR code generation for faster rendering.
-   - Implement caching to reduce API calls and improve load times.
+   - a. Optimize QR code generation for faster rendering.
+   - b. Implement caching to reduce API calls and improve load times.
 
 8. **Accessibility Features:**
    - Add VoiceOver support for better accessibility.
