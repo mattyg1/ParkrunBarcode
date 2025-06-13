@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		C97FF5C82DFB732F007FBC7F /* PR Bar Code Watch App Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = C97FF5A82DFB732E007FBC7F /* PR Bar Code Watch App Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		C9648A2A2D0DAFDA00D43D7F /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -21,12 +25,50 @@
 			remoteGlobalIDString = C9648A172D0DAFD900D43D7F;
 			remoteInfo = "PR Bar Code";
 		};
+		C97FF5B52DFB732F007FBC7F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9648A102D0DAFD900D43D7F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C97FF5A72DFB732E007FBC7F;
+			remoteInfo = "PR Bar Code Watch App Watch App";
+		};
+		C97FF5BF2DFB732F007FBC7F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9648A102D0DAFD900D43D7F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C97FF5A72DFB732E007FBC7F;
+			remoteInfo = "PR Bar Code Watch App Watch App";
+		};
+		C97FF5C62DFB732F007FBC7F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = C9648A102D0DAFD900D43D7F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C97FF5A72DFB732E007FBC7F;
+			remoteInfo = "PR Bar Code Watch App Watch App";
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C97FF5CC2DFB732F007FBC7F /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolderSpec = 16;
+			files = (
+				C97FF5C82DFB732F007FBC7F /* PR Bar Code Watch App Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		C9648A182D0DAFD900D43D7F /* PR Bar Code.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PR Bar Code.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9648A292D0DAFDA00D43D7F /* PR Bar CodeTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PR Bar CodeTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		C9648A332D0DAFDA00D43D7F /* PR Bar CodeUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PR Bar CodeUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C97FF5A82DFB732E007FBC7F /* PR Bar Code Watch App Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "PR Bar Code Watch App Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C97FF5B42DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PR Bar Code Watch App Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		C97FF5BE2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "PR Bar Code Watch App Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -43,6 +85,21 @@
 		C9648A362D0DAFDA00D43D7F /* PR Bar CodeUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "PR Bar CodeUITests";
+			sourceTree = "<group>";
+		};
+		C97FF5A92DFB732E007FBC7F /* PR Bar Code Watch App Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "PR Bar Code Watch App Watch App";
+			sourceTree = "<group>";
+		};
+		C97FF5B72DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "PR Bar Code Watch App Watch AppTests";
+			sourceTree = "<group>";
+		};
+		C97FF5C12DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "PR Bar Code Watch App Watch AppUITests";
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -69,6 +126,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C97FF5A52DFB732E007FBC7F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C97FF5B12DFB732F007FBC7F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C97FF5BB2DFB732F007FBC7F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -78,6 +156,9 @@
 				C9648A1A2D0DAFD900D43D7F /* PR Bar Code */,
 				C9648A2C2D0DAFDA00D43D7F /* PR Bar CodeTests */,
 				C9648A362D0DAFDA00D43D7F /* PR Bar CodeUITests */,
+				C97FF5A92DFB732E007FBC7F /* PR Bar Code Watch App Watch App */,
+				C97FF5B72DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests */,
+				C97FF5C12DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests */,
 				C9648A192D0DAFD900D43D7F /* Products */,
 			);
 			sourceTree = "<group>";
@@ -88,6 +169,9 @@
 				C9648A182D0DAFD900D43D7F /* PR Bar Code.app */,
 				C9648A292D0DAFDA00D43D7F /* PR Bar CodeTests.xctest */,
 				C9648A332D0DAFDA00D43D7F /* PR Bar CodeUITests.xctest */,
+				C97FF5A82DFB732E007FBC7F /* PR Bar Code Watch App Watch App.app */,
+				C97FF5B42DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests.xctest */,
+				C97FF5BE2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -102,10 +186,12 @@
 				C9648A142D0DAFD900D43D7F /* Sources */,
 				C9648A152D0DAFD900D43D7F /* Frameworks */,
 				C9648A162D0DAFD900D43D7F /* Resources */,
+				C97FF5CC2DFB732F007FBC7F /* Embed Watch Content */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C97FF5C72DFB732F007FBC7F /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				C9648A1A2D0DAFD900D43D7F /* PR Bar Code */,
@@ -163,6 +249,74 @@
 			productReference = C9648A332D0DAFDA00D43D7F /* PR Bar CodeUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C97FF5C92DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch App" */;
+			buildPhases = (
+				C97FF5A42DFB732E007FBC7F /* Sources */,
+				C97FF5A52DFB732E007FBC7F /* Frameworks */,
+				C97FF5A62DFB732E007FBC7F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C97FF5A92DFB732E007FBC7F /* PR Bar Code Watch App Watch App */,
+			);
+			name = "PR Bar Code Watch App Watch App";
+			packageProductDependencies = (
+			);
+			productName = "PR Bar Code Watch App Watch App";
+			productReference = C97FF5A82DFB732E007FBC7F /* PR Bar Code Watch App Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		C97FF5B32DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C97FF5CD2DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch AppTests" */;
+			buildPhases = (
+				C97FF5B02DFB732F007FBC7F /* Sources */,
+				C97FF5B12DFB732F007FBC7F /* Frameworks */,
+				C97FF5B22DFB732F007FBC7F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C97FF5B62DFB732F007FBC7F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C97FF5B72DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests */,
+			);
+			name = "PR Bar Code Watch App Watch AppTests";
+			packageProductDependencies = (
+			);
+			productName = "PR Bar Code Watch App Watch AppTests";
+			productReference = C97FF5B42DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		C97FF5BD2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C97FF5D02DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch AppUITests" */;
+			buildPhases = (
+				C97FF5BA2DFB732F007FBC7F /* Sources */,
+				C97FF5BB2DFB732F007FBC7F /* Frameworks */,
+				C97FF5BC2DFB732F007FBC7F /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				C97FF5C02DFB732F007FBC7F /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				C97FF5C12DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests */,
+			);
+			name = "PR Bar Code Watch App Watch AppUITests";
+			packageProductDependencies = (
+			);
+			productName = "PR Bar Code Watch App Watch AppUITests";
+			productReference = C97FF5BE2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -170,7 +324,7 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 1610;
+				LastSwiftUpdateCheck = 1640;
 				LastUpgradeCheck = 1610;
 				TargetAttributes = {
 					C9648A172D0DAFD900D43D7F = {
@@ -183,6 +337,17 @@
 					C9648A322D0DAFDA00D43D7F = {
 						CreatedOnToolsVersion = 16.1;
 						TestTargetID = C9648A172D0DAFD900D43D7F;
+					};
+					C97FF5A72DFB732E007FBC7F = {
+						CreatedOnToolsVersion = 16.4;
+					};
+					C97FF5B32DFB732F007FBC7F = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = C97FF5A72DFB732E007FBC7F;
+					};
+					C97FF5BD2DFB732F007FBC7F = {
+						CreatedOnToolsVersion = 16.4;
+						TestTargetID = C97FF5A72DFB732E007FBC7F;
 					};
 				};
 			};
@@ -203,6 +368,9 @@
 				C9648A172D0DAFD900D43D7F /* PR Bar Code */,
 				C9648A282D0DAFDA00D43D7F /* PR Bar CodeTests */,
 				C9648A322D0DAFDA00D43D7F /* PR Bar CodeUITests */,
+				C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */,
+				C97FF5B32DFB732F007FBC7F /* PR Bar Code Watch App Watch AppTests */,
+				C97FF5BD2DFB732F007FBC7F /* PR Bar Code Watch App Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -223,6 +391,27 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		C9648A312D0DAFDA00D43D7F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C97FF5A62DFB732E007FBC7F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C97FF5B22DFB732F007FBC7F /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C97FF5BC2DFB732F007FBC7F /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +442,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C97FF5A42DFB732E007FBC7F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C97FF5B02DFB732F007FBC7F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C97FF5BA2DFB732F007FBC7F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -265,6 +475,21 @@
 			isa = PBXTargetDependency;
 			target = C9648A172D0DAFD900D43D7F /* PR Bar Code */;
 			targetProxy = C9648A342D0DAFDA00D43D7F /* PBXContainerItemProxy */;
+		};
+		C97FF5B62DFB732F007FBC7F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */;
+			targetProxy = C97FF5B52DFB732F007FBC7F /* PBXContainerItemProxy */;
+		};
+		C97FF5C02DFB732F007FBC7F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */;
+			targetProxy = C97FF5BF2DFB732F007FBC7F /* PBXContainerItemProxy */;
+		};
+		C97FF5C72DFB732F007FBC7F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C97FF5A72DFB732E007FBC7F /* PR Bar Code Watch App Watch App */;
+			targetProxy = C97FF5C62DFB732F007FBC7F /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -551,6 +776,145 @@
 			};
 			name = Release;
 		};
+		C97FF5CA2DFB732F007FBC7F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J23B2B6ZCV;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "PR Bar Code Watch App";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.prbarcode.app.PR-Bar-Code";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.prbarcode.app.PR-Bar-Code.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		C97FF5CB2DFB732F007FBC7F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J23B2B6ZCV;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = "PR Bar Code Watch App";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = "com.prbarcode.app.PR-Bar-Code";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.prbarcode.app.PR-Bar-Code.watchkitapp";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		C97FF5CE2DFB732F007FBC7F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J23B2B6ZCV;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.prbarcode.app.PR-Bar-Code-Watch-App-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PR Bar Code Watch App Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PR Bar Code Watch App Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		C97FF5CF2DFB732F007FBC7F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J23B2B6ZCV;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.prbarcode.app.PR-Bar-Code-Watch-App-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PR Bar Code Watch App Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PR Bar Code Watch App Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
+		C97FF5D12DFB732F007FBC7F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J23B2B6ZCV;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.prbarcode.app.PR-Bar-Code-Watch-App-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "PR Bar Code Watch App Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Debug;
+		};
+		C97FF5D22DFB732F007FBC7F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J23B2B6ZCV;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.prbarcode.app.PR-Bar-Code-Watch-App-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "PR Bar Code Watch App Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 11.5;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -586,6 +950,33 @@
 			buildConfigurations = (
 				C9648A442D0DAFDA00D43D7F /* Debug */,
 				C9648A452D0DAFDA00D43D7F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C97FF5C92DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C97FF5CA2DFB732F007FBC7F /* Debug */,
+				C97FF5CB2DFB732F007FBC7F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C97FF5CD2DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C97FF5CE2DFB732F007FBC7F /* Debug */,
+				C97FF5CF2DFB732F007FBC7F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C97FF5D02DFB732F007FBC7F /* Build configuration list for PBXNativeTarget "PR Bar Code Watch App Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C97FF5D12DFB732F007FBC7F /* Debug */,
+				C97FF5D22DFB732F007FBC7F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

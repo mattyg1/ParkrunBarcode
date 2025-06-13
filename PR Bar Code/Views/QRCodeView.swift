@@ -1,6 +1,7 @@
 import SwiftUI
 import CoreImage.CIFilterBuiltins
 import SwiftData
+import WatchConnectivity
 
 #if os(iOS)
 import UIKit
@@ -32,13 +33,35 @@ struct QRCodeBarcodeView: View {
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
     private let barcodeFilter = CIFilter.code128BarcodeGenerator()
+    
+    private var confirmationMessage: String {
+        var message = "Please confirm your details:\n\nParkrun ID: \(inputText)"
+        
+        if !name.isEmpty {
+            message += "\nName: \(name)"
+        }
+        
+        print("DEBUG - confirmationMessage: totalParkruns='\(totalParkruns)', isEmpty=\(totalParkruns.isEmpty)")
+        if !totalParkruns.isEmpty {
+            message += "\nTotal Parkruns: \(totalParkruns)"
+        }
+        
+        print("DEBUG - confirmationMessage: lastParkrunDate='\(lastParkrunDate)', lastParkrunTime='\(lastParkrunTime)', lastParkrunEvent='\(lastParkrunEvent)'")
+        if !lastParkrunDate.isEmpty && !lastParkrunTime.isEmpty && !lastParkrunEvent.isEmpty {
+            message += "\nLast Parkrun: \(lastParkrunEvent)"
+            message += "\nDate: \(lastParkrunDate), Time: \(lastParkrunTime)"
+        }
+        
+        print("DEBUG - Final confirmation message: '\(message)'")
+        return message
+    }
 
     var body: some View {
         NavigationView {
-            VStack(spacing: 20) {
+            VStack(spacing: 12) {
                 if isEditing || parkrunInfoList.isEmpty {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 20) {
+                        VStack(alignment: .leading, spacing: 12) {
                             // Personal Information Section
                             personalInfoSection
                             
@@ -53,17 +76,23 @@ struct QRCodeBarcodeView: View {
                             cancelEdit()
                         }.disabled(parkrunInfoList.isEmpty),
                         trailing: Button("Confirm") {
+                            print("Confirm button pressed with inputText: '\(inputText)'")
                             if !inputText.isEmpty && inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
+                                print("Valid Parkrun ID format detected")
                                 if name.isEmpty {
+                                    print("Name is empty, triggering API lookup...")
                                     // Fetch data first, then show confirmation dialog
                                     fetchParkrunnerName(id: inputText) {
+                                        print("API lookup completed, showing confirmation dialog")
                                         self.showConfirmationDialog = true
                                     }
                                 } else {
+                                    print("Name already available: '\(name)', showing confirmation dialog")
                                     // Data already available, show confirmation dialog
                                     showConfirmationDialog = true
                                 }
                             } else {
+                                print("Invalid Parkrun ID format")
                                 alertMessage = "Please enter a valid Parkrun ID first."
                                 showAlert = true
                             }
@@ -72,7 +101,7 @@ struct QRCodeBarcodeView: View {
                 } else {
                     // Display Saved Data
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 20) {
+                        VStack(alignment: .leading, spacing: 15) {
                             // Personal Information Section
                             personalInfoSection
                             
@@ -96,37 +125,25 @@ struct QRCodeBarcodeView: View {
                 }
                 Button("Cancel", role: .cancel) { }
             } message: {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Please confirm your details:")
-                    Text("Parkrun ID: \(inputText)")
-                    if !name.isEmpty {
-                        Text("Name: \(name)")
-                    }
-                    if !totalParkruns.isEmpty {
-                        Text("Total Parkruns: \(totalParkruns)")
-                    }
-                    if !lastParkrunDate.isEmpty && !lastParkrunTime.isEmpty && !lastParkrunEvent.isEmpty {
-                        Text("Last Parkrun: \(lastParkrunEvent)")
-                        Text("Date: \(lastParkrunDate), Time: \(lastParkrunTime)")
-                    }
-                }
+                Text(confirmationMessage)
             }
             .onAppear {
                 loadInitialData()
+                WatchSessionManager.shared.startSession()
             }
         }
     }
 
     // MARK: - Personal Info Section
     private var personalInfoSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 6) {
             Text("Personal Information")
                 .font(.headline)
-                .padding(.bottom, 5)
+                .padding(.bottom, 1)
 
             if isEditing {
-                VStack(alignment: .leading, spacing: 10) {
-                    VStack(alignment: .leading, spacing: 5) {
+                VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 3) {
                         HStack {
                             TextField("Parkrun ID (e.g., A12345)", text: $inputText)
                                 .keyboardType(.asciiCapable)
@@ -158,65 +175,65 @@ struct QRCodeBarcodeView: View {
                                     .foregroundColor(.red)
                             }
                         }
-                        .padding(10)
+                        .padding(6)
                         .background(Color(.secondarySystemBackground))
-                        .cornerRadius(10)
+                        .cornerRadius(6)
                         
                         // Helper text
                         if !inputText.isEmpty && inputText.range(of: #"^A\d+$"#, options: .regularExpression) == nil {
                             Text("ID must start with 'A' followed by numbers")
                                 .font(.caption)
                                 .foregroundColor(.red)
-                                .padding(.leading, 10)
+                                .padding(.leading, 6)
                         } else if isLoadingName {
                             Text("Looking up runner details...")
                                 .font(.caption)
                                 .foregroundColor(.blue)
-                                .padding(.leading, 10)
+                                .padding(.leading, 6)
                         } else if !name.isEmpty && inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
                             Text("Details found - ready to save")
                                 .font(.caption)
                                 .foregroundColor(.green)
-                                .padding(.leading, 10)
+                                .padding(.leading, 6)
                         } else if inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
                             Text("Press Confirm to lookup details")
                                 .font(.caption)
                                 .foregroundColor(.blue)
-                                .padding(.leading, 10)
+                                .padding(.leading, 6)
                         }
                     }
                     
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text("Name")
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Text(name.isEmpty ? "Auto-filled from Parkrun ID" : name)
                             .font(.body)
                             .foregroundColor(name.isEmpty ? .secondary : .primary)
-                            .padding(10)
+                            .padding(6)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color(.tertiarySystemBackground))
-                            .cornerRadius(10)
+                            .cornerRadius(6)
                     }
                     
                     // Show total parkruns if available
                     if !totalParkruns.isEmpty {
-                        VStack(alignment: .leading, spacing: 5) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text("Total Parkruns")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                             Text(totalParkruns)
                                 .font(.body)
-                                .padding(10)
+                                .padding(6)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 .background(Color(.tertiarySystemBackground))
-                                .cornerRadius(10)
+                                .cornerRadius(6)
                         }
                     }
                     
                     // Show last parkrun table if data is available
                     if !lastParkrunDate.isEmpty && !lastParkrunTime.isEmpty && !lastParkrunEvent.isEmpty {
-                        VStack(alignment: .leading, spacing: 5) {
+                        VStack(alignment: .leading, spacing: 2) {
                             Text("Last Parkrun")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
@@ -240,8 +257,8 @@ struct QRCodeBarcodeView: View {
                                         .foregroundColor(.secondary)
                                         .frame(width: 70, alignment: .center)
                                 }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 8)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 6)
                                 .background(Color(.quaternarySystemFill))
                                 
                                 // Data row
@@ -264,56 +281,58 @@ struct QRCodeBarcodeView: View {
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.8)
                                 }
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 10)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 8)
                                 .background(Color(.tertiarySystemBackground))
                             }
-                            .cornerRadius(10)
+                            .cornerRadius(8)
                         }
                     }
                 }
             } else {
-                // Read-only display
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Parkrun ID")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text(inputText.isEmpty ? "Not set" : inputText)
-                        .font(.body)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.blue)
-                        .padding(10)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(.tertiarySystemBackground))
-                        .cornerRadius(10)
+                // Read-only display with horizontal layout for compact display
+                HStack(spacing: 12) {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Parkrun ID")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(inputText.isEmpty ? "Not set" : inputText)
+                            .font(.body)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.blue)
+                            .padding(6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.tertiarySystemBackground))
+                            .cornerRadius(6)
+                    }
+                    
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Total Parkruns")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                        Text(totalParkruns.isEmpty ? "Not set" : totalParkruns)
+                            .font(.body)
+                            .padding(6)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.tertiarySystemBackground))
+                            .cornerRadius(6)
+                    }
                 }
                 
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text("Name")
                         .font(.caption)
                         .foregroundColor(.secondary)
                     Text(name.isEmpty ? "Not set" : name)
                         .font(.body)
-                        .padding(10)
+                        .padding(6)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Color(.tertiarySystemBackground))
-                        .cornerRadius(10)
-                }
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Total Parkruns")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Text(totalParkruns.isEmpty ? "Not set" : totalParkruns)
-                        .font(.body)
-                        .padding(10)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color(.tertiarySystemBackground))
-                        .cornerRadius(10)
+                        .cornerRadius(6)
                 }
                 
                 if !lastParkrunDate.isEmpty && !lastParkrunTime.isEmpty && !lastParkrunEvent.isEmpty {
-                    VStack(alignment: .leading, spacing: 8) {
+                    VStack(alignment: .leading, spacing: 2) {
                         Text("Last Parkrun")
                             .font(.caption)
                             .foregroundColor(.secondary)
@@ -337,8 +356,8 @@ struct QRCodeBarcodeView: View {
                                     .foregroundColor(.secondary)
                                     .frame(width: 70, alignment: .center)
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 8)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
                             .background(Color(.quaternarySystemFill))
                             
                             // Data row
@@ -361,19 +380,19 @@ struct QRCodeBarcodeView: View {
                                     .lineLimit(1)
                                     .minimumScaleFactor(0.8)
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 10)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
                             .background(Color(.tertiarySystemBackground))
                         }
-                        .cornerRadius(10)
+                        .cornerRadius(8)
                     }
                 }
             }
         }
-        .padding()
+        .padding(10)
         .background(Color(.systemBackground))
-        .cornerRadius(15)
-        .shadow(radius: 5)
+        .cornerRadius(10)
+        .shadow(radius: 2)
         .frame(maxWidth: .infinity)
     }
 
@@ -420,6 +439,16 @@ struct QRCodeBarcodeView: View {
             name = savedInfo.name
             homeParkrun = savedInfo.homeParkrun
             selectedCountryCode = savedInfo.country ?? Country.unitedKingdom.rawValue
+            totalParkruns = savedInfo.totalParkruns ?? ""
+            lastParkrunDate = savedInfo.lastParkrunDate ?? ""
+            lastParkrunTime = savedInfo.lastParkrunTime ?? ""
+            lastParkrunEvent = savedInfo.lastParkrunEvent ?? ""
+            
+            print("DEBUG - loadInitialData: parkrunID='\(savedInfo.parkrunID)', name='\(savedInfo.name)'")
+            print("DEBUG - loadInitialData: totalParkruns='\(savedInfo.totalParkruns ?? "nil")', lastEvent='\(savedInfo.lastParkrunEvent ?? "nil")'")
+            print("DEBUG - loadInitialData: lastDate='\(savedInfo.lastParkrunDate ?? "nil")', lastTime='\(savedInfo.lastParkrunTime ?? "nil")'")
+        } else {
+            print("DEBUG - loadInitialData: No saved parkrun info found")
         }
     }
 
@@ -439,14 +468,28 @@ struct QRCodeBarcodeView: View {
             existingInfo.name = name
             existingInfo.homeParkrun = homeParkrun
             existingInfo.country = selectedCountryCode
+            existingInfo.totalParkruns = totalParkruns.isEmpty ? nil : totalParkruns
+            existingInfo.lastParkrunDate = lastParkrunDate.isEmpty ? nil : lastParkrunDate
+            existingInfo.lastParkrunTime = lastParkrunTime.isEmpty ? nil : lastParkrunTime
+            existingInfo.lastParkrunEvent = lastParkrunEvent.isEmpty ? nil : lastParkrunEvent
         } else {
-            let newInfo = ParkrunInfo(parkrunID: inputText, name: name, homeParkrun: homeParkrun, country: selectedCountryCode)
+            let newInfo = ParkrunInfo(
+                parkrunID: inputText, 
+                name: name, 
+                homeParkrun: homeParkrun, 
+                country: selectedCountryCode,
+                totalParkruns: totalParkruns.isEmpty ? nil : totalParkruns,
+                lastParkrunDate: lastParkrunDate.isEmpty ? nil : lastParkrunDate,
+                lastParkrunTime: lastParkrunTime.isEmpty ? nil : lastParkrunTime,
+                lastParkrunEvent: lastParkrunEvent.isEmpty ? nil : lastParkrunEvent
+            )
             modelContext.insert(newInfo)
         }
 
         do {
             try modelContext.save()
             isEditing = false
+            WatchSessionManager.shared.sendParkrunID(inputText)
         } catch {
             alertMessage = "Failed to save data. Please try again."
             showAlert = true
@@ -562,39 +605,135 @@ struct QRCodeBarcodeView: View {
         var lastTime: String?
         var lastEvent: String?
         
+        print("DEBUG - Starting HTML parsing, HTML length: \(html.count)")
+        
         // Extract runner name from h2 tag: <h2>Matt GARDNER <span style="font-weight: normal;" title="parkrun ID">(A79156)</span></h2>
-        if let nameRegex = try? NSRegularExpression(pattern: #"<h2>([^<]+?)\s*<span[^>]*title="parkrun ID"[^>]*>"#, options: [.caseInsensitive]) {
+        if let nameRegex = try? NSRegularExpression(pattern: #"<h2>([^<]+?)\s*<span[^>]*title="parkrun ID"[^>]*>"#, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
             let nameMatches = nameRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = nameMatches.first, let nameRange = Range(match.range(at: 1), in: html) {
                 name = String(html[nameRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                print("DEBUG - Extracted name: '\(name ?? "nil")'")
+            } else {
+                print("DEBUG - No name match found")
             }
+        } else {
+            print("DEBUG - Failed to create name regex")
         }
         
         // Extract total parkruns from h3 tag: <h3>279 parkruns total</h3>
-        if let totalRegex = try? NSRegularExpression(pattern: #"<h3>(\d+)\s+parkruns?\s+total</h3>"#, options: [.caseInsensitive]) {
+        // Try simpler pattern first
+        if let totalRegex = try? NSRegularExpression(pattern: #"(\d+)\s+parkruns?\s+total"#, options: [.caseInsensitive]) {
             let totalMatches = totalRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = totalMatches.first, let totalRange = Range(match.range(at: 1), in: html) {
                 totalRuns = String(html[totalRange])
+                print("DEBUG - Extracted totalRuns: '\(totalRuns ?? "nil")' using simple pattern")
+            } else {
+                print("DEBUG - No total parkruns match found with simple pattern")
+            }
+        } else {
+            print("DEBUG - Failed to create simple total regex")
+        }
+        
+        // If simple pattern didn't work, try complex pattern
+        if totalRuns == nil {
+            if let totalRegex = try? NSRegularExpression(pattern: #"<h3>(\d+)\s+parkruns?\s+total</h3>"#, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+                let totalMatches = totalRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                if let match = totalMatches.first, let totalRange = Range(match.range(at: 1), in: html) {
+                    totalRuns = String(html[totalRange])
+                    print("DEBUG - Extracted totalRuns: '\(totalRuns ?? "nil")' using complex pattern")
+                } else {
+                    print("DEBUG - No total parkruns match found with complex pattern")
+                    // Let's search for any h3 tags to see what's actually there
+                    if let debugRegex = try? NSRegularExpression(pattern: #"<h3[^>]*>([^<]+)</h3>"#, options: [.caseInsensitive]) {
+                        let debugMatches = debugRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                        print("DEBUG - Found \(debugMatches.count) h3 tags")
+                        for (index, debugMatch) in debugMatches.enumerated() {
+                            if let debugRange = Range(debugMatch.range(at: 1), in: html) {
+                                let content = String(html[debugRange])
+                                print("DEBUG - h3[\(index)]: '\(content)'")
+                                if content.contains("parkrun") {
+                                    print("DEBUG - *** This h3 contains 'parkrun': '\(content)'")
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                print("DEBUG - Failed to create complex total regex")
             }
         }
         
         // Extract most recent parkrun data from first row of results table
-        // Looking for pattern like: <td><a href="..." target="_top">Ganger Farm parkrun</a></td><td><a href="...">07/06/2025</a></td><td>64</td><td>76</td><td>25:14</td>
-        if let recentRegex = try? NSRegularExpression(pattern: #"<td><a href="[^"]*"[^>]*>([^<]+)</a></td><td><a href="[^"]*results/\d+/"[^>]*>(\d{2}/\d{2}/\d{4})</a></td><td>\d+</td><td>\d+</td><td>([^<]+)</td>"#, options: [.caseInsensitive]) {
-            let recentMatches = recentRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            if let match = recentMatches.first {
-                if let eventRange = Range(match.range(at: 1), in: html) {
-                    lastEvent = String(html[eventRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                }
-                if let dateRange = Range(match.range(at: 2), in: html) {
-                    lastDate = String(html[dateRange])
-                }
-                if let timeRange = Range(match.range(at: 3), in: html) {
-                    lastTime = String(html[timeRange])
-                }
+        // Try simple patterns for each piece of data
+        
+        // Look for event name in first <td><a> combination  
+        if let eventRegex = try? NSRegularExpression(pattern: #"<td><a[^>]*>([^<]+parkrun[^<]*)</a></td>"#, options: [.caseInsensitive]) {
+            let eventMatches = eventRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            if let match = eventMatches.first, let eventRange = Range(match.range(at: 1), in: html) {
+                lastEvent = String(html[eventRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                print("DEBUG - Extracted lastEvent: '\(lastEvent ?? "nil")' using simple pattern")
             }
         }
         
+        // Look for date pattern DD/MM/YYYY
+        if let dateRegex = try? NSRegularExpression(pattern: #"(\d{2}/\d{2}/\d{4})"#, options: []) {
+            let dateMatches = dateRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            if let match = dateMatches.first, let dateRange = Range(match.range(at: 1), in: html) {
+                lastDate = String(html[dateRange])
+                print("DEBUG - Extracted lastDate: '\(lastDate ?? "nil")' using simple pattern")
+            }
+        }
+        
+        // Look for time pattern MM:SS in table
+        if let timeRegex = try? NSRegularExpression(pattern: #"<td>(\d{2}:\d{2})</td>"#, options: []) {
+            let timeMatches = timeRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            if let match = timeMatches.first, let timeRange = Range(match.range(at: 1), in: html) {
+                lastTime = String(html[timeRange])
+                print("DEBUG - Extracted lastTime: '\(lastTime ?? "nil")' using simple pattern")
+            }
+        }
+        
+        // If simple patterns didn't work, try the complex pattern
+        if lastEvent == nil || lastDate == nil || lastTime == nil {
+            print("DEBUG - Trying complex table pattern as fallback")
+            if let recentRegex = try? NSRegularExpression(pattern: #"<td><a href="[^"]*"[^>]*>([^<]+)</a></td><td><a href="[^"]*results/\d+/"[^>]*>(\d{2}/\d{2}/\d{4})</a></td><td>\d+</td><td>\d+</td><td>([^<]+)</td>"#, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+                let recentMatches = recentRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                if let match = recentMatches.first {
+                    if lastEvent == nil, let eventRange = Range(match.range(at: 1), in: html) {
+                        lastEvent = String(html[eventRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        print("DEBUG - Extracted lastEvent: '\(lastEvent ?? "nil")' using complex pattern")
+                    }
+                    if lastDate == nil, let dateRange = Range(match.range(at: 2), in: html) {
+                        lastDate = String(html[dateRange])
+                        print("DEBUG - Extracted lastDate: '\(lastDate ?? "nil")' using complex pattern")
+                    }
+                    if lastTime == nil, let timeRange = Range(match.range(at: 3), in: html) {
+                        lastTime = String(html[timeRange])
+                        print("DEBUG - Extracted lastTime: '\(lastTime ?? "nil")' using complex pattern")
+                    }
+                } else {
+                    print("DEBUG - No recent parkrun match found with complex pattern")
+                    // Debug: show first few table cells
+                    if let debugRegex = try? NSRegularExpression(pattern: #"<td[^>]*>([^<]+)</td>"#, options: [.caseInsensitive]) {
+                        let debugMatches = debugRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                        print("DEBUG - Found \(debugMatches.count) td elements, showing first 20:")
+                        for (index, debugMatch) in debugMatches.prefix(20).enumerated() {
+                            if let debugRange = Range(debugMatch.range(at: 1), in: html) {
+                                let content = String(html[debugRange])
+                                print("DEBUG - TD[\(index)]: '\(content)'")
+                                if content.contains("parkrun") || content.contains("/") || content.contains(":") {
+                                    print("DEBUG - *** Interesting TD[\(index)]: '\(content)'")
+                                }
+                            }
+                        }
+                    }
+                }
+            } else {
+                print("DEBUG - Failed to create complex recent regex")
+            }
+        }
+        
+        print("DEBUG - Final extracted data: name='\(name ?? "nil")', totalRuns='\(totalRuns ?? "nil")', lastEvent='\(lastEvent ?? "nil")', lastDate='\(lastDate ?? "nil")', lastTime='\(lastTime ?? "nil")'")
         return (name: name, totalRuns: totalRuns, lastDate: lastDate, lastTime: lastTime, lastEvent: lastEvent)
     }
 
@@ -678,5 +817,91 @@ struct QRCodeBarcodeView_Previews: PreviewProvider {
         } catch {
             fatalError("Failed to create SwiftData container for preview: \(error)")
         }
+    }
+}
+
+class WatchSessionManager: NSObject, WCSessionDelegate {
+    static let shared = WatchSessionManager()
+    private override init() { super.init() }
+    
+    func startSession() {
+        if WCSession.isSupported() {
+            WCSession.default.delegate = self
+            WCSession.default.activate()
+        }
+    }
+    
+    func sendParkrunID(_ id: String) {
+        print("Attempting to send Parkrun ID: \(id)")
+        print("Session supported: \(WCSession.isSupported())")
+        print("Session reachable: \(WCSession.default.isReachable)")
+        print("Session activated: \(WCSession.default.activationState == .activated)")
+        
+        // Generate QR code image data
+        guard let qrImage = generateQRCodeImage(from: id),
+              let imageData = qrImage.pngData() else {
+            print("Failed to generate QR code image")
+            return
+        }
+        
+        // Try both methods - transferUserInfo works even when not reachable
+        if WCSession.default.activationState == .activated {
+            let data: [String: Any] = [
+                "parkrunID": id,
+                "qrCodeImageData": imageData
+            ]
+            
+            // Method 1: transferUserInfo (works when not immediately reachable)
+            WCSession.default.transferUserInfo(data)
+            print("User info transferred: \(id) with QR code image")
+            
+            // Method 2: sendMessage (only works when reachable)
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(data, replyHandler: { response in
+                    print("Message sent successfully: \(response)")
+                }, errorHandler: { error in
+                    print("Error sending message: \(error)")
+                })
+            } else {
+                print("Watch is not reachable for immediate messaging")
+            }
+        } else {
+            print("Session not activated")
+        }
+    }
+    
+    private func generateQRCodeImage(from string: String) -> UIImage? {
+        guard !string.isEmpty else { return nil }
+        
+        let context = CIContext()
+        let qrCodeFilter = CIFilter.qrCodeGenerator()
+        qrCodeFilter.message = Data(string.utf8)
+        
+        guard let ciImage = qrCodeFilter.outputImage else { return nil }
+        let scaledImage = ciImage.transformed(by: CGAffineTransform(scaleX: 10, y: 10))
+        guard let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) else { return nil }
+        return UIImage(cgImage: cgImage)
+    }
+    
+    func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
+        print("iOS: Session activated with state: \(activationState.rawValue)")
+        if let error = error {
+            print("iOS: Activation error: \(error)")
+        }
+        print("iOS: Session reachable: \(session.isReachable)")
+        print("iOS: Session paired: \(session.isPaired)")
+        print("iOS: Session installed: \(session.isWatchAppInstalled)")
+    }
+    
+    func sessionDidBecomeInactive(_ session: WCSession) {
+        print("iOS: Session became inactive")
+    }
+    
+    func sessionDidDeactivate(_ session: WCSession) {
+        print("iOS: Session deactivated")
+    }
+    
+    func sessionReachabilityDidChange(_ session: WCSession) {
+        print("iOS: Reachability changed to: \(session.isReachable)")
     }
 }
