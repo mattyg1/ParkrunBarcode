@@ -264,31 +264,44 @@ struct QRCodeBarcodeView: View {
                 .padding()
                 .animation(AnimationConstants.springAnimation, value: isEditing)
             }
-            .navigationBarItems(
-                leading: isEditing ? Button("Cancel") {
-                    withAnimation(AnimationConstants.springAnimation) {
-                        cancelEdit()
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    if isEditing {
+                        Button("Cancel") {
+                            withAnimation(AnimationConstants.springAnimation) {
+                                cancelEdit()
+                            }
+                        }
+                    } else {
+                        Button(action: toggleTheme) {
+                            Image(systemName: colorScheme == .dark ? "sun.max.fill" : "moon.fill")
+                                .foregroundColor(.adaptiveParkrunGreen)
+                                .font(.title3)
+                        }
                     }
-                } : Button(action: toggleTheme) {
-                    Image(systemName: colorScheme == .dark ? "sun.max.fill" : "moon.fill")
-                        .foregroundColor(.adaptiveParkrunGreen)
-                        .font(.title3)
-                },
-                trailing: isEditing ? Button("Save") {
-                    withAnimation(AnimationConstants.springAnimation) {
-                        // Refresh user details and show confirmation dialog without saving
-                        fetchParkrunnerName(id: inputText) {
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                self.showConfirmationDialog = true
+                }
+                
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    if isEditing {
+                        Button("Save") {
+                            withAnimation(AnimationConstants.springAnimation) {
+                                // Refresh user details and show confirmation dialog without saving
+                                fetchParkrunnerName(id: inputText) {
+                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                        self.showConfirmationDialog = true
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Button("Edit") {
+                            withAnimation(AnimationConstants.springAnimation) {
+                                startEdit()
                             }
                         }
                     }
-                } : Button("Edit") {
-                    withAnimation(AnimationConstants.springAnimation) {
-                        startEdit()
-                    }
                 }
-            )
+            }
             .background(Color(.systemGroupedBackground))
             .preferredColorScheme(preferredColorScheme)
         }
@@ -788,6 +801,8 @@ struct QRCodeBarcodeView: View {
                 preferredColorScheme = .dark
             case .dark:
                 preferredColorScheme = .light
+            @unknown default:
+                preferredColorScheme = .dark
             }
         }
     }

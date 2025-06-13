@@ -55,11 +55,13 @@ struct CountrySelectionView: View {
             }
             .navigationTitle("Select Your Country")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(
-                leading: Button("Back") {
-                    isPresented = false
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Back") {
+                        isPresented = false
+                    }
                 }
-            )
+            }
         }
     }
     

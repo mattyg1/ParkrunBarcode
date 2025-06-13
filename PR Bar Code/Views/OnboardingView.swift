@@ -56,14 +56,16 @@ struct OnboardingView: View {
             }
             .navigationTitle("Me")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(leading: 
-                Button(action: {
-                    // Hamburger menu placeholder
-                }) {
-                    Image(systemName: "line.horizontal.3")
-                        .foregroundColor(.blue)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        // Hamburger menu placeholder
+                    }) {
+                        Image(systemName: "line.horizontal.3")
+                            .foregroundColor(.blue)
+                    }
                 }
-            )
+            }
         }
         .sheet(isPresented: $showBarcodeEntry) {
             BarcodeEntryView(isPresented: $showBarcodeEntry, onboardingPresented: $isPresented)
@@ -120,11 +122,13 @@ struct BarcodeEntryView: View {
             }
             .navigationTitle("Add Your Barcode")
             .navigationBarTitleDisplayMode(.inline)
-            .navigationBarItems(
-                leading: Button("Me") {
-                    isPresented = false
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button("Me") {
+                        isPresented = false
+                    }
                 }
-            )
+            }
         }
         .alert(isPresented: $showAlert) {
             Alert(title: Text("Search Result"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
