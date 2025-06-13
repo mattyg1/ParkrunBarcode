@@ -126,6 +126,7 @@ struct QRCodeBarcodeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var parkrunInfoList: [ParkrunInfo]
     @Environment(\.colorScheme) var colorScheme
+    @EnvironmentObject var notificationManager: NotificationManager
 
     @State private var inputText: String = ""
     @State private var name: String = ""
@@ -146,6 +147,7 @@ struct QRCodeBarcodeView: View {
     @State private var showOnboarding: Bool = false
     @State private var isAnimating = false
     @State private var preferredColorScheme: ColorScheme?
+    @State private var showNotificationSettings = false
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
@@ -218,6 +220,18 @@ struct QRCodeBarcodeView: View {
                         }
                         .cardStyle()
                         .transition(AnimationConstants.cardTransition)
+                        
+                        // Notifications Card
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Notifications")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.adaptiveParkrunGreen)
+                            
+                            notificationSettingsSection
+                        }
+                        .cardStyle()
+                        .transition(AnimationConstants.cardTransition)
                     } else {
                         // Display Saved Data
                         VStack(spacing: 20) {
@@ -255,6 +269,17 @@ struct QRCodeBarcodeView: View {
                                     .foregroundColor(.adaptiveParkrunGreen)
                                 
                                 watchSyncIndicator
+                            }
+                            .cardStyle()
+                            
+                            // Notifications Card
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text("Notifications")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.adaptiveParkrunGreen)
+                                
+                                notificationSettingsSection
                             }
                             .cardStyle()
                         }
@@ -372,6 +397,13 @@ struct QRCodeBarcodeView: View {
                         self.showConfirmationDialog = true
                     }
                 }
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("RefreshParkrunData"))) { notification in
+            if let parkrunID = notification.object as? String, parkrunID == inputText {
+                // Refresh data when notification is tapped
+                print("Refreshing parkrun data from notification tap")
+                refreshEventDataIfNeeded()
             }
         }
     }
@@ -792,6 +824,104 @@ struct QRCodeBarcodeView: View {
             .animation(AnimationConstants.springAnimation, value: watchSyncStatus)
         }
     }
+    
+    // MARK: - Notification Settings Section
+    private var notificationSettingsSection: some View {
+        VStack(spacing: 12) {
+            // Permission status
+            HStack {
+                Image(systemName: notificationManager.hasPermission ? "bell.fill" : "bell.slash")
+                    .foregroundColor(notificationManager.hasPermission ? .green : .red)
+                    .font(.title3)
+                
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(notificationManager.hasPermission ? "Notifications Enabled" : "Notifications Disabled")
+                        .font(.body)
+                        .fontWeight(.medium)
+                    Text(notificationManager.hasPermission ? "You'll receive parkrun reminders and updates" : "Enable to get parkrun reminders and result updates")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+            }
+            
+            Divider()
+                .padding(.horizontal)
+            
+            // Notification controls
+            VStack(spacing: 8) {
+                if !notificationManager.hasPermission {
+                    Button(action: {
+                        Task {
+                            await notificationManager.requestNotificationPermission()
+                            if notificationManager.hasPermission {
+                                setupNotificationsForCurrentUser()
+                            }
+                        }
+                    }) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "bell.badge")
+                                .font(.title3)
+                            Text("Enable Notifications")
+                                .font(.headline)
+                                .fontWeight(.medium)
+                        }
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.adaptiveParkrunGreen)
+                        .cornerRadius(12)
+                    }
+                } else {
+                    // Toggle for Saturday reminders
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Saturday Reminders")
+                                .font(.body)
+                                .fontWeight(.medium)
+                            Text("Get reminded before parkrun starts")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Toggle("", isOn: $notificationManager.isNotificationsEnabled)
+                            .labelsHidden()
+                            .onChange(of: notificationManager.isNotificationsEnabled) { oldValue, newValue in
+                                if newValue {
+                                    notificationManager.scheduleSaturdayReminders()
+                                    setupNotificationsForCurrentUser()
+                                } else {
+                                    notificationManager.cancelSaturdayReminders()
+                                }
+                            }
+                    }
+                    
+                    // Result notifications info
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Result Updates")
+                                .font(.body)
+                                .fontWeight(.medium)
+                            Text("Get notified when new results may be available")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                            .font(.title3)
+                    }
+                }
+            }
+            .padding(.horizontal)
+        }
+        .background(Color.adaptiveCardBackground)
+    }
 
     // MARK: - Functions
     private func toggleTheme() {
@@ -807,6 +937,17 @@ struct QRCodeBarcodeView: View {
                 preferredColorScheme = .dark
             }
         }
+    }
+    
+    private func setupNotificationsForCurrentUser() {
+        guard notificationManager.hasPermission, !inputText.isEmpty else { return }
+        
+        // Schedule result check notifications if we have parkrun data
+        if !lastParkrunDate.isEmpty {
+            notificationManager.scheduleBackgroundResultCheck(for: inputText, lastKnownDate: lastParkrunDate)
+        }
+        
+        print("Notifications set up for user: \(name.isEmpty ? inputText : name)")
     }
     
     private func loadInitialData() {
@@ -917,6 +1058,11 @@ struct QRCodeBarcodeView: View {
         do {
             try modelContext.save()
             isEditing = false
+            
+            // Set up notifications for the user if enabled
+            if notificationManager.hasPermission && notificationManager.isNotificationsEnabled {
+                setupNotificationsForCurrentUser()
+            }
             
             // Send to watch with status tracking
             watchSyncStatus = .sending
