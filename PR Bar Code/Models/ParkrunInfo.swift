@@ -19,8 +19,9 @@ class ParkrunInfo {
     var lastParkrunDate: String?
     var lastParkrunTime: String?
     var lastParkrunEvent: String?
+    var lastParkrunEventURL: String?
 
-    init(parkrunID: String, name: String, homeParkrun: String, country: Int? = nil, totalParkruns: String? = nil, lastParkrunDate: String? = nil, lastParkrunTime: String? = nil, lastParkrunEvent: String? = nil) {
+    init(parkrunID: String, name: String, homeParkrun: String, country: Int? = nil, totalParkruns: String? = nil, lastParkrunDate: String? = nil, lastParkrunTime: String? = nil, lastParkrunEvent: String? = nil, lastParkrunEventURL: String? = nil) {
         self.parkrunID = parkrunID
         self.name = name
         self.homeParkrun = homeParkrun
@@ -29,5 +30,6 @@ class ParkrunInfo {
         self.lastParkrunDate = lastParkrunDate
         self.lastParkrunTime = lastParkrunTime
         self.lastParkrunEvent = lastParkrunEvent
+        self.lastParkrunEventURL = lastParkrunEventURL
     }
 }

@@ -14,6 +14,7 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     @Published var parkrunID: String = ""
     @Published var qrCodeImage: UIImage? = nil
     @Published var isConnected: Bool = false
+    @Published var shouldShowQRImmediately: Bool = false
     
     private let userDefaults = UserDefaults.standard
     private let parkrunIDKey = "SavedParkrunID"
@@ -62,6 +63,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             dataUpdated = true
         }
         
+        // Check if we should show QR immediately
+        if let showQRImmediately = message["showQRImmediately"] as? Bool, showQRImmediately {
+            print("Watch: Triggering immediate QR display")
+            DispatchQueue.main.async {
+                self.shouldShowQRImmediately = true
+            }
+        }
+        
         if dataUpdated {
             DispatchQueue.main.async {
                 self.saveData()
@@ -97,6 +106,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             dataUpdated = true
         }
         
+        // Check if we should show QR immediately from userInfo
+        if let showQRImmediately = userInfo["showQRImmediately"] as? Bool, showQRImmediately {
+            print("Watch: Triggering immediate QR display from userInfo")
+            DispatchQueue.main.async {
+                self.shouldShowQRImmediately = true
+            }
+        }
+        
         if dataUpdated {
             DispatchQueue.main.async {
                 self.saveData()
@@ -123,6 +140,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
                 self.qrCodeImage = qrImage
             }
             dataUpdated = true
+        }
+        
+        // Check if we should show QR immediately from message with reply
+        if let showQRImmediately = message["showQRImmediately"] as? Bool, showQRImmediately {
+            print("Watch: Triggering immediate QR display from message")
+            DispatchQueue.main.async {
+                self.shouldShowQRImmediately = true
+            }
         }
         
         if dataUpdated {
@@ -248,6 +273,14 @@ struct ContentView: View {
         }
         .onAppear {
             watchManager.startSession()
+        }
+        .onChange(of: watchManager.shouldShowQRImmediately) { _, shouldShow in
+            if shouldShow && !watchManager.parkrunID.isEmpty {
+                print("Watch: Auto-opening QR code display")
+                showFullScreenQR = true
+                // Reset the flag
+                watchManager.shouldShowQRImmediately = false
+            }
         }
         .sheet(isPresented: $showFullScreenQR) {
             FullScreenQRView(
