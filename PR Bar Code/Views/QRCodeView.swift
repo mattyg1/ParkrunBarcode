@@ -37,6 +37,7 @@ struct QRCodeBarcodeView: View {
     @State private var lastParkrunTime: String = ""
     @State private var lastParkrunEvent: String = ""
     @State private var watchSyncStatus: WatchSyncStatus = .idle
+    @State private var showOnboarding: Bool = false
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
@@ -90,15 +91,19 @@ struct QRCodeBarcodeView: View {
                             print("Confirm button pressed with inputText: '\(inputText)'")
                             if !inputText.isEmpty && inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
                                 print("Valid Parkrun ID format detected")
-                                if name.isEmpty {
-                                    print("Name is empty, triggering API lookup...")
+                                if name.isEmpty && !isLoadingName {
+                                    print("Name is empty and not loading, triggering API lookup...")
                                     // Fetch data first, then show confirmation dialog
                                     fetchParkrunnerName(id: inputText) {
                                         print("API lookup completed, showing confirmation dialog")
                                         self.showConfirmationDialog = true
                                     }
+                                } else if isLoadingName {
+                                    print("Currently loading data, please wait...")
+                                    // Do nothing, data is being fetched
                                 } else {
                                     print("Name already available: '\(name)', showing confirmation dialog")
+                                    print("Current data - name: '\(name)', totalParkruns: '\(totalParkruns)', lastEvent: '\(lastParkrunEvent)'")
                                     // Data already available, show confirmation dialog
                                     showConfirmationDialog = true
                                 }
@@ -144,6 +149,50 @@ struct QRCodeBarcodeView: View {
             .onAppear {
                 loadInitialData()
                 WatchSessionManager.shared.startSession()
+                checkForOnboarding()
+            }
+            .sheet(isPresented: $showOnboarding) {
+                OnboardingView(isPresented: $showOnboarding)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunID"))) { notification in
+                if let parkrunID = notification.object as? String {
+                    inputText = parkrunID
+                    // Clear existing data and trigger API lookup
+                    name = ""
+                    totalParkruns = ""
+                    lastParkrunDate = ""
+                    lastParkrunTime = ""
+                    lastParkrunEvent = ""
+                    
+                    // Trigger edit mode to show the new ID
+                    isEditing = true
+                    
+                    // Fetch data for the ID
+                    fetchParkrunnerName(id: parkrunID)
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunIDWithConfirmation"))) { notification in
+                if let parkrunID = notification.object as? String {
+                    inputText = parkrunID
+                    // Clear existing data and trigger API lookup
+                    name = ""
+                    totalParkruns = ""
+                    lastParkrunDate = ""
+                    lastParkrunTime = ""
+                    lastParkrunEvent = ""
+                    
+                    // Trigger edit mode to show the new ID
+                    isEditing = true
+                    
+                    // Fetch data for the ID and show confirmation dialog when done
+                    fetchParkrunnerName(id: parkrunID) {
+                        // Show confirmation dialog after API call completes
+                        print("Onboarding: API lookup completed, showing confirmation dialog")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            self.showConfirmationDialog = true
+                        }
+                    }
+                }
             }
         }
     }
@@ -499,6 +548,13 @@ struct QRCodeBarcodeView: View {
             print("DEBUG - loadInitialData: lastDate='\(savedInfo.lastParkrunDate ?? "nil")', lastTime='\(savedInfo.lastParkrunTime ?? "nil")'")
         } else {
             print("DEBUG - loadInitialData: No saved parkrun info found")
+        }
+    }
+    
+    private func checkForOnboarding() {
+        // Show onboarding if no parkrun info exists
+        if parkrunInfoList.isEmpty {
+            showOnboarding = true
         }
     }
 
