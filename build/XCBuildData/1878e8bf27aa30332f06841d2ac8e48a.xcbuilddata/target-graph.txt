@@ -1,2 +1,0 @@
-Target dependency graph (1 target)
-Target 'PR Bar Code Watch App Watch App' in project 'PR Bar Code' (no dependencies)
