@@ -12,12 +12,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
     static let shared = WatchConnectivityManager()
     
     @Published var parkrunID: String = ""
+    @Published var userName: String = ""
     @Published var qrCodeImage: UIImage? = nil
     @Published var isConnected: Bool = false
     @Published var shouldShowQRImmediately: Bool = false
     
     private let userDefaults = UserDefaults.standard
     private let parkrunIDKey = "SavedParkrunID"
+    private let userNameKey = "SavedUserName"
     private let qrCodeImageKey = "SavedQRCodeImage"
     
     private override init() { 
@@ -53,6 +55,12 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         if let parkrunID = message["parkrunID"] as? String {
             print("Watch: Setting parkrunID to: \(parkrunID)")
             self.parkrunID = parkrunID
+            dataUpdated = true
+        }
+        
+        if let userName = message["userName"] as? String {
+            print("Watch: Setting userName to: \(userName)")
+            self.userName = userName
             dataUpdated = true
         }
         
@@ -97,6 +105,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             dataUpdated = true
         }
         
+        if let userName = userInfo["userName"] as? String {
+            print("Watch: Setting userName from userInfo to: \(userName)")
+            DispatchQueue.main.async {
+                self.userName = userName
+            }
+            dataUpdated = true
+        }
+        
         if let imageData = userInfo["qrCodeImageData"] as? Data,
            let qrImage = UIImage(data: imageData) {
             print("Watch: Setting QR code image from userInfo")
@@ -129,6 +145,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             print("Watch: Setting parkrunID from message to: \(parkrunID)")
             DispatchQueue.main.async {
                 self.parkrunID = parkrunID
+            }
+            dataUpdated = true
+        }
+        
+        if let userName = message["userName"] as? String {
+            print("Watch: Setting userName from message to: \(userName)")
+            DispatchQueue.main.async {
+                self.userName = userName
             }
             dataUpdated = true
         }
@@ -170,6 +194,14 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
             }
         }
         
+        // Load saved user name
+        if let savedName = userDefaults.string(forKey: userNameKey), !savedName.isEmpty {
+            print("Watch: Loading saved user name: \(savedName)")
+            DispatchQueue.main.async {
+                self.userName = savedName
+            }
+        }
+        
         // Load saved QR code image
         if let imageData = userDefaults.data(forKey: qrCodeImageKey),
            let savedImage = UIImage(data: imageData) {
@@ -184,6 +216,10 @@ class WatchConnectivityManager: NSObject, ObservableObject, WCSessionDelegate {
         // Save Parkrun ID
         userDefaults.set(parkrunID, forKey: parkrunIDKey)
         print("Watch: Saved Parkrun ID: \(parkrunID)")
+        
+        // Save user name
+        userDefaults.set(userName, forKey: userNameKey)
+        print("Watch: Saved user name: \(userName)")
         
         // Save QR code image
         if let qrImage = qrCodeImage,
@@ -242,9 +278,17 @@ struct ContentView: View {
                     .fontWeight(.bold)
                     .foregroundColor(.blue)
                 
-                Text("Show to scanner")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                if !watchManager.userName.isEmpty {
+                    Text(watchManager.userName)
+                        .font(.caption2)
+                        .foregroundColor(.primary)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                } else {
+                    Text("Show to scanner")
+                        .font(.caption2)
+                        .foregroundColor(.secondary)
+                }
                 
                 // Connection status indicator
                 HStack(spacing: 4) {
