@@ -15,11 +15,19 @@ class ParkrunInfo {
     var name: String
     var homeParkrun: String
     var country: Int?
+    var totalParkruns: String?
+    var lastParkrunDate: String?
+    var lastParkrunTime: String?
+    var lastParkrunEvent: String?
 
-    init(parkrunID: String, name: String, homeParkrun: String, country: Int? = nil) {
+    init(parkrunID: String, name: String, homeParkrun: String, country: Int? = nil, totalParkruns: String? = nil, lastParkrunDate: String? = nil, lastParkrunTime: String? = nil, lastParkrunEvent: String? = nil) {
         self.parkrunID = parkrunID
         self.name = name
         self.homeParkrun = homeParkrun
         self.country = country
+        self.totalParkruns = totalParkruns
+        self.lastParkrunDate = lastParkrunDate
+        self.lastParkrunTime = lastParkrunTime
+        self.lastParkrunEvent = lastParkrunEvent
     }
 }
