@@ -13,6 +13,7 @@ struct UserSelectionView: View {
     @Binding var isPresented: Bool
     let onUserSelected: (ParkrunInfo) -> Void
     let onDeleteUser: (ParkrunInfo) -> Void
+    let onSetDefault: ((ParkrunInfo) -> Void)?
     
     var body: some View {
         NavigationView {
@@ -20,7 +21,7 @@ struct UserSelectionView: View {
                 ForEach(users, id: \.parkrunID) { user in
                     UserRowView(
                         user: user,
-                        isSelected: user.isSelected,
+                        isSelected: user.isDefault,
                         onTap: {
                             onUserSelected(user)
                             isPresented = false
@@ -28,7 +29,11 @@ struct UserSelectionView: View {
                         onDelete: {
                             onDeleteUser(user)
                         },
-                        canDelete: users.count > 1
+                        onSetDefault: {
+                            onSetDefault?(user)
+                        },
+                        canDelete: users.count > 1,
+                        showSetDefault: !user.isDefault
                     )
                 }
             }
@@ -50,7 +55,9 @@ struct UserRowView: View {
     let isSelected: Bool
     let onTap: () -> Void
     let onDelete: () -> Void
+    let onSetDefault: () -> Void
     let canDelete: Bool
+    let showSetDefault: Bool
     
     var body: some View {
         HStack {
@@ -87,6 +94,15 @@ struct UserRowView: View {
             }
             .buttonStyle(PlainButtonStyle())
             
+            if showSetDefault {
+                Button(action: onSetDefault) {
+                    Image(systemName: "star")
+                        .foregroundColor(.orange)
+                        .font(.body)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            
             if canDelete {
                 Button(action: onDelete) {
                     Image(systemName: "trash")
@@ -105,6 +121,7 @@ struct UserRowView: View {
         currentUser: nil,
         isPresented: .constant(true),
         onUserSelected: { _ in },
-        onDeleteUser: { _ in }
+        onDeleteUser: { _ in },
+        onSetDefault: { _ in }
     )
 }

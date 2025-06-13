@@ -151,6 +151,7 @@ struct QRCodeBarcodeView: View {
     @State private var showUserSelection = false
     @State private var showAddUser = false
     @State private var selectedUserID: String = ""
+    @State private var currentlyViewingUserID: String = "" // Currently displayed user (can be different from default)
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
@@ -158,8 +159,21 @@ struct QRCodeBarcodeView: View {
     
     // Computed properties for user management
     private var currentUser: ParkrunInfo? {
-        if let selectedUser = parkrunInfoList.first(where: { $0.isSelected }) {
-            return selectedUser
+        // If we're viewing a specific user, return that user
+        if !currentlyViewingUserID.isEmpty {
+            return parkrunInfoList.first(where: { $0.parkrunID == currentlyViewingUserID })
+        }
+        
+        // Otherwise, return the default user
+        if let defaultUser = parkrunInfoList.first(where: { $0.isDefault }) {
+            return defaultUser
+        }
+        return parkrunInfoList.first
+    }
+    
+    private var defaultUser: ParkrunInfo? {
+        if let defaultUser = parkrunInfoList.first(where: { $0.isDefault }) {
+            return defaultUser
         }
         return parkrunInfoList.first
     }
@@ -413,6 +427,9 @@ struct QRCodeBarcodeView: View {
                 },
                 onDeleteUser: { user in
                     deleteUser(user)
+                },
+                onSetDefault: { user in
+                    setDefaultUser(user)
                 }
             )
         }
@@ -906,8 +923,11 @@ struct QRCodeBarcodeView: View {
                             }) {
                                 HStack {
                                     Text(user.displayName)
-                                    if user.isSelected {
-                                        Image(systemName: "checkmark")
+                                    if user.parkrunID == currentUser?.parkrunID {
+                                        Image(systemName: "eye.fill") // Currently viewing
+                                    }
+                                    if user.isDefault {
+                                        Image(systemName: "star.fill") // Default user
                                     }
                                 }
                             }
@@ -1024,6 +1044,9 @@ struct QRCodeBarcodeView: View {
                         Toggle("", isOn: $notificationManager.isNotificationsEnabled)
                             .labelsHidden()
                             .onChange(of: notificationManager.isNotificationsEnabled) { oldValue, newValue in
+                                // Save the setting
+                                UserDefaults.standard.set(newValue, forKey: "isNotificationsEnabled")
+                                
                                 if newValue {
                                     notificationManager.scheduleSaturdayReminders()
                                     setupNotificationsForCurrentUser()
@@ -1087,38 +1110,40 @@ struct QRCodeBarcodeView: View {
     // MARK: - User Management Functions
     
     private func switchToUser(_ user: ParkrunInfo) {
-        // Deselect all users
+        // Temporarily switch to viewing this user (don't change default)
+        currentlyViewingUserID = user.parkrunID
+        loadInitialData()
+        print("Temporarily viewing user: \(user.displayName)")
+    }
+    
+    private func setDefaultUser(_ user: ParkrunInfo) {
+        // Remove default flag from all users
         for parkrunUser in parkrunInfoList {
-            parkrunUser.isSelected = false
+            parkrunUser.isDefault = false
         }
         
-        // Select the chosen user
-        user.isSelected = true
+        // Set the chosen user as default
+        user.isDefault = true
         
         // Save changes
         do {
             try modelContext.save()
-            // Reload data for the selected user
-            loadInitialData()
-            print("Switched to user: \(user.displayName)")
+            print("Set default user: \(user.displayName)")
         } catch {
-            print("Failed to switch user: \(error)")
+            print("Failed to set default user: \(error)")
         }
     }
     
     private func addNewUser(parkrunID: String) {
-        // First, deselect all existing users
-        for user in parkrunInfoList {
-            user.isSelected = false
-        }
+        // Don't change default user when adding - new user is not default unless explicitly set
         
-        // Create new user with the given ID (selected by default)
+        // Create new user with the given ID (not default by default)
         let newUser = ParkrunInfo(
             parkrunID: parkrunID,
             name: "", // Will be filled when user saves
             homeParkrun: "",
             country: Country.unitedKingdom.rawValue,
-            isSelected: true
+            isDefault: false
         )
         
         modelContext.insert(newUser)
@@ -1126,17 +1151,11 @@ struct QRCodeBarcodeView: View {
         do {
             try modelContext.save()
             
+            // Temporarily switch to the new user for editing (but don't make them default yet)
+            switchToUser(newUser)
+            
             // Switch to editing mode for the new user
             isEditing = true
-            inputText = parkrunID
-            name = ""
-            homeParkrun = ""
-            selectedCountryCode = Country.unitedKingdom.rawValue
-            totalParkruns = ""
-            lastParkrunDate = ""
-            lastParkrunTime = ""
-            lastParkrunEvent = ""
-            lastParkrunEventURL = ""
             
             // Fetch data for the new user
             fetchParkrunnerName(id: parkrunID)
@@ -1154,7 +1173,7 @@ struct QRCodeBarcodeView: View {
             return
         }
         
-        let wasSelected = user.isSelected
+        let wasDefault = user.isDefault
         
         // Cancel notifications for this user
         notificationManager.cancelResultNotifications(for: user.parkrunID)
@@ -1165,9 +1184,9 @@ struct QRCodeBarcodeView: View {
         do {
             try modelContext.save()
             
-            // If the deleted user was selected, select the first remaining user
-            if wasSelected, let firstUser = parkrunInfoList.first {
-                firstUser.isSelected = true
+            // If the deleted user was the default, make the first remaining user default
+            if wasDefault, let firstUser = parkrunInfoList.first {
+                firstUser.isDefault = true
                 try modelContext.save()
                 loadInitialData()
             }
@@ -1184,14 +1203,17 @@ struct QRCodeBarcodeView: View {
         // Migrate existing data if needed
         migrateExistingUsersIfNeeded()
         
-        // If no user is selected but users exist, select the first one
-        if currentUser == nil && !parkrunInfoList.isEmpty {
-            parkrunInfoList.first?.isSelected = true
-            do {
-                try modelContext.save()
-                print("DEBUG - Auto-selected first user")
-            } catch {
-                print("Failed to select first user: \(error)")
+        // Reset to default user on app startup (clear any temporary viewing)
+        if currentlyViewingUserID.isEmpty {
+            // If no default user exists but users exist, set the first one as default
+            if defaultUser == nil && !parkrunInfoList.isEmpty {
+                parkrunInfoList.first?.isDefault = true
+                do {
+                    try modelContext.save()
+                    print("DEBUG - Auto-set first user as default")
+                } catch {
+                    print("Failed to set default user: \(error)")
+                }
             }
         }
         
@@ -1222,18 +1244,18 @@ struct QRCodeBarcodeView: View {
                 user.updateDisplayName()
                 needsSave = true
             }
-            
-            // If this is the only user, make sure it's selected
-            if parkrunInfoList.count == 1 && !user.isSelected {
-                user.isSelected = true
-                needsSave = true
-            }
+        }
+        
+        // If no user is marked as default, make the first one default
+        if !parkrunInfoList.contains(where: { $0.isDefault }) && !parkrunInfoList.isEmpty {
+            parkrunInfoList.first?.isDefault = true
+            needsSave = true
         }
         
         if needsSave {
             do {
                 try modelContext.save()
-                print("DEBUG - Migrated existing user data")
+                print("DEBUG - Migrated existing user data and set default user")
             } catch {
                 print("Failed to migrate user data: \(error)")
             }
@@ -1310,12 +1332,9 @@ struct QRCodeBarcodeView: View {
             existingInfo.lastParkrunEvent = lastParkrunEvent.isEmpty ? nil : lastParkrunEvent
             existingInfo.lastParkrunEventURL = lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL
             existingInfo.updateDisplayName() // Update display name
-            existingInfo.isSelected = true // Ensure this user is selected
         } else {
-            // Deselect all existing users first
-            for user in parkrunInfoList {
-                user.isSelected = false
-            }
+            // For new users, only make them default if this is the first user
+            let isFirstUser = parkrunInfoList.isEmpty
             
             let newInfo = ParkrunInfo(
                 parkrunID: inputText, 
@@ -1327,7 +1346,7 @@ struct QRCodeBarcodeView: View {
                 lastParkrunTime: lastParkrunTime.isEmpty ? nil : lastParkrunTime,
                 lastParkrunEvent: lastParkrunEvent.isEmpty ? nil : lastParkrunEvent,
                 lastParkrunEventURL: lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL,
-                isSelected: true // New user is selected by default
+                isDefault: isFirstUser // Only first user is default automatically
             )
             modelContext.insert(newInfo)
         }

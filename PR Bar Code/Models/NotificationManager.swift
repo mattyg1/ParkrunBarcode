@@ -16,8 +16,20 @@ class NotificationManager: ObservableObject {
     @Published var isNotificationsEnabled = false
     @Published var hasPermission = false
     
+    private let userDefaults = UserDefaults.standard
+    private let notificationsEnabledKey = "isNotificationsEnabled"
+    
     private init() {
+        loadPersistedSettings()
         checkNotificationPermission()
+    }
+    
+    private func loadPersistedSettings() {
+        isNotificationsEnabled = userDefaults.bool(forKey: notificationsEnabledKey)
+    }
+    
+    private func saveSettings() {
+        userDefaults.set(isNotificationsEnabled, forKey: notificationsEnabledKey)
     }
     
     // MARK: - Permission Management
@@ -30,6 +42,7 @@ class NotificationManager: ObservableObject {
             await MainActor.run {
                 self.hasPermission = granted
                 self.isNotificationsEnabled = granted
+                self.saveSettings()
             }
             return granted
         } catch {
@@ -42,7 +55,11 @@ class NotificationManager: ObservableObject {
         UNUserNotificationCenter.current().getNotificationSettings { settings in
             DispatchQueue.main.async {
                 self.hasPermission = settings.authorizationStatus == .authorized
-                self.isNotificationsEnabled = settings.authorizationStatus == .authorized
+                // Only update isNotificationsEnabled if permission was revoked
+                if settings.authorizationStatus != .authorized {
+                    self.isNotificationsEnabled = false
+                    self.saveSettings()
+                }
             }
         }
     }
@@ -196,6 +213,7 @@ class NotificationManager: ObservableObject {
     
     func disableNotifications() {
         isNotificationsEnabled = false
+        saveSettings()
         cancelAllNotifications()
     }
 }
