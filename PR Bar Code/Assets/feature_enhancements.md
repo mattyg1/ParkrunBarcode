@@ -1,9 +1,9 @@
 # Feature Enhancements
 
 1. **UI/UX Refinements:**
-   - change name of app to 5K QR Code. (Priority: 1)
-   - Redesign the UI for a more modern and intuitive experience. (Priority: 1)
-   - Add animations to make the app feel more responsive and engaging. (Priority: 1)
+   - a. change name of app to 5K QR Code. (Priority: 1) ✅
+   - b. Redesign the UI for a more modern and intuitive experience. (Priority: 1) ✅
+   - c. Add animations to make the app feel more responsive and engaging. (Priority: 1)
 
 2. **Functionality Improvements:**
    - Allow users to save multiple Parkrun IDs and switch between them. (Priority: 2)

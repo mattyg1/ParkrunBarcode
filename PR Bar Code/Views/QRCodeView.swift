@@ -11,6 +11,21 @@ import AppKit
 typealias PlatformImage = NSImage
 #endif
 
+// Add animation constants
+struct AnimationConstants {
+    static let cardTransition = AnyTransition.asymmetric(
+        insertion: .scale(scale: 0.8).combined(with: .opacity),
+        removal: .scale(scale: 0.8).combined(with: .opacity)
+    )
+    static let slideTransition = AnyTransition.asymmetric(
+        insertion: .move(edge: .trailing),
+        removal: .move(edge: .leading)
+    )
+    static let fadeTransition = AnyTransition.opacity
+    static let springAnimation = Animation.spring(response: 0.3, dampingFraction: 0.7)
+    static let easeAnimation = Animation.easeInOut(duration: 0.2)
+}
+
 // Add custom color scheme
 extension Color {
     static let parkrunGreen = Color(red: 0.2, green: 0.6, blue: 0.2)
@@ -21,12 +36,24 @@ extension Color {
 
 // Add custom view modifiers
 struct CardModifier: ViewModifier {
+    @State private var isPressed = false
+    
     func body(content: Content) -> some View {
         content
             .padding()
             .background(Color.cardBackground)
             .cornerRadius(16)
-            .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+            .shadow(color: Color.black.opacity(isPressed ? 0.05 : 0.1), radius: isPressed ? 3 : 5, x: 0, y: isPressed ? 1 : 2)
+            .scaleEffect(isPressed ? 0.98 : 1.0)
+            .animation(AnimationConstants.springAnimation, value: isPressed)
+            .onTapGesture {
+                withAnimation(AnimationConstants.springAnimation) {
+                    isPressed = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        isPressed = false
+                    }
+                }
+            }
     }
 }
 
@@ -64,6 +91,7 @@ struct QRCodeBarcodeView: View {
     @State private var lastParkrunEventURL: String = ""
     @State private var watchSyncStatus: WatchSyncStatus = .idle
     @State private var showOnboarding: Bool = false
+    @State private var isAnimating = false
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
@@ -106,6 +134,7 @@ struct QRCodeBarcodeView: View {
                             personalInfoSection
                         }
                         .cardStyle()
+                        .transition(AnimationConstants.cardTransition)
                         
                         // QR Code Card
                         VStack(alignment: .leading, spacing: 12) {
@@ -117,10 +146,12 @@ struct QRCodeBarcodeView: View {
                             qrCodeAndBarcodeSection
                         }
                         .cardStyle()
+                        .transition(AnimationConstants.cardTransition)
                         
                         // Send to Watch Button
                         sendToWatchSection
                             .cardStyle()
+                            .transition(AnimationConstants.cardTransition)
                         
                         // Watch Sync Card
                         VStack(alignment: .leading, spacing: 12) {
@@ -132,6 +163,7 @@ struct QRCodeBarcodeView: View {
                             watchSyncIndicator
                         }
                         .cardStyle()
+                        .transition(AnimationConstants.cardTransition)
                     } else {
                         // Display Saved Data
                         VStack(spacing: 20) {
@@ -172,12 +204,16 @@ struct QRCodeBarcodeView: View {
                             }
                             .cardStyle()
                         }
+                        .transition(AnimationConstants.slideTransition)
                     }
                 }
                 .padding()
+                .animation(AnimationConstants.springAnimation, value: isEditing)
             }
             .navigationBarItems(trailing: !isEditing ? Button("Edit") {
-                startEdit()
+                withAnimation(AnimationConstants.springAnimation) {
+                    startEdit()
+                }
             } : nil)
             .background(Color(.systemGroupedBackground))
         }
@@ -386,6 +422,7 @@ struct QRCodeBarcodeView: View {
                         }
                     }
                 }
+                .transition(AnimationConstants.fadeTransition)
             } else {
                 // Read-only display with horizontal layout for compact display
                 HStack(spacing: 12) {
@@ -534,6 +571,7 @@ struct QRCodeBarcodeView: View {
                     }
                 }
             }
+            .transition(AnimationConstants.fadeTransition)
         }
         .padding(10)
         .background(Color(.systemBackground))
@@ -551,6 +589,7 @@ struct QRCodeBarcodeView: View {
                 Text("Barcode").tag(1)
             }
             .pickerStyle(SegmentedPickerStyle())
+            .transition(AnimationConstants.fadeTransition)
             
             HStack {
                 if selectedCodeType == 0 {
@@ -559,15 +598,18 @@ struct QRCodeBarcodeView: View {
                         image: generateQRCode(from: inputText),
                         size: CGSize(width: 200, height: 200)
                     )
+                    .transition(AnimationConstants.fadeTransition)
                 } else {
                     CodeSectionView(
                         title: "",
                         image: generateBarcode(from: inputText),
                         size: CGSize(width: 300, height: 100)
                     )
+                    .transition(AnimationConstants.fadeTransition)
                 }
             }
             .frame(maxWidth: .infinity)
+            .animation(AnimationConstants.springAnimation, value: selectedCodeType)
         }
     }
     
@@ -576,6 +618,7 @@ struct QRCodeBarcodeView: View {
         VStack(spacing: 12) {
             Divider()
                 .padding(.horizontal)
+                .transition(AnimationConstants.fadeTransition)
             
             VStack(spacing: 8) {
                 if WCSession.default.isReachable {
@@ -587,6 +630,7 @@ struct QRCodeBarcodeView: View {
                             .font(.caption)
                             .foregroundColor(.green)
                     }
+                    .transition(AnimationConstants.fadeTransition)
                 } else {
                     VStack(spacing: 8) {
                         HStack(spacing: 4) {
@@ -597,9 +641,12 @@ struct QRCodeBarcodeView: View {
                                 .font(.caption)
                                 .foregroundColor(.orange)
                         }
+                        .transition(AnimationConstants.fadeTransition)
                         
                         Button(action: {
-                            openWatchQRCode()
+                            withAnimation(AnimationConstants.springAnimation) {
+                                openWatchQRCode()
+                            }
                         }) {
                             HStack(spacing: 6) {
                                 Image(systemName: "qrcode")
@@ -615,11 +662,13 @@ struct QRCodeBarcodeView: View {
                             .cornerRadius(8)
                         }
                         .disabled(inputText.isEmpty)
+                        .transition(AnimationConstants.fadeTransition)
                     }
                 }
             }
             .padding(.horizontal)
             .padding(.bottom, 16)
+            .animation(AnimationConstants.springAnimation, value: WCSession.default.isReachable)
         }
         .background(Color(.systemBackground))
     }
@@ -628,21 +677,26 @@ struct QRCodeBarcodeView: View {
     private var sendToWatchSection: some View {
         VStack(spacing: 12) {
             Button(action: {
-                sendToWatch()
+                withAnimation(AnimationConstants.springAnimation) {
+                    sendToWatch()
+                }
             }) {
                 HStack(spacing: 8) {
                     if watchSyncStatus == .sending {
                         ProgressView()
                             .scaleEffect(0.8)
                             .foregroundColor(.white)
+                            .transition(AnimationConstants.fadeTransition)
                     } else {
                         Image(systemName: "applewatch")
                             .font(.title3)
+                            .transition(AnimationConstants.fadeTransition)
                     }
                     
                     Text(watchSyncStatus == .sending ? "Sending..." : "Send to Watch")
                         .font(.headline)
                         .fontWeight(.medium)
+                        .transition(AnimationConstants.fadeTransition)
                 }
                 .foregroundColor(.white)
                 .frame(maxWidth: .infinity)
@@ -651,6 +705,7 @@ struct QRCodeBarcodeView: View {
                 .cornerRadius(12)
             }
             .disabled(watchSyncStatus == .sending || inputText.isEmpty)
+            .animation(AnimationConstants.springAnimation, value: watchSyncStatus)
         }
     }
 
@@ -1208,6 +1263,7 @@ struct CodeSectionView: View {
     let title: String
     let image: PlatformImage?
     let size: CGSize
+    @State private var isAnimating = false
 
     var body: some View {
         VStack {
@@ -1224,6 +1280,12 @@ struct CodeSectionView: View {
                     .background(Color.white)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    .scaleEffect(isAnimating ? 1.0 : 0.95)
+                    .opacity(isAnimating ? 1.0 : 0.8)
+                    .animation(AnimationConstants.springAnimation, value: isAnimating)
+                    .onAppear {
+                        isAnimating = true
+                    }
                 #elseif os(macOS)
                 Image(nsImage: image)
                     .resizable()
@@ -1233,10 +1295,17 @@ struct CodeSectionView: View {
                     .background(Color.white)
                     .clipShape(RoundedRectangle(cornerRadius: 16))
                     .shadow(color: Color.black.opacity(0.1), radius: 5, x: 0, y: 2)
+                    .scaleEffect(isAnimating ? 1.0 : 0.95)
+                    .opacity(isAnimating ? 1.0 : 0.8)
+                    .animation(AnimationConstants.springAnimation, value: isAnimating)
+                    .onAppear {
+                        isAnimating = true
+                    }
                 #endif
             } else {
                 Text("Failed to generate \(title)")
                     .foregroundColor(.red)
+                    .transition(AnimationConstants.fadeTransition)
             }
         }
     }
