@@ -26,11 +26,25 @@ This is a SwiftUI iOS app called "PR Bar Code" that generates QR codes and barco
 
 ## Build Commands
 
-This is a standard SwiftUI iOS project. Use Xcode to build:
+This is a standard SwiftUI iOS project. **IMPORTANT: Always run these build commands before committing code to ensure compatibility:**
+
+### Required Pre-Commit Build Tests
+```bash
+# Build for iPhone 16 (primary target)
+xcodebuild -project "../PR Bar Code.xcodeproj" -scheme "PR Bar Code" -destination "platform=iOS Simulator,name=iPhone 16,OS=latest" build
+
+# Build for Apple Watch Series 10 (watch target)
+xcodebuild -project "../PR Bar Code.xcodeproj" -scheme "5K QR Code Watch App Watch App" -destination "platform=watchOS Simulator,name=Apple Watch Series 10 (46mm)" build
+```
+
+### Development Build Commands
 - Open the project in Xcode
 - Build with Cmd+B
-- Run with Cmd+R
+- Run with Cmd+R  
 - Test with Cmd+U
+
+### Build Verification
+Both iOS and watchOS builds must succeed with "BUILD SUCCEEDED" before any code commits. This ensures compatibility across both platforms and prevents integration issues.
 
 ## watchOS Target Setup (Manual Steps Required)
 
