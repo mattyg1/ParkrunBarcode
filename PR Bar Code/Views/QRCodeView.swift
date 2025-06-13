@@ -578,13 +578,33 @@ struct QRCodeBarcodeView: View {
                             .foregroundColor(.green)
                     }
                 } else {
-                    HStack(spacing: 4) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.orange)
-                            .font(.caption)
-                        Text("Watch Not Connected")
-                            .font(.caption)
-                            .foregroundColor(.orange)
+                    VStack(spacing: 8) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.orange)
+                                .font(.caption)
+                            Text("Watch Not Connected")
+                                .font(.caption)
+                                .foregroundColor(.orange)
+                        }
+                        
+                        Button(action: {
+                            openWatchQRCode()
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "qrcode")
+                                    .font(.caption)
+                                Text("Open 5K QR Code on Watch")
+                                    .font(.caption)
+                                    .fontWeight(.medium)
+                            }
+                            .foregroundColor(.blue)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(Color.blue.opacity(0.1))
+                            .cornerRadius(8)
+                        }
+                        .disabled(inputText.isEmpty)
                     }
                 }
             }
@@ -705,6 +725,39 @@ struct QRCodeBarcodeView: View {
                 }
             }
         }
+    }
+    
+    private func openWatchQRCode() {
+        guard !inputText.isEmpty else {
+            alertMessage = "No Parkrun ID available to display."
+            showAlert = true
+            return
+        }
+        
+        // Try to open the watch app directly to show QR code
+        #if os(iOS)
+        let watchAppURL = URL(string: "watch://")
+        if let url = watchAppURL, UIApplication.shared.canOpenURL(url) {
+            UIApplication.shared.open(url) { success in
+                if success {
+                    print("Successfully opened watch app")
+                    // Send the parkrun ID with a special flag to show QR immediately
+                    WatchSessionManager.shared.sendParkrunIDForQRDisplay(inputText)
+                } else {
+                    print("Failed to open watch app")
+                    DispatchQueue.main.async {
+                        self.alertMessage = "Unable to open watch app. Make sure your Apple Watch is nearby and the app is installed."
+                        self.showAlert = true
+                    }
+                }
+            }
+        } else {
+            // Fallback: try to send data and hope watch app opens
+            WatchSessionManager.shared.sendParkrunIDForQRDisplay(inputText)
+            alertMessage = "QR code sent to watch. Please open the Parkrun app on your Apple Watch."
+            showAlert = true
+        }
+        #endif
     }
     
     // MARK: - Parkrun API Functions
@@ -1075,6 +1128,40 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         } else {
             print("Session not activated")
             completion?(false)
+        }
+    }
+    
+    func sendParkrunIDForQRDisplay(_ id: String) {
+        print("Sending Parkrun ID for QR display: \(id)")
+        
+        // Generate QR code image data
+        guard let qrImage = generateQRCodeImage(from: id),
+              let imageData = qrImage.pngData() else {
+            print("Failed to generate QR code image for display")
+            return
+        }
+        
+        if WCSession.default.activationState == .activated {
+            let data: [String: Any] = [
+                "parkrunID": id,
+                "qrCodeImageData": imageData,
+                "showQRImmediately": true  // Special flag for immediate QR display
+            ]
+            
+            // Use transferUserInfo for reliability when watch might not be immediately reachable
+            WCSession.default.transferUserInfo(data)
+            print("QR display data transferred to watch: \(id)")
+            
+            // Also try immediate message if reachable
+            if WCSession.default.isReachable {
+                WCSession.default.sendMessage(data, replyHandler: { response in
+                    print("QR display message sent successfully: \(response)")
+                }, errorHandler: { error in
+                    print("Error sending QR display message: \(error)")
+                })
+            }
+        } else {
+            print("Session not activated for QR display")
         }
     }
     
