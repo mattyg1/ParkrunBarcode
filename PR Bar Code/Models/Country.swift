@@ -54,4 +54,30 @@ enum Country: Int, CaseIterable {
         case .unitedStates:  return "United States"
         }
     }
+    
+    var websiteURL: String {
+        switch self {
+        case .australia:     return "https://www.parkrun.com.au"
+        case .austria:       return "https://www.parkrun.at"
+        case .canada:        return "https://www.parkrun.ca"
+        case .denmark:       return "https://www.parkrun.dk"
+        case .finland:       return "https://www.parkrun.fi"
+        case .france:        return "https://www.parkrun.fr"
+        case .germany:       return "https://www.parkrun.de"
+        case .ireland:       return "https://www.parkrun.ie"
+        case .italy:         return "https://www.parkrun.it"
+        case .japan:         return "https://www.parkrun.jp"
+        case .lithuania:     return "https://www.parkrun.lt"
+        case .malaysia:      return "https://www.parkrun.my"
+        case .netherlands:   return "https://www.parkrun.nl"
+        case .newZealand:    return "https://www.parkrun.co.nz"
+        case .norway:        return "https://www.parkrun.no"
+        case .poland:        return "https://www.parkrun.pl"
+        case .singapore:     return "https://www.parkrun.sg"
+        case .southAfrica:   return "https://www.parkrun.co.za"
+        case .sweden:        return "https://www.parkrun.se"
+        case .unitedKingdom: return "https://www.parkrun.org.uk"
+        case .unitedStates:  return "https://www.parkrun.us"
+        }
+    }
 }

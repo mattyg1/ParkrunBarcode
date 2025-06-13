@@ -10,6 +10,7 @@ import SwiftUI
 struct OnboardingView: View {
     @Binding var isPresented: Bool
     @State private var showBarcodeEntry = false
+    @State private var showCountrySelection = false
     
     var body: some View {
         NavigationView {
@@ -42,7 +43,7 @@ struct OnboardingView: View {
                     }
                     
                     Button(action: {
-                        isPresented = false
+                        showCountrySelection = true
                     }) {
                         Text("I don't have a barcode")
                             .font(.body)
@@ -67,6 +68,9 @@ struct OnboardingView: View {
         .sheet(isPresented: $showBarcodeEntry) {
             BarcodeEntryView(isPresented: $showBarcodeEntry, onboardingPresented: $isPresented)
         }
+        .sheet(isPresented: $showCountrySelection) {
+            CountrySelectionView(isPresented: $showCountrySelection)
+        }
     }
 }
 
@@ -83,7 +87,7 @@ struct BarcodeEntryView: View {
             VStack(spacing: 20) {
                 // Input field
                 VStack(alignment: .leading, spacing: 8) {
-                    TextField("Barcode or Name", text: $barcodeText)
+                    TextField("Barcode number, which starts with an A", text: $barcodeText)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .font(.body)
                 }
