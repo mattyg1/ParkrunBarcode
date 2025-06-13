@@ -6,7 +6,7 @@
    - c. Add animations to make the app feel more responsive and engaging. (Priority: 1) ✅
 
 2. **Functionality Improvements:**
-   - a. Allow users to save multiple Parkrun IDs and switch between them. (Priority: 2)
+   - a. Allow users to save multiple Parkrun IDs and switch between them. (Priority: 2) ✅
    - b. Implement push notifications to keep users engaged with updates and reminders. Can it check for result updates in the background notify. Reminder for parkrun on Saturday morning. (Priority: 2) ✅
 
 3. **Testing and Quality Assurance:**

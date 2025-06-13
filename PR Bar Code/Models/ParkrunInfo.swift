@@ -20,8 +20,11 @@ class ParkrunInfo {
     var lastParkrunTime: String?
     var lastParkrunEvent: String?
     var lastParkrunEventURL: String?
+    var isSelected: Bool = false
+    var displayName: String = "" // Computed display name for UI
+    var createdDate: Date = Date()
 
-    init(parkrunID: String, name: String, homeParkrun: String, country: Int? = nil, totalParkruns: String? = nil, lastParkrunDate: String? = nil, lastParkrunTime: String? = nil, lastParkrunEvent: String? = nil, lastParkrunEventURL: String? = nil) {
+    init(parkrunID: String, name: String, homeParkrun: String, country: Int? = nil, totalParkruns: String? = nil, lastParkrunDate: String? = nil, lastParkrunTime: String? = nil, lastParkrunEvent: String? = nil, lastParkrunEventURL: String? = nil, isSelected: Bool = false) {
         self.parkrunID = parkrunID
         self.name = name
         self.homeParkrun = homeParkrun
@@ -31,5 +34,13 @@ class ParkrunInfo {
         self.lastParkrunTime = lastParkrunTime
         self.lastParkrunEvent = lastParkrunEvent
         self.lastParkrunEventURL = lastParkrunEventURL
+        self.isSelected = isSelected
+        self.displayName = name.isEmpty ? parkrunID : "\(name) (\(parkrunID))"
+        self.createdDate = Date()
+    }
+    
+    // Update display name when name changes
+    func updateDisplayName() {
+        self.displayName = name.isEmpty ? parkrunID : "\(name) (\(parkrunID))"
     }
 }
