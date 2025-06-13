@@ -11,6 +11,13 @@ import AppKit
 typealias PlatformImage = NSImage
 #endif
 
+enum WatchSyncStatus {
+    case idle
+    case sending
+    case success
+    case failed
+}
+
 struct QRCodeBarcodeView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var parkrunInfoList: [ParkrunInfo]
@@ -29,6 +36,7 @@ struct QRCodeBarcodeView: View {
     @State private var lastParkrunDate: String = ""
     @State private var lastParkrunTime: String = ""
     @State private var lastParkrunEvent: String = ""
+    @State private var watchSyncStatus: WatchSyncStatus = .idle
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
@@ -67,6 +75,9 @@ struct QRCodeBarcodeView: View {
                             
                             // QR Code and Barcode Selector and Display
                             qrCodeAndBarcodeSection
+                            
+                            // Watch sync status indicator
+                            watchSyncIndicator
                         }
                         .padding()
                     }
@@ -107,6 +118,9 @@ struct QRCodeBarcodeView: View {
                             
                             // QR Code and Barcode Selector and Display
                             qrCodeAndBarcodeSection
+                            
+                            // Watch sync status indicator
+                            watchSyncIndicator
                         }
                         .padding()
                     }
@@ -399,37 +413,73 @@ struct QRCodeBarcodeView: View {
 
     // MARK: - QR Code and Barcode Section
     private var qrCodeAndBarcodeSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Parkrun Codes")
-                .font(.headline)
-                .padding(.bottom, 5)
-
+        VStack(alignment: .leading, spacing: 6) {
             Picker("Code Type", selection: $selectedCodeType) {
                 Text("QR Code").tag(0)
                 Text("Barcode").tag(1)
             }
             .pickerStyle(SegmentedPickerStyle())
-            .padding()
+            .padding(.bottom, 8)
 
             HStack {
                 if selectedCodeType == 0 {
                     CodeSectionView(
-                        title: "QR Code",
+                        title: "",
                         image: generateQRCode(from: inputText),
                         size: CGSize(width: 200, height: 200)
                     )
                 } else {
                     CodeSectionView(
-                        title: "Barcode",
+                        title: "",
                         image: generateBarcode(from: inputText),
                         size: CGSize(width: 300, height: 100)
                     )
                 }
             }
             .frame(maxWidth: .infinity) // Center align QR/Barcode
-            .padding()
         }
-        .padding()
+        .padding(10)
+        .background(Color(.systemBackground))
+        .cornerRadius(10)
+        .shadow(radius: 2)
+        .frame(maxWidth: .infinity)
+    }
+    
+    // MARK: - Watch Sync Indicator
+    private var watchSyncIndicator: some View {
+        Group {
+            if watchSyncStatus != .idle {
+                HStack(spacing: 8) {
+                    switch watchSyncStatus {
+                    case .sending:
+                        ProgressView()
+                            .scaleEffect(0.8)
+                        Text("Sending to Watch...")
+                            .font(.caption)
+                            .foregroundColor(.blue)
+                    case .success:
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.green)
+                        Text("Sent to Watch")
+                            .font(.caption)
+                            .foregroundColor(.green)
+                    case .failed:
+                        Image(systemName: "exclamationmark.circle.fill")
+                            .foregroundColor(.red)
+                        Text("Failed to send to Watch")
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    case .idle:
+                        EmptyView()
+                    }
+                }
+                .padding(8)
+                .background(Color(.secondarySystemBackground))
+                .cornerRadius(8)
+                .transition(.opacity)
+                .animation(.easeInOut(duration: 0.3), value: watchSyncStatus)
+            }
+        }
     }
 
     // MARK: - Functions
@@ -489,7 +539,19 @@ struct QRCodeBarcodeView: View {
         do {
             try modelContext.save()
             isEditing = false
-            WatchSessionManager.shared.sendParkrunID(inputText)
+            
+            // Send to watch with status tracking
+            watchSyncStatus = .sending
+            WatchSessionManager.shared.sendParkrunID(inputText) { success in
+                DispatchQueue.main.async {
+                    self.watchSyncStatus = success ? .success : .failed
+                    
+                    // Reset status after 3 seconds
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                        self.watchSyncStatus = .idle
+                    }
+                }
+            }
         } catch {
             alertMessage = "Failed to save data. Please try again."
             showAlert = true
@@ -831,7 +893,7 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         }
     }
     
-    func sendParkrunID(_ id: String) {
+    func sendParkrunID(_ id: String, completion: ((Bool) -> Void)? = nil) {
         print("Attempting to send Parkrun ID: \(id)")
         print("Session supported: \(WCSession.isSupported())")
         print("Session reachable: \(WCSession.default.isReachable)")
@@ -841,6 +903,7 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
         guard let qrImage = generateQRCodeImage(from: id),
               let imageData = qrImage.pngData() else {
             print("Failed to generate QR code image")
+            completion?(false)
             return
         }
         
@@ -859,14 +922,19 @@ class WatchSessionManager: NSObject, WCSessionDelegate {
             if WCSession.default.isReachable {
                 WCSession.default.sendMessage(data, replyHandler: { response in
                     print("Message sent successfully: \(response)")
+                    completion?(true)
                 }, errorHandler: { error in
                     print("Error sending message: \(error)")
+                    completion?(false)
                 })
             } else {
                 print("Watch is not reachable for immediate messaging")
+                // Still consider successful as transferUserInfo was called
+                completion?(true)
             }
         } else {
             print("Session not activated")
+            completion?(false)
         }
     }
     
