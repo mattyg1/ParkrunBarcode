@@ -158,7 +158,7 @@ struct MeTabView: View {
                 .padding()
                 .animation(AnimationConstants.springAnimation, value: isEditing)
             }
-            .navigationTitle("Me")
+            .navigationBarHidden(true)
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     if isEditing {

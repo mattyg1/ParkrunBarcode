@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 
 @Model
-class ParkrunInfo {
+class ParkrunInfo: Identifiable {
     @Attribute(.unique) var parkrunID: String
     var name: String
     var homeParkrun: String
@@ -23,6 +23,8 @@ class ParkrunInfo {
     var isDefault: Bool = false // Default user loaded on app startup
     var displayName: String = "" // Computed display name for UI
     var createdDate: Date = Date()
+    
+    var id: String { parkrunID } // Identifiable conformance
 
     init(parkrunID: String, name: String, homeParkrun: String, country: Int? = nil, totalParkruns: String? = nil, lastParkrunDate: String? = nil, lastParkrunTime: String? = nil, lastParkrunEvent: String? = nil, lastParkrunEventURL: String? = nil, isDefault: Bool = false) {
         self.parkrunID = parkrunID

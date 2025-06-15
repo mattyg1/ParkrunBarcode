@@ -17,7 +17,6 @@ struct FamilyTabView: View {
     @State private var showAddUser = false
     @State private var showUserSelection = false
     @State private var selectedUserForQR: ParkrunInfo?
-    @State private var showQRCodeSheet = false
     
     private var availableUsers: [ParkrunInfo] {
         parkrunInfoList.sorted { $0.createdDate < $1.createdDate }
@@ -67,7 +66,6 @@ struct FamilyTabView: View {
                                 user: user,
                                 onTapQR: {
                                     selectedUserForQR = user
-                                    showQRCodeSheet = true
                                 },
                                 onDelete: {
                                     deleteUser(user)
@@ -129,10 +127,13 @@ struct FamilyTabView: View {
                 }
             )
         }
-        .sheet(isPresented: $showQRCodeSheet) {
-            if let user = selectedUserForQR {
-                FamilyQRCodeView(user: user, isPresented: $showQRCodeSheet)
-            }
+        .sheet(item: $selectedUserForQR, onDismiss: {
+            selectedUserForQR = nil
+        }) { user in
+            FamilyQRCodeView(user: user, isPresented: Binding(
+                get: { selectedUserForQR != nil },
+                set: { _ in selectedUserForQR = nil }
+            ))
         }
         .onAppear {
             // Data correction: Fix corrupted names (one-time fix)
