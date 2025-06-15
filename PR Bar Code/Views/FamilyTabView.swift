@@ -30,9 +30,11 @@ struct FamilyTabView: View {
         switch selectedSortOption {
         case .date:
             return parkrunInfoList.sorted { user1, user2 in
-                // Default user first
-                if user1.isDefault && !user2.isDefault { return true }
-                if !user1.isDefault && user2.isDefault { return false }
+                // Default user first (if enabled)
+                if defaultUserFirst {
+                    if user1.isDefault && !user2.isDefault { return true }
+                    if !user1.isDefault && user2.isDefault { return false }
+                }
                 
                 // Sort by last parkrun date (newest first)
                 let date1 = user1.lastParkrunDate ?? ""
@@ -47,9 +49,11 @@ struct FamilyTabView: View {
             
         case .alphabetical:
             return parkrunInfoList.sorted { user1, user2 in
-                // Default user first
-                if user1.isDefault && !user2.isDefault { return true }
-                if !user1.isDefault && user2.isDefault { return false }
+                // Default user first (if enabled)
+                if defaultUserFirst {
+                    if user1.isDefault && !user2.isDefault { return true }
+                    if !user1.isDefault && user2.isDefault { return false }
+                }
                 
                 // Sort alphabetically by name
                 let name1 = user1.displayName
@@ -66,9 +70,11 @@ struct FamilyTabView: View {
             
         case .time:
             return parkrunInfoList.sorted { user1, user2 in
-                // Default user first
-                if user1.isDefault && !user2.isDefault { return true }
-                if !user1.isDefault && user2.isDefault { return false }
+                // Default user first (if enabled)
+                if defaultUserFirst {
+                    if user1.isDefault && !user2.isDefault { return true }
+                    if !user1.isDefault && user2.isDefault { return false }
+                }
                 
                 // Sort by last parkrun time (fastest first)
                 let time1 = user1.lastParkrunTime ?? "99:99"
