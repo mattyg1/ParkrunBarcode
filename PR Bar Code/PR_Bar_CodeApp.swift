@@ -16,7 +16,7 @@ struct PR_Bar_CodeApp: App {
     
     var body: some Scene {
         WindowGroup {
-            QRCodeBarcodeView()
+            MainTabView()
                 .environmentObject(notificationManager)
                 .onAppear {
                     setupNotifications()

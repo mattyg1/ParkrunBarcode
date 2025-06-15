@@ -42,3 +42,14 @@
 
 11. **Cross-Platform Support:**
     - Consider expanding the app to other platforms, such as Android, to reach a wider audience. 
+
+12. **Bugs**
+    - Badge not removing when notification seen
+    - Notification for new results not been created.  Possibly due to checking for new results not working
+    
+13. **New Features**
+    - a. Add bottom navigation bar.  Have 4 icons.  Me. Family & Friends?. Events and Settings.  Move multi user selecter to Family view.  Keep Me to default user.  Consider adding simple table of most recent results for each user.
+    - b. Move notification to settings window
+    - c. Move dark mode settings to settings screen.  Add auto switch.
+    - d. Multi user support for watch
+    
