@@ -128,7 +128,7 @@ struct MeTabView: View {
                             
                             // QR Code Card
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("My prCode")
+                                Text("parkrun code")
                                     .font(.title2)
                                     .fontWeight(.bold)
                                     .foregroundColor(.adaptiveParkrunGreen)
