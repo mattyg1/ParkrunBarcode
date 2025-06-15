@@ -20,6 +20,10 @@ struct PR_Bar_CodeApp: App {
                 .environmentObject(notificationManager)
                 .onAppear {
                     setupNotifications()
+                    clearBadgeIfNeeded()
+                }
+                .onReceive(NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
+                    clearBadgeIfNeeded()
                 }
         }
         .modelContainer(for: ParkrunInfo.self) // Attach SwiftData Model Container
@@ -27,5 +31,13 @@ struct PR_Bar_CodeApp: App {
     
     private func setupNotifications() {
         UNUserNotificationCenter.current().delegate = notificationDelegate
+    }
+    
+    private func clearBadgeIfNeeded() {
+        if #available(iOS 17.0, *) {
+            UNUserNotificationCenter.current().setBadgeCount(0) { _ in }
+        } else {
+            UIApplication.shared.applicationIconBadgeNumber = 0
+        }
     }
 }
