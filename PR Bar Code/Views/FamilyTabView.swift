@@ -135,16 +135,7 @@ struct FamilyTabView: View {
             }
         }
         .onAppear {
-            // Debug: Print current user states when view appears
-            print("DEBUG - FamilyTabView onAppear:")
-            for user in parkrunInfoList {
-                print("DEBUG - User: \(user.displayName) isDefault=\(user.isDefault)")
-                print("DEBUG -   parkrunID: \(user.parkrunID)")
-                print("DEBUG -   name: '\(user.name)'")
-                print("DEBUG -   displayName: '\(user.displayName)'")
-            }
-            
-            // Data correction: Fix corrupted names
+            // Data correction: Fix corrupted names (one-time fix)
             fixCorruptedUserNames()
         }
     }
@@ -242,12 +233,6 @@ struct FamilyTabView: View {
     }
     
     private func setDefaultUser(_ user: ParkrunInfo) {
-        // Debug: Print current state
-        print("DEBUG - setDefaultUser called for: \(user.displayName)")
-        for parkrunUser in parkrunInfoList {
-            print("DEBUG - Before change: \(parkrunUser.displayName) isDefault=\(parkrunUser.isDefault)")
-        }
-        
         // Remove default flag from all users
         for parkrunUser in parkrunInfoList {
             parkrunUser.isDefault = false
@@ -260,11 +245,6 @@ struct FamilyTabView: View {
         do {
             try modelContext.save()
             print("Set default user: \(user.displayName)")
-            
-            // Debug: Print state after save
-            for parkrunUser in parkrunInfoList {
-                print("DEBUG - After change: \(parkrunUser.displayName) isDefault=\(parkrunUser.isDefault)")
-            }
         } catch {
             print("Failed to set default user: \(error)")
         }
