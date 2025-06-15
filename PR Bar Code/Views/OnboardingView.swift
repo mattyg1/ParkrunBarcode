@@ -38,7 +38,7 @@ struct OnboardingView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding()
-                            .background(Color.blue)
+                            .background(Color.adaptiveParkrunGreen)
                             .cornerRadius(12)
                     }
                     
@@ -56,16 +56,6 @@ struct OnboardingView: View {
             }
             .navigationTitle("Me")
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button(action: {
-                        // Hamburger menu placeholder
-                    }) {
-                        Image(systemName: "line.horizontal.3")
-                            .foregroundColor(.blue)
-                    }
-                }
-            }
         }
         .sheet(isPresented: $showBarcodeEntry) {
             BarcodeEntryView(isPresented: $showBarcodeEntry, onboardingPresented: $isPresented)
@@ -112,7 +102,7 @@ struct BarcodeEntryView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .padding()
-                    .background(barcodeText.isEmpty ? Color.gray : Color.blue)
+                    .background(barcodeText.isEmpty ? Color.gray : Color.adaptiveParkrunGreen)
                     .cornerRadius(12)
                 }
                 .disabled(barcodeText.isEmpty || isLoading)
