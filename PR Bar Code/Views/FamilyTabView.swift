@@ -323,7 +323,7 @@ struct FamilyTabView: View {
         }.resume()
     }
     
-    private func extractParkrunnerDataFromHTML(_ html: String) -> (name: String?, totalRuns: String?, lastDate: String?, lastTime: String?, lastEvent: String?, lastEventURL: String?) {
+    internal func extractParkrunnerDataFromHTML(_ html: String) -> (name: String?, totalRuns: String?, lastDate: String?, lastTime: String?, lastEvent: String?, lastEventURL: String?) {
         var name: String?
         var totalRuns: String?
         var lastDate: String?
