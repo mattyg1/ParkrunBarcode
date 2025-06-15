@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 enum AppearanceMode: String, CaseIterable {
     case system = "System"
@@ -29,6 +30,7 @@ struct SettingsTabView: View {
     @EnvironmentObject var notificationManager: NotificationManager
     @AppStorage("appearanceMode") private var appearanceMode: String = AppearanceMode.system.rawValue
     @State private var preferredColorScheme: ColorScheme?
+    @Environment(\.modelContext) var modelContext: ModelContext
     
     private var currentAppearanceMode: AppearanceMode {
         AppearanceMode(rawValue: appearanceMode) ?? .system

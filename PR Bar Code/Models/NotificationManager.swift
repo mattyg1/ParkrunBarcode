@@ -8,6 +8,7 @@
 import Foundation
 import UserNotifications
 import SwiftData
+import UIKit
 
 @MainActor
 class NotificationManager: ObservableObject {
