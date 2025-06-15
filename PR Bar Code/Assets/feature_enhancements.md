@@ -53,3 +53,5 @@
     - c. Move dark mode settings to settings screen.  Add auto switch. ✅
     - d. Multi user support for watch
     
+14. Add Unit Tests ✅
+    
