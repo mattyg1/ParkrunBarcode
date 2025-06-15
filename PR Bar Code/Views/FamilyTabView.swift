@@ -605,7 +605,7 @@ struct FamilyUserCard: View {
 struct FamilyQRCodeView: View {
     let user: ParkrunInfo
     @Binding var isPresented: Bool
-    @State private var selectedCodeType: Int = 0 // 0 = QR Code, 1 = Barcode
+    @State private var selectedCodeType: Int = 0 // 0 = QR Code, 1 = Barcode (default to QR code)
     
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
