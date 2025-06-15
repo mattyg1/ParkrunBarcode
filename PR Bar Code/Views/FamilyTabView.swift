@@ -24,10 +24,9 @@ struct FamilyTabView: View {
     @State private var showUserSelection = false
     @State private var selectedUserForQR: ParkrunInfo?
     @State private var selectedSortOption: SortOption = .date
+    @State private var defaultUserFirst: Bool = true
     
     private var availableUsers: [ParkrunInfo] {
-        let defaultUser = parkrunInfoList.first(where: { $0.isDefault })
-        
         switch selectedSortOption {
         case .date:
             return parkrunInfoList.sorted { user1, user2 in
@@ -131,33 +130,54 @@ struct FamilyTabView: View {
                             
                             Spacer()
                             
-                            // Sort dropdown
-                            Menu {
-                                ForEach(SortOption.allCases, id: \.self) { option in
-                                    Button(action: {
-                                        selectedSortOption = option
-                                    }) {
-                                        HStack {
-                                            Text(option.rawValue)
-                                            if selectedSortOption == option {
-                                                Image(systemName: "checkmark")
+                            // Sort options
+                            HStack(spacing: 12) {
+                                // Default user first toggle
+                                Button(action: {
+                                    defaultUserFirst.toggle()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: defaultUserFirst ? "star.fill" : "star")
+                                            .font(.caption)
+                                            .foregroundColor(defaultUserFirst ? .orange : .secondary)
+                                        Text("Default First")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color(.tertiarySystemBackground))
+                                    .cornerRadius(6)
+                                }
+                                
+                                // Sort dropdown
+                                Menu {
+                                    ForEach(SortOption.allCases, id: \.self) { option in
+                                        Button(action: {
+                                            selectedSortOption = option
+                                        }) {
+                                            HStack {
+                                                Text(option.rawValue)
+                                                if selectedSortOption == option {
+                                                    Image(systemName: "checkmark")
+                                                }
                                             }
                                         }
                                     }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Text("Sort: \(selectedSortOption.rawValue)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Image(systemName: "chevron.down")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color(.tertiarySystemBackground))
+                                    .cornerRadius(6)
                                 }
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Text("Sort: \(selectedSortOption.rawValue)")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Image(systemName: "chevron.down")
-                                        .font(.caption2)
-                                        .foregroundColor(.secondary)
-                                }
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color(.tertiarySystemBackground))
-                                .cornerRadius(6)
                             }
                         }
                         
@@ -179,6 +199,8 @@ struct FamilyTabView: View {
                                 )
                             }
                         }
+                        .animation(.easeInOut(duration: 0.2), value: defaultUserFirst)
+                        .animation(.easeInOut(duration: 0.2), value: selectedSortOption)
                     }
                     .cardStyle()
                 }
