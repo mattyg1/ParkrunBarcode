@@ -9,7 +9,7 @@ import Testing
 import Foundation
 import CoreImage
 import UIKit
-@testable import PR_Bar_Code
+@testable import FiveKQRCode
 
 struct QRCodeGenerationTests {
     
