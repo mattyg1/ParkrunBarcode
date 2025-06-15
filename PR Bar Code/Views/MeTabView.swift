@@ -23,7 +23,7 @@ struct MeTabView: View {
     @State private var isEditing: Bool = false
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
-    @State private var selectedCodeType: Int = 0 // 0 = QR Code, 1 = Barcode
+    @State private var selectedCodeType: Int = 1 // 0 = QR Code, 1 = Barcode (default to barcode)
     @State private var isLoadingName: Bool = false
     @State private var showConfirmationDialog: Bool = false
     @State private var totalParkruns: String = ""
@@ -128,7 +128,7 @@ struct MeTabView: View {
                             
                             // QR Code Card
                             VStack(alignment: .leading, spacing: 12) {
-                                Text("My QR Code")
+                                Text("My prCode")
                                     .font(.title2)
                                     .fontWeight(.bold)
                                     .foregroundColor(.adaptiveParkrunGreen)
