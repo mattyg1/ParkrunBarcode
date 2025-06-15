@@ -40,7 +40,17 @@ struct FamilyTabView: View {
                 let date1 = user1.lastParkrunDate ?? ""
                 let date2 = user2.lastParkrunDate ?? ""
                 if date1 != date2 {
-                    return date1 > date2
+                    // Convert DD/MM/YYYY to comparable format for proper date sorting
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "dd/MM/yyyy"
+                    let parsedDate1 = dateFormatter.date(from: date1)
+                    let parsedDate2 = dateFormatter.date(from: date2)
+                    
+                    if let d1 = parsedDate1, let d2 = parsedDate2 {
+                        return d1 > d2 // Newer dates first
+                    } else {
+                        return date1 > date2 // Fallback to string comparison
+                    }
                 }
                 
                 // Secondary sort: alphabetical by name
@@ -65,7 +75,17 @@ struct FamilyTabView: View {
                 // Secondary sort: date (newest first)
                 let date1 = user1.lastParkrunDate ?? ""
                 let date2 = user2.lastParkrunDate ?? ""
-                return date1 > date2
+                // Convert DD/MM/YYYY to comparable format for proper date sorting
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "dd/MM/yyyy"
+                let parsedDate1 = dateFormatter.date(from: date1)
+                let parsedDate2 = dateFormatter.date(from: date2)
+                
+                if let d1 = parsedDate1, let d2 = parsedDate2 {
+                    return d1 > d2 // Newer dates first
+                } else {
+                    return date1 > date2 // Fallback to string comparison
+                }
             }
             
         case .time:
