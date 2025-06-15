@@ -134,9 +134,56 @@ struct FamilyTabView: View {
                 FamilyQRCodeView(user: user, isPresented: $showQRCodeSheet)
             }
         }
+        .onAppear {
+            // Debug: Print current user states when view appears
+            print("DEBUG - FamilyTabView onAppear:")
+            for user in parkrunInfoList {
+                print("DEBUG - User: \(user.displayName) isDefault=\(user.isDefault)")
+                print("DEBUG -   parkrunID: \(user.parkrunID)")
+                print("DEBUG -   name: '\(user.name)'")
+                print("DEBUG -   displayName: '\(user.displayName)'")
+            }
+            
+            // Data correction: Fix corrupted names
+            fixCorruptedUserNames()
+        }
     }
     
     // MARK: - Functions
+    
+    private func fixCorruptedUserNames() {
+        var needsSave = false
+        
+        // Fix known data corruption: A79156 should be Matt GARDNER
+        for user in parkrunInfoList {
+            if user.parkrunID == "A79156" && user.name != "Matt GARDNER" {
+                print("DEBUG - Fixing corrupted name for A79156: '\(user.name)' -> 'Matt GARDNER'")
+                user.name = "Matt GARDNER"
+                user.updateDisplayName()
+                needsSave = true
+            }
+            
+            // Set correct default user: A79156 (Matt) should be default
+            if user.parkrunID == "A79156" && !user.isDefault {
+                print("DEBUG - Setting A79156 (Matt) as default user")
+                // First remove default from all users
+                for otherUser in parkrunInfoList {
+                    otherUser.isDefault = false
+                }
+                user.isDefault = true
+                needsSave = true
+            }
+        }
+        
+        if needsSave {
+            do {
+                try modelContext.save()
+                print("DEBUG - Data corruption fixed and saved")
+            } catch {
+                print("DEBUG - Failed to save data correction: \(error)")
+            }
+        }
+    }
     
     private func addNewUser(parkrunID: String) {
         // Create new user (not default by default - only first user is automatically default)
@@ -195,6 +242,12 @@ struct FamilyTabView: View {
     }
     
     private func setDefaultUser(_ user: ParkrunInfo) {
+        // Debug: Print current state
+        print("DEBUG - setDefaultUser called for: \(user.displayName)")
+        for parkrunUser in parkrunInfoList {
+            print("DEBUG - Before change: \(parkrunUser.displayName) isDefault=\(parkrunUser.isDefault)")
+        }
+        
         // Remove default flag from all users
         for parkrunUser in parkrunInfoList {
             parkrunUser.isDefault = false
@@ -207,6 +260,11 @@ struct FamilyTabView: View {
         do {
             try modelContext.save()
             print("Set default user: \(user.displayName)")
+            
+            // Debug: Print state after save
+            for parkrunUser in parkrunInfoList {
+                print("DEBUG - After change: \(parkrunUser.displayName) isDefault=\(parkrunUser.isDefault)")
+            }
         } catch {
             print("Failed to set default user: \(error)")
         }
