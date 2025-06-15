@@ -630,6 +630,6 @@ struct HTMLParsingTests {
         #expect(extractedData.lastDate == "31/05/2025")
         #expect(extractedData.lastTime == "16:20")
         #expect(extractedData.lastEvent == "Whiteley parkrun")
-        #expect(extractedData.lastEventURL == "https://www.parkrun.org.uk/whiteley/results/326/")
+        #expect(extractedData.lastEventURL == "https://www.parkrun.org.uk/gangerfarm/results/133/")
     }
 }
