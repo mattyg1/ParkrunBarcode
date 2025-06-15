@@ -47,6 +47,7 @@
     - a. Badge not removing when notification seen ✅
     - b. Notification for new results not been created.  Possibly due to checking for new results not working ✅
     - c. Regex issues for total parkruns, specifically when junior parkruns included like for Mia Gardner.
+    - d. Regex issue.  extractedData.lastEventURL returns nil for Matt Gardner
     
 13. **New Features**
     - a. Add bottom navigation bar.  Have 4 icons.  Me. Family & Friends?. Events and Settings. Move multi user selecter to Family view.  Keep Me to default user.  Consider adding simple table of most recent results for each user. ✅

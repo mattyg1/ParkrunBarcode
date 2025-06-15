@@ -378,12 +378,24 @@ struct FamilyTabView: View {
             }
         }
         
-        // Look for event URL
+        // Look for event URL - first try full URLs
         if let urlRegex = try? NSRegularExpression(pattern: #"<td><a href="(https://www\.parkrun\.(?:org\.uk|com|us|au|org\.nz|co\.za|it|se|dk|pl|ie|ca|fi|fr|sg|de|no|ru|my)/[^/]+/results/\d+/)"[^>]*>(?:[^<]+|\d{2}/\d{2}/\d{4})</a></td>"#, options: [.caseInsensitive]) {
             let urlMatches = urlRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = urlMatches.first, let urlRange = Range(match.range(at: 1), in: html) {
                 lastEventURL = String(html[urlRange])
                 print("DEBUG - Extracted lastEventURL: '\(lastEventURL ?? "nil")'")
+            }
+        }
+        
+        // If no full URL found, look for relative URLs and convert them
+        if lastEventURL == nil {
+            if let relativeUrlRegex = try? NSRegularExpression(pattern: #"<td><a href="/parkrun/([^/]+/results/\d+/)"[^>]*>(?:[^<]+|\d{2}/\d{2}/\d{4})</a></td>"#, options: [.caseInsensitive]) {
+                let relativeMatches = relativeUrlRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                if let match = relativeMatches.first, let urlRange = Range(match.range(at: 1), in: html) {
+                    let pathWithoutParkrun = String(html[urlRange])
+                    lastEventURL = "https://www.parkrun.org.uk/" + pathWithoutParkrun
+                    print("DEBUG - Extracted lastEventURL from relative: '\(lastEventURL ?? "nil")'")
+                }
             }
         }
         
