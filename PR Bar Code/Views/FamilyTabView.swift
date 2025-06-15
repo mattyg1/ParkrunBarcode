@@ -194,6 +194,7 @@ struct FamilyTabView: View {
         do {
             try modelContext.save()
             
+            print("DEBUG - Added new user \(parkrunID), now fetching data...")
             // Fetch data for the new user in background
             fetchParkrunnerName(for: newUser)
             
@@ -256,7 +257,11 @@ struct FamilyTabView: View {
         let numericId = String(user.parkrunID.dropFirst())
         
         let urlString = "https://www.parkrun.org.uk/parkrunner/\(numericId)/"
-        guard let url = URL(string: urlString) else { return }
+        print("DEBUG - Starting fetch for \(user.parkrunID) at URL: \(urlString)")
+        guard let url = URL(string: urlString) else { 
+            print("DEBUG - Invalid URL for \(user.parkrunID): \(urlString)")
+            return 
+        }
         
         // Create request with proper headers to avoid 403
         var request = URLRequest(url: url)
@@ -288,24 +293,40 @@ struct FamilyTabView: View {
             // Parse the HTML to extract all information
             let extractedData = extractParkrunnerDataFromHTML(htmlString)
             
+            print("DEBUG - Extracted data for \(user.parkrunID):")
+            print("  - Name: \(extractedData.name ?? "nil")")
+            print("  - Total runs: \(extractedData.totalRuns ?? "nil")")
+            print("  - Last date: \(extractedData.lastDate ?? "nil")")
+            print("  - Last time: \(extractedData.lastTime ?? "nil")")
+            print("  - Last event: \(extractedData.lastEvent ?? "nil")")
+            print("  - Last event URL: \(extractedData.lastEventURL ?? "nil")")
+            
             DispatchQueue.main.async {
+                print("DEBUG - Updating user data for \(user.parkrunID)")
+                
                 // Update user data
                 if let name = extractedData.name {
+                    print("DEBUG - Setting name: '\(user.name)' -> '\(name)'")
                     user.name = name
                 }
                 if let totalRuns = extractedData.totalRuns {
+                    print("DEBUG - Setting totalParkruns: '\(user.totalParkruns ?? "nil")' -> '\(totalRuns)'")
                     user.totalParkruns = totalRuns
                 }
                 if let lastDate = extractedData.lastDate {
+                    print("DEBUG - Setting lastParkrunDate: '\(user.lastParkrunDate ?? "nil")' -> '\(lastDate)'")
                     user.lastParkrunDate = lastDate
                 }
                 if let lastTime = extractedData.lastTime {
+                    print("DEBUG - Setting lastParkrunTime: '\(user.lastParkrunTime ?? "nil")' -> '\(lastTime)'")
                     user.lastParkrunTime = lastTime
                 }
                 if let lastEvent = extractedData.lastEvent {
+                    print("DEBUG - Setting lastParkrunEvent: '\(user.lastParkrunEvent ?? "nil")' -> '\(lastEvent)'")
                     user.lastParkrunEvent = lastEvent
                 }
                 if let lastEventURL = extractedData.lastEventURL {
+                    print("DEBUG - Setting lastParkrunEventURL: '\(user.lastParkrunEventURL ?? "nil")' -> '\(lastEventURL)'")
                     user.lastParkrunEventURL = lastEventURL
                 }
                 
@@ -315,9 +336,16 @@ struct FamilyTabView: View {
                 // Save the updated data
                 do {
                     try self.modelContext.save()
-                    print("Updated data for user: \(user.parkrunID)")
+                    print("DEBUG - Successfully saved data for user: \(user.parkrunID)")
+                    print("DEBUG - Final saved values:")
+                    print("  - Name: '\(user.name)'")
+                    print("  - TotalParkruns: '\(user.totalParkruns ?? "nil")'")
+                    print("  - LastDate: '\(user.lastParkrunDate ?? "nil")'")
+                    print("  - LastTime: '\(user.lastParkrunTime ?? "nil")'")
+                    print("  - LastEvent: '\(user.lastParkrunEvent ?? "nil")'")
+                    print("  - LastEventURL: '\(user.lastParkrunEventURL ?? "nil")'")
                 } catch {
-                    print("Failed to save updated data for user \(user.parkrunID): \(error)")
+                    print("DEBUG - Failed to save updated data for user \(user.parkrunID): \(error)")
                 }
             }
         }.resume()

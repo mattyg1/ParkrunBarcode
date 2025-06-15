@@ -1027,18 +1027,18 @@ struct MeTabView: View {
             print("DEBUG - Failed to create name regex")
         }
         
-        // Extract total parkruns from h3 tag: <h3>279 parkruns total</h3>
-        // Try simpler pattern first
-        if let totalRegex = try? NSRegularExpression(pattern: #"(\d+)\s+parkruns?\s+total"#, options: [.caseInsensitive]) {
+        // Extract total parkruns from h3 tag: <h3>279 parkruns total</h3> or <h3>50 parkruns & 1 junior parkrun total</h3>
+        // Use pattern that handles both regular and junior parkrun cases
+        if let totalRegex = try? NSRegularExpression(pattern: #"(\d+)\s+parkruns?(?:\s+&\s+\d+\s+junior\s+parkrun)?\s+total"#, options: [.caseInsensitive]) {
             let totalMatches = totalRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = totalMatches.first, let totalRange = Range(match.range(at: 1), in: html) {
                 totalRuns = String(html[totalRange])
-                print("DEBUG - Extracted totalRuns: '\(totalRuns ?? "nil")' using simple pattern")
+                print("DEBUG - Extracted totalRuns: '\(totalRuns ?? "nil")' using improved pattern")
             } else {
-                print("DEBUG - No total parkruns match found with simple pattern")
+                print("DEBUG - No total parkruns match found with improved pattern")
             }
         } else {
-            print("DEBUG - Failed to create simple total regex")
+            print("DEBUG - Failed to create improved total regex")
         }
         
         // Look for event name in first <td><a> combination  
