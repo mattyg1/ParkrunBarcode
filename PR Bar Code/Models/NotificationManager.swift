@@ -142,7 +142,12 @@ class NotificationManager: ObservableObject {
     func scheduleBackgroundResultCheck(for parkrunID: String, lastKnownDate: String) {
         // Schedule a notification to remind user to check for new results
         // This will trigger on Sunday evening when results are typically published
-        guard hasPermission else { return }
+        guard hasPermission else {
+            print("DEBUG: Cannot schedule result check - no permission")
+            return
+        }
+        
+        print("DEBUG: Scheduling result check for parkrun ID: \(parkrunID), last date: \(lastKnownDate)")
         
         let content = UNMutableNotificationContent()
         content.title = "5K QR Code"
@@ -165,11 +170,14 @@ class NotificationManager: ObservableObject {
             trigger: trigger
         )
         
+        // Remove any existing notifications for this parkrun ID first
+        cancelResultNotifications(for: parkrunID)
+        
         UNUserNotificationCenter.current().add(request) { error in
             if let error = error {
-                print("Failed to schedule background result check: \(error)")
+                print("DEBUG: Failed to schedule background result check: \(error)")
             } else {
-                print("Background result check scheduled for parkrun ID: \(parkrunID)")
+                print("DEBUG: Background result check scheduled successfully for parkrun ID: \(parkrunID)")
             }
         }
     }
@@ -179,12 +187,12 @@ class NotificationManager: ObservableObject {
     func cancelAllNotifications() {
         UNUserNotificationCenter.current().removeAllPendingNotificationRequests()
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
-        print("All notifications cancelled")
+        print("DEBUG: All notifications cancelled")
     }
     
     func cancelSaturdayReminders() {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: ["saturday-reminder"])
-        print("Saturday reminders cancelled")
+        print("DEBUG: Saturday reminders cancelled")
     }
     
     func cancelResultNotifications(for parkrunID: String) {
@@ -193,13 +201,15 @@ class NotificationManager: ObservableObject {
             "background-result-check-\(parkrunID)"
         ]
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: identifiers)
-        print("Result notifications cancelled for parkrun ID: \(parkrunID)")
+        print("DEBUG: Result notifications cancelled for parkrun ID: \(parkrunID)")
     }
     
     // MARK: - Utility Functions
     
     func getPendingNotifications() async -> [UNNotificationRequest] {
-        return await UNUserNotificationCenter.current().pendingNotificationRequests()
+        let notifications = await UNUserNotificationCenter.current().pendingNotificationRequests()
+        print("DEBUG: Found \(notifications.count) pending notifications")
+        return notifications
     }
     
     func enableNotifications() {
@@ -207,6 +217,9 @@ class NotificationManager: ObservableObject {
             let granted = await requestNotificationPermission()
             if granted {
                 scheduleSaturdayReminders()
+                // Get all pending notifications to verify
+                let pending = await getPendingNotifications()
+                print("DEBUG: After enabling notifications, found \(pending.count) pending notifications")
             }
         }
     }

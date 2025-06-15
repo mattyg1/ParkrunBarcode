@@ -302,15 +302,33 @@ struct SettingsTabView: View {
     }
     
     private func setupNotificationsForAllUsers() {
-        // This function would set up notifications for all users
-        // For now, we'll just trigger Saturday reminders
         guard notificationManager.hasPermission else { return }
         
         if notificationManager.isNotificationsEnabled {
+            // Schedule Saturday reminders
             notificationManager.scheduleSaturdayReminders()
+            
+            // Get all users from SwiftData and set up their result notifications
+            Task {
+                let descriptor = FetchDescriptor<ParkrunInfo>()
+                if let users = try? modelContext.fetch(descriptor) {
+                    for user in users {
+                        if let lastDate = user.lastParkrunDate, !lastDate.isEmpty {
+                            notificationManager.scheduleBackgroundResultCheck(
+                                for: user.parkrunID,
+                                lastKnownDate: lastDate
+                            )
+                        }
+                    }
+                }
+                
+                // Verify notifications were scheduled
+                let pending = await notificationManager.getPendingNotifications()
+                print("DEBUG: After setting up all notifications, found \(pending.count) pending notifications")
+            }
         }
         
-        print("Notifications set up for all users")
+        print("DEBUG: Notifications set up for all users")
     }
 }
 

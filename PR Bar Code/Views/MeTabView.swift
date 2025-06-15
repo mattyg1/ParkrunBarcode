@@ -787,14 +787,26 @@ struct MeTabView: View {
     }
     
     private func setupNotificationsForCurrentUser() {
-        guard notificationManager.hasPermission, !inputText.isEmpty else { return }
+        guard notificationManager.hasPermission, !inputText.isEmpty else {
+            print("DEBUG: Cannot set up notifications - missing permission or parkrun ID")
+            return
+        }
+        
+        print("DEBUG: Setting up notifications for user: \(name.isEmpty ? inputText : name)")
         
         // Schedule result check notifications if we have parkrun data
         if !lastParkrunDate.isEmpty {
+            print("DEBUG: Scheduling result check with last date: \(lastParkrunDate)")
             notificationManager.scheduleBackgroundResultCheck(for: inputText, lastKnownDate: lastParkrunDate)
+        } else {
+            print("DEBUG: No last parkrun date available for result notifications")
         }
         
-        print("Notifications set up for user: \(name.isEmpty ? inputText : name)")
+        // Verify notifications were scheduled
+        Task {
+            let pending = await notificationManager.getPendingNotifications()
+            print("DEBUG: After setting up notifications, found \(pending.count) pending notifications")
+        }
     }
     
     private func openEventResults() {
