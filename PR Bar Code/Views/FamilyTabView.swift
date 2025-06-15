@@ -24,7 +24,7 @@ struct FamilyTabView: View {
     
     var body: some View {
         NavigationView {
-            VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 20) {
                 if parkrunInfoList.isEmpty {
                     // Empty state
                     VStack(spacing: 20) {
@@ -59,31 +59,40 @@ struct FamilyTabView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color(.systemGroupedBackground))
                 } else {
-                    // Results table
-                    List {
-                        ForEach(availableUsers, id: \.parkrunID) { user in
-                            FamilyUserCard(
-                                user: user,
-                                onTapQR: {
-                                    selectedUserForQR = user
-                                },
-                                onDelete: {
-                                    deleteUser(user)
-                                },
-                                onSetDefault: {
-                                    setDefaultUser(user)
-                                },
-                                canDelete: parkrunInfoList.count > 1
-                            )
-                            .listRowBackground(Color.clear)
-                            .listRowSeparator(.hidden)
-                            .listRowInsets(EdgeInsets(top: 4, leading: 16, bottom: 4, trailing: 16))
+                    // Family & Friends Card
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("Family & Friends")
+                            .font(.title2)
+                            .fontWeight(.bold)
+                            .foregroundColor(.adaptiveParkrunGreen)
+                        
+                        // Results table
+                        VStack(spacing: 8) {
+                            ForEach(availableUsers, id: \.parkrunID) { user in
+                                FamilyUserCard(
+                                    user: user,
+                                    onTapQR: {
+                                        selectedUserForQR = user
+                                    },
+                                    onDelete: {
+                                        deleteUser(user)
+                                    },
+                                    onSetDefault: {
+                                        setDefaultUser(user)
+                                    },
+                                    canDelete: parkrunInfoList.count > 1
+                                )
+                            }
                         }
                     }
-                    .listStyle(PlainListStyle())
+                    .cardStyle()
                 }
+                
+                Spacer()
             }
-            .navigationTitle("Family & Friends")
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .padding()
+            .background(Color(.systemGroupedBackground))
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     HStack {
