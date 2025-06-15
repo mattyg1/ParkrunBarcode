@@ -8,7 +8,7 @@
 import Testing
 import Foundation
 import UserNotifications
-@testable import PR_Bar_Code
+@testable import FiveKQRCode
 
 @MainActor
 struct NotificationManagerTests {

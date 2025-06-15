@@ -48,6 +48,12 @@ Until the scheme is configured, tests can be run manually in Xcode:
 3. Click the diamond icon next to test functions
 4. Or press `Cmd+U` to run all tests
 
+## ✅ FIXED: Import Issues Resolved
+
+**Update**: The test import issues have been resolved! The module name has been updated to `FiveKQRCode` to ensure Swift compatibility.
+
+**All test files now use**: `@testable import FiveKQRCode`
+
 ## Expected Test Results
 
 When properly configured, all tests should pass:
@@ -66,4 +72,4 @@ Once the scheme is created, verify with:
 xcodebuild test -project "../PR Bar Code.xcodeproj" -scheme "5K QR CodeTests" -destination "platform=iOS Simulator,name=iPhone 16,OS=latest"
 ```
 
-This should run all tests and show successful results.
+✅ **Build Status**: Main app now builds successfully with `FiveKQRCode` module name.

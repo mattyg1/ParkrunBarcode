@@ -639,6 +639,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.prbarcode.app.PR-Bar-Code";
+				PRODUCT_MODULE_NAME = FiveKQRCode;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
@@ -678,6 +679,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.1;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.prbarcode.app.PR-Bar-Code";
+				PRODUCT_MODULE_NAME = FiveKQRCode;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = auto;
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
@@ -706,7 +708,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PR Bar Code.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PR Bar Code";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/5K QR Code.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/5K QR Code";
 				XROS_DEPLOYMENT_TARGET = 2.1;
 			};
 			name = Debug;
@@ -729,7 +731,7 @@
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/PR Bar Code.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/PR Bar Code";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/5K QR Code.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/5K QR Code";
 				XROS_DEPLOYMENT_TARGET = 2.1;
 			};
 			name = Release;

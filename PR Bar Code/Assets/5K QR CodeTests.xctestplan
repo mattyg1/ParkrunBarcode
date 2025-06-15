@@ -1,0 +1,24 @@
+{
+  "configurations" : [
+    {
+      "id" : "4D87A2A3-99A6-4FE7-A792-02475CA07C53",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:PR Bar Code.xcodeproj",
+        "identifier" : "C9648A282D0DAFDA00D43D7F",
+        "name" : "5K QR CodeTests"
+      }
+    }
+  ],
+  "version" : 1
+}

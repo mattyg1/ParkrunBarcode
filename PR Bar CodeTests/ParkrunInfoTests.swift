@@ -7,7 +7,7 @@
 
 import Testing
 import Foundation
-@testable import PR_Bar_Code
+@testable import FiveKQRCode
 
 struct ParkrunInfoTests {
     
