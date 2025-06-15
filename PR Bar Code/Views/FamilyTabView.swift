@@ -657,13 +657,16 @@ struct FamilyUserCard: View {
                     }
                 }
                 
-                // QR button
-                Button(action: onTapQR) {
-                    Image(systemName: "qrcode")
-                        .font(.title2)
-                        .foregroundColor(.adaptiveParkrunGreen)
+                // QR button - aligned with Time column
+                VStack(spacing: 2) {
+                    Button(action: onTapQR) {
+                        Image(systemName: "qrcode")
+                            .font(.title2)
+                            .foregroundColor(.adaptiveParkrunGreen)
+                    }
+                    .buttonStyle(PlainButtonStyle())
                 }
-                .buttonStyle(PlainButtonStyle())
+                .frame(width: 60, alignment: .center)
             }
             
             // Data row - event, date, time
