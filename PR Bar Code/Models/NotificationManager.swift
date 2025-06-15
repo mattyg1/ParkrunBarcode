@@ -226,6 +226,9 @@ class NotificationDelegate: NSObject, UNUserNotificationCenterDelegate {
         
         let userInfo = response.notification.request.content.userInfo
         
+        // Clear the badge count when notification is handled
+        UIApplication.shared.applicationIconBadgeNumber = 0
+        
         if let type = userInfo["type"] as? String {
             switch type {
             case "result-check", "background-check":
