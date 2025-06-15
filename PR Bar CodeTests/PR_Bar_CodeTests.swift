@@ -6,6 +6,8 @@
 //
 
 import Testing
+import Foundation
+@testable import PR_Bar_Code
 
 struct PR_Bar_CodeTests {
 
