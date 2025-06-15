@@ -9,6 +9,12 @@ import SwiftUI
 import SwiftData
 import CoreImage.CIFilterBuiltins
 
+enum SortOption: String, CaseIterable {
+    case date = "Date"
+    case alphabetical = "Alphabetical"
+    case time = "Time"
+}
+
 struct FamilyTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var parkrunInfoList: [ParkrunInfo]
@@ -17,9 +23,90 @@ struct FamilyTabView: View {
     @State private var showAddUser = false
     @State private var showUserSelection = false
     @State private var selectedUserForQR: ParkrunInfo?
+    @State private var selectedSortOption: SortOption = .date
+    @State private var defaultUserFirst: Bool = true
     
     private var availableUsers: [ParkrunInfo] {
-        parkrunInfoList.sorted { $0.createdDate < $1.createdDate }
+        switch selectedSortOption {
+        case .date:
+            return parkrunInfoList.sorted { user1, user2 in
+                // Default user first (if enabled)
+                if defaultUserFirst {
+                    if user1.isDefault && !user2.isDefault { return true }
+                    if !user1.isDefault && user2.isDefault { return false }
+                }
+                
+                // Sort by last parkrun date (newest first)
+                let date1 = user1.lastParkrunDate ?? ""
+                let date2 = user2.lastParkrunDate ?? ""
+                if date1 != date2 {
+                    // Convert DD/MM/YYYY to comparable format for proper date sorting
+                    let dateFormatter = DateFormatter()
+                    dateFormatter.dateFormat = "dd/MM/yyyy"
+                    let parsedDate1 = dateFormatter.date(from: date1)
+                    let parsedDate2 = dateFormatter.date(from: date2)
+                    
+                    if let d1 = parsedDate1, let d2 = parsedDate2 {
+                        return d1 > d2 // Newer dates first
+                    } else {
+                        return date1 > date2 // Fallback to string comparison
+                    }
+                }
+                
+                // Secondary sort: alphabetical by name
+                return user1.displayName.localizedCaseInsensitiveCompare(user2.displayName) == .orderedAscending
+            }
+            
+        case .alphabetical:
+            return parkrunInfoList.sorted { user1, user2 in
+                // Default user first (if enabled)
+                if defaultUserFirst {
+                    if user1.isDefault && !user2.isDefault { return true }
+                    if !user1.isDefault && user2.isDefault { return false }
+                }
+                
+                // Sort alphabetically by name
+                let name1 = user1.displayName
+                let name2 = user2.displayName
+                if name1 != name2 {
+                    return name1.localizedCaseInsensitiveCompare(name2) == .orderedAscending
+                }
+                
+                // Secondary sort: date (newest first)
+                let date1 = user1.lastParkrunDate ?? ""
+                let date2 = user2.lastParkrunDate ?? ""
+                // Convert DD/MM/YYYY to comparable format for proper date sorting
+                let dateFormatter = DateFormatter()
+                dateFormatter.dateFormat = "dd/MM/yyyy"
+                let parsedDate1 = dateFormatter.date(from: date1)
+                let parsedDate2 = dateFormatter.date(from: date2)
+                
+                if let d1 = parsedDate1, let d2 = parsedDate2 {
+                    return d1 > d2 // Newer dates first
+                } else {
+                    return date1 > date2 // Fallback to string comparison
+                }
+            }
+            
+        case .time:
+            return parkrunInfoList.sorted { user1, user2 in
+                // Default user first (if enabled)
+                if defaultUserFirst {
+                    if user1.isDefault && !user2.isDefault { return true }
+                    if !user1.isDefault && user2.isDefault { return false }
+                }
+                
+                // Sort by last parkrun time (fastest first)
+                let time1 = user1.lastParkrunTime ?? "99:99"
+                let time2 = user2.lastParkrunTime ?? "99:99"
+                if time1 != time2 {
+                    return time1.localizedCaseInsensitiveCompare(time2) == .orderedAscending
+                }
+                
+                // Secondary sort: alphabetical by name
+                return user1.displayName.localizedCaseInsensitiveCompare(user2.displayName) == .orderedAscending
+            }
+        }
     }
     
     var body: some View {
@@ -61,10 +148,64 @@ struct FamilyTabView: View {
                 } else {
                     // Family & Friends Card
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Family & Friends")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.adaptiveParkrunGreen)
+                        HStack {
+                            Text("Family & Friends")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.adaptiveParkrunGreen)
+                            
+                            Spacer()
+                            
+                            // Sort options
+                            HStack(spacing: 12) {
+                                // Default user first toggle
+                                Button(action: {
+                                    defaultUserFirst.toggle()
+                                }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: defaultUserFirst ? "star.fill" : "star")
+                                            .font(.caption)
+                                            .foregroundColor(defaultUserFirst ? .orange : .secondary)
+                                        Text("Default First")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color(.tertiarySystemBackground))
+                                    .cornerRadius(6)
+                                }
+                                
+                                // Sort dropdown
+                                Menu {
+                                    ForEach(SortOption.allCases, id: \.self) { option in
+                                        Button(action: {
+                                            selectedSortOption = option
+                                        }) {
+                                            HStack {
+                                                Text(option.rawValue)
+                                                if selectedSortOption == option {
+                                                    Image(systemName: "checkmark")
+                                                }
+                                            }
+                                        }
+                                    }
+                                } label: {
+                                    HStack(spacing: 4) {
+                                        Text("Sort: \(selectedSortOption.rawValue)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Image(systemName: "chevron.down")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                    }
+                                    .padding(.horizontal, 8)
+                                    .padding(.vertical, 4)
+                                    .background(Color(.tertiarySystemBackground))
+                                    .cornerRadius(6)
+                                }
+                            }
+                        }
                         
                         // Results table
                         VStack(spacing: 8) {
@@ -84,6 +225,9 @@ struct FamilyTabView: View {
                                 )
                             }
                         }
+                        .id("\(selectedSortOption.rawValue)-\(defaultUserFirst)")
+                        .animation(.easeInOut(duration: 0.2), value: defaultUserFirst)
+                        .animation(.easeInOut(duration: 0.2), value: selectedSortOption)
                     }
                     .cardStyle()
                 }
@@ -513,13 +657,14 @@ struct FamilyUserCard: View {
                     }
                 }
                 
-                // QR button
+                // QR button - vertically centered
                 Button(action: onTapQR) {
                     Image(systemName: "qrcode")
                         .font(.title2)
                         .foregroundColor(.adaptiveParkrunGreen)
                 }
                 .buttonStyle(PlainButtonStyle())
+                .frame(width: 60, alignment: .center)
             }
             
             // Data row - event, date, time
