@@ -477,13 +477,15 @@ struct FamilyUserCard: View {
                             Text(lastDate)
                                 .font(.caption)
                                 .foregroundColor(.primary)
+                                .fixedSize(horizontal: true, vertical: false)
+                                .lineLimit(1)
                         } else {
                             Text("—")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }
                     }
-                    .frame(width: 80, alignment: .center)
+                    .frame(minWidth: 80, maxWidth: 100, alignment: .center)
                     
                     // Time
                     VStack(alignment: .center, spacing: 2) {
