@@ -331,19 +331,23 @@ struct FamilyTabView: View {
         var lastEvent: String?
         var lastEventURL: String?
         
+        print("DEBUG - Starting HTML parsing, HTML length: \(html.count)")
+        
         // Extract runner name from h2 tag
         if let nameRegex = try? NSRegularExpression(pattern: #"<h2>([^<]+?)\s*<span[^>]*title="parkrun ID"[^>]*>"#, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
             let nameMatches = nameRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = nameMatches.first, let nameRange = Range(match.range(at: 1), in: html) {
                 name = String(html[nameRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                print("DEBUG - Extracted name: '\(name ?? "nil")'")
             }
         }
         
         // Extract total parkruns
-        if let totalRegex = try? NSRegularExpression(pattern: #"(\d+)\s+parkruns?\s+total"#, options: [.caseInsensitive]) {
+        if let totalRegex = try? NSRegularExpression(pattern: #"(\d+)\s+parkruns?(?:\s+&\s+\d+\s+junior\s+parkrun)?\s+total"#, options: [.caseInsensitive]) {
             let totalMatches = totalRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = totalMatches.first, let totalRange = Range(match.range(at: 1), in: html) {
                 totalRuns = String(html[totalRange])
+                print("DEBUG - Extracted totalRuns: '\(totalRuns ?? "nil")'")
             }
         }
         
@@ -352,6 +356,7 @@ struct FamilyTabView: View {
             let eventMatches = eventRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = eventMatches.first, let eventRange = Range(match.range(at: 1), in: html) {
                 lastEvent = String(html[eventRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                print("DEBUG - Extracted lastEvent: '\(lastEvent ?? "nil")'")
             }
         }
         
@@ -360,6 +365,7 @@ struct FamilyTabView: View {
             let dateMatches = dateRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = dateMatches.first, let dateRange = Range(match.range(at: 1), in: html) {
                 lastDate = String(html[dateRange])
+                print("DEBUG - Extracted lastDate: '\(lastDate ?? "nil")'")
             }
         }
         
@@ -368,18 +374,42 @@ struct FamilyTabView: View {
             let timeMatches = timeRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = timeMatches.first, let timeRange = Range(match.range(at: 1), in: html) {
                 lastTime = String(html[timeRange])
+                print("DEBUG - Extracted lastTime: '\(lastTime ?? "nil")'")
             }
         }
         
-        // Look for event results URL
-        if let eventURLRegex = try? NSRegularExpression(pattern: #"<td><a href="(https://www\.parkrun\.(?:org\.uk|com|us|au|org\.nz|co\.za|it|se|dk|pl|ie|ca|fi|fr|sg|de|no|ru|my)/[^/]+/results/\d+/)"[^>]*>\d{2}/\d{2}/\d{4}</a></td>"#, options: [.caseInsensitive]) {
-            let urlMatches = eventURLRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+        // Look for event URL
+        if let urlRegex = try? NSRegularExpression(pattern: #"<td><a href="(https://www\.parkrun\.(?:org\.uk|com|us|au|org\.nz|co\.za|it|se|dk|pl|ie|ca|fi|fr|sg|de|no|ru|my)/[^/]+/results/\d+/)"[^>]*>(?:[^<]+|\d{2}/\d{2}/\d{4})</a></td>"#, options: [.caseInsensitive]) {
+            let urlMatches = urlRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
             if let match = urlMatches.first, let urlRange = Range(match.range(at: 1), in: html) {
                 lastEventURL = String(html[urlRange])
+                print("DEBUG - Extracted lastEventURL: '\(lastEventURL ?? "nil")'")
             }
         }
         
-        return (name: name, totalRuns: totalRuns, lastDate: lastDate, lastTime: lastTime, lastEvent: lastEvent, lastEventURL: lastEventURL)
+        // If we're missing any data, try the complex table pattern as fallback
+        if lastEvent == nil || lastDate == nil || lastTime == nil {
+            print("DEBUG - Trying complex table pattern as fallback")
+            if let recentRegex = try? NSRegularExpression(pattern: #"<td><a href="[^"]*"[^>]*>([^<]+)</a></td><td><a href="[^"]*results/\d+/"[^>]*>(\d{2}/\d{2}/\d{4})</a></td><td>\d+</td><td>\d+</td><td>([^<]+)</td>"#, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+                let recentMatches = recentRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                if let match = recentMatches.first {
+                    if lastEvent == nil, let eventRange = Range(match.range(at: 1), in: html) {
+                        lastEvent = String(html[eventRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        print("DEBUG - Extracted lastEvent: '\(lastEvent ?? "nil")' using complex pattern")
+                    }
+                    if lastDate == nil, let dateRange = Range(match.range(at: 2), in: html) {
+                        lastDate = String(html[dateRange])
+                        print("DEBUG - Extracted lastDate: '\(lastDate ?? "nil")' using complex pattern")
+                    }
+                    if lastTime == nil, let timeRange = Range(match.range(at: 3), in: html) {
+                        lastTime = String(html[timeRange])
+                        print("DEBUG - Extracted lastTime: '\(lastTime ?? "nil")' using complex pattern")
+                    }
+                }
+            }
+        }
+        
+        return (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL)
     }
 }
 
