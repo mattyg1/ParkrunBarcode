@@ -9,6 +9,12 @@ import SwiftUI
 import SwiftData
 import CoreImage.CIFilterBuiltins
 
+enum SortOption: String, CaseIterable {
+    case date = "Date"
+    case alphabetical = "Alphabetical"
+    case time = "Time"
+}
+
 struct FamilyTabView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var parkrunInfoList: [ParkrunInfo]
@@ -17,9 +23,65 @@ struct FamilyTabView: View {
     @State private var showAddUser = false
     @State private var showUserSelection = false
     @State private var selectedUserForQR: ParkrunInfo?
+    @State private var selectedSortOption: SortOption = .date
     
     private var availableUsers: [ParkrunInfo] {
-        parkrunInfoList.sorted { $0.createdDate < $1.createdDate }
+        let defaultUser = parkrunInfoList.first(where: { $0.isDefault })
+        
+        switch selectedSortOption {
+        case .date:
+            return parkrunInfoList.sorted { user1, user2 in
+                // Default user first
+                if user1.isDefault && !user2.isDefault { return true }
+                if !user1.isDefault && user2.isDefault { return false }
+                
+                // Sort by last parkrun date (newest first)
+                let date1 = user1.lastParkrunDate ?? ""
+                let date2 = user2.lastParkrunDate ?? ""
+                if date1 != date2 {
+                    return date1 > date2
+                }
+                
+                // Secondary sort: alphabetical by name
+                return user1.displayName.localizedCaseInsensitiveCompare(user2.displayName) == .orderedAscending
+            }
+            
+        case .alphabetical:
+            return parkrunInfoList.sorted { user1, user2 in
+                // Default user first
+                if user1.isDefault && !user2.isDefault { return true }
+                if !user1.isDefault && user2.isDefault { return false }
+                
+                // Sort alphabetically by name
+                let name1 = user1.displayName
+                let name2 = user2.displayName
+                if name1 != name2 {
+                    return name1.localizedCaseInsensitiveCompare(name2) == .orderedAscending
+                }
+                
+                // Secondary sort: date (newest first)
+                let date1 = user1.lastParkrunDate ?? ""
+                let date2 = user2.lastParkrunDate ?? ""
+                return date1 > date2
+            }
+            
+        case .time:
+            return parkrunInfoList.sorted { user1, user2 in
+                // Default user first
+                if user1.isDefault && !user2.isDefault { return true }
+                if !user1.isDefault && user2.isDefault { return false }
+                
+                // Sort by last parkrun time (fastest first)
+                let time1 = user1.lastParkrunTime ?? "99:99"
+                let time2 = user2.lastParkrunTime ?? "99:99"
+                if time1 != time2 {
+                    return time1.localizedCaseInsensitiveCompare(time2) == .orderedAscending
+                }
+                
+                // Secondary sort: alphabetical by name
+                return user1.displayName.localizedCaseInsensitiveCompare(user2.displayName) == .orderedAscending
+            }
+        }
     }
     
     var body: some View {
@@ -61,10 +123,43 @@ struct FamilyTabView: View {
                 } else {
                     // Family & Friends Card
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Family & Friends")
-                            .font(.title2)
-                            .fontWeight(.bold)
-                            .foregroundColor(.adaptiveParkrunGreen)
+                        HStack {
+                            Text("Family & Friends")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.adaptiveParkrunGreen)
+                            
+                            Spacer()
+                            
+                            // Sort dropdown
+                            Menu {
+                                ForEach(SortOption.allCases, id: \.self) { option in
+                                    Button(action: {
+                                        selectedSortOption = option
+                                    }) {
+                                        HStack {
+                                            Text(option.rawValue)
+                                            if selectedSortOption == option {
+                                                Image(systemName: "checkmark")
+                                            }
+                                        }
+                                    }
+                                }
+                            } label: {
+                                HStack(spacing: 4) {
+                                    Text("Sort: \(selectedSortOption.rawValue)")
+                                        .font(.caption)
+                                        .foregroundColor(.secondary)
+                                    Image(systemName: "chevron.down")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 4)
+                                .background(Color(.tertiarySystemBackground))
+                                .cornerRadius(6)
+                            }
+                        }
                         
                         // Results table
                         VStack(spacing: 8) {
