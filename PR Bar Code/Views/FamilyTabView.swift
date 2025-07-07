@@ -430,7 +430,9 @@ struct FamilyTabView: View {
                 return
             }
             
-            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 {
+            // Accept both HTTP 200 (OK) and 202 (Accepted) responses
+            // HTTP 202 is returned by AWS WAF when challenge action is triggered (e.g., VPN usage)
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode != 200 && httpResponse.statusCode != 202 {
                 print("HTTP Error for \(user.parkrunID): \(httpResponse.statusCode)")
                 return
             }
