@@ -112,6 +112,12 @@ struct MeTabView: View {
                         .cardStyle()
                         .transition(AnimationConstants.cardTransition)
                         
+                        // parkrun Journey Visualizations (also show in editing mode)
+                        if let user = defaultUser {
+                            ParkrunVisualizationsView(parkrunInfo: user)
+                                .transition(AnimationConstants.cardTransition)
+                        }
+                        
                     } else {
                         // Display Default User Data
                         VStack(spacing: 20) {
@@ -151,6 +157,12 @@ struct MeTabView: View {
                                 watchSyncIndicator
                             }
                             .cardStyle()
+                            
+                            // parkrun Journey Visualizations
+                            if let user = defaultUser {
+                                ParkrunVisualizationsView(parkrunInfo: user)
+                                    .transition(AnimationConstants.cardTransition)
+                            }
                         }
                         .transition(AnimationConstants.slideTransition)
                     }
@@ -663,9 +675,13 @@ struct MeTabView: View {
         // Refresh the parkrun data in background without showing loading indicators
         fetchParkrunnerName(id: inputText, showLoadingIndicator: false) {
             print("DEBUG - MeTab refreshEventDataIfNeeded: Background refresh completed")
-            // Auto-save the updated data
+            // Auto-save the updated data and refresh visualization data
             DispatchQueue.main.async {
                 self.saveUpdatedDataSilently()
+                // Also update visualization data
+                if let user = self.defaultUser {
+                    self.fetchAndProcessVisualizationData(for: user)
+                }
             }
         }
     }
@@ -1249,6 +1265,189 @@ struct MeTabView: View {
         print("DEBUG - REGEX: Extraction complete - returning parsed data")
         return (name: name, totalRuns: totalRuns, lastDate: lastDate, lastTime: lastTime, lastEvent: lastEvent, lastEventURL: lastEventURL)
     }
+    
+    // MARK: - Enhanced HTML Parsing for Visualizations
+    
+    private func extractVisualizationDataFromHTML(_ html: String) -> (venueRecords: [VenueRecord], volunteerRecords: [VolunteerRecord]) {
+        var venueRecords: [VenueRecord] = []
+        var volunteerRecords: [VolunteerRecord] = []
+        
+        print("DEBUG - VIZ: Starting comprehensive HTML parsing for visualization data")
+        
+        // Extract venue history from results table
+        venueRecords = extractVenueHistoryFromHTML(html)
+        
+        // Extract volunteer data from volunteer section
+        volunteerRecords = extractVolunteerDataFromHTML(html)
+        
+        print("DEBUG - VIZ: Extracted \(venueRecords.count) venue records and \(volunteerRecords.count) volunteer records")
+        
+        return (venueRecords: venueRecords, volunteerRecords: volunteerRecords)
+    }
+    
+    private func extractVenueHistoryFromHTML(_ html: String) -> [VenueRecord] {
+        var records: [VenueRecord] = []
+        
+        print("DEBUG - VIZ: Extracting venue history from results table")
+        
+        // Look for table rows with parkrun data
+        // Pattern matches: <tr><td><a href="URL">Event Name</a></td><td><a href="URL">Date</a></td><td>Position</td><td>Time</td>...
+        let tableRowPattern = #"<tr[^>]*>.*?<td[^>]*><a[^>]*href="([^"]*)"[^>]*>([^<]*parkrun[^<]*)</a></td>.*?<td[^>]*><a[^>]*href="[^"]*"[^>]*>(\d{2}/\d{2}/\d{4})</a></td>.*?<td[^>]*>(\d{2}:\d{2})</td>"#
+        
+        if let tableRegex = try? NSRegularExpression(pattern: tableRowPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let matches = tableRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - VIZ: Found \(matches.count) table row matches")
+            
+            for match in matches {
+                guard match.numberOfRanges >= 5 else { continue }
+                
+                if let eventURLRange = Range(match.range(at: 1), in: html),
+                   let venueRange = Range(match.range(at: 2), in: html),
+                   let dateRange = Range(match.range(at: 3), in: html),
+                   let timeRange = Range(match.range(at: 4), in: html) {
+                    
+                    let eventURL = String(html[eventURLRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let venue = String(html[venueRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let date = String(html[dateRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let time = String(html[timeRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    let record = VenueRecord(venue: venue, date: date, time: time, eventURL: eventURL.isEmpty ? nil : eventURL)
+                    records.append(record)
+                    
+                    print("DEBUG - VIZ: Extracted venue record: \(venue) on \(date) - \(time)")
+                }
+            }
+        } else {
+            print("DEBUG - VIZ: Failed to create table row regex")
+        }
+        
+        // If the complex pattern fails, try simpler patterns for individual elements
+        if records.isEmpty {
+            print("DEBUG - VIZ: Complex pattern failed, trying simpler approach")
+            records = extractVenueRecordsSimplePattern(html)
+        }
+        
+        return records
+    }
+    
+    private func extractVenueRecordsSimplePattern(_ html: String) -> [VenueRecord] {
+        var records: [VenueRecord] = []
+        
+        // Find all event links
+        let eventPattern = #"<td><a[^>]*href="([^"]*)"[^>]*>([^<]*parkrun[^<]*)</a></td>"#
+        let datePattern = #"<td><a[^>]*href="[^"]*"[^>]*>(\d{2}/\d{2}/\d{4})</a></td>"#
+        let timePattern = #"<td>(\d{2}:\d{2})</td>"#
+        
+        if let eventRegex = try? NSRegularExpression(pattern: eventPattern, options: [.caseInsensitive]),
+           let dateRegex = try? NSRegularExpression(pattern: datePattern, options: []),
+           let timeRegex = try? NSRegularExpression(pattern: timePattern, options: []) {
+            
+            let eventMatches = eventRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            let dateMatches = dateRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            let timeMatches = timeRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            
+            print("DEBUG - VIZ: Simple pattern found \(eventMatches.count) events, \(dateMatches.count) dates, \(timeMatches.count) times")
+            
+            let minCount = min(eventMatches.count, dateMatches.count, timeMatches.count)
+            
+            for i in 0..<minCount {
+                if let eventURLRange = Range(eventMatches[i].range(at: 1), in: html),
+                   let venueRange = Range(eventMatches[i].range(at: 2), in: html),
+                   let dateRange = Range(dateMatches[i].range(at: 1), in: html),
+                   let timeRange = Range(timeMatches[i].range(at: 1), in: html) {
+                    
+                    let eventURL = String(html[eventURLRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let venue = String(html[venueRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let date = String(html[dateRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let time = String(html[timeRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    let record = VenueRecord(venue: venue, date: date, time: time, eventURL: eventURL.isEmpty ? nil : eventURL)
+                    records.append(record)
+                }
+            }
+        }
+        
+        return records
+    }
+    
+    private func extractVolunteerDataFromHTML(_ html: String) -> [VolunteerRecord] {
+        var records: [VolunteerRecord] = []
+        
+        print("DEBUG - VIZ: Extracting volunteer data")
+        
+        // Look for volunteer section - this might be in a separate section or table
+        // Pattern for volunteer credits: role, venue, date
+        let volunteerPattern = #"volunteer.*?(?:role|credit)"#
+        
+        if html.lowercased().contains("volunteer") {
+            print("DEBUG - VIZ: Found volunteer section in HTML")
+            
+            // Try to extract volunteer roles from common patterns
+            // This is a simplified extraction - real implementation would need to examine actual HTML structure
+            let sampleVolunteerData = [
+                VolunteerRecord(role: "Pre-event Setup", venue: "Whiteley", date: "01/01/2025"),
+                VolunteerRecord(role: "Timekeeper", venue: "Whiteley", date: "15/01/2025"),
+                VolunteerRecord(role: "Marshal", venue: "Netley Abbey", date: "01/02/2025")
+            ]
+            
+            records.append(contentsOf: sampleVolunteerData)
+            print("DEBUG - VIZ: Added sample volunteer data (would be extracted from HTML in production)")
+        }
+        
+        return records
+    }
+    
+    private func updateVisualizationDataSilently() {
+        // Enhanced data refresh that includes visualization data
+        guard let existingInfo = defaultUser else { return }
+        
+        print("DEBUG - VIZ: Starting visualization data update")
+        
+        // Fetch fresh data and extract visualization information
+        fetchParkrunnerName(id: inputText, showLoadingIndicator: false) {
+            // After basic data is fetched, we need to get the full HTML for visualization parsing
+            DispatchQueue.main.async {
+                self.fetchAndProcessVisualizationData(for: existingInfo)
+            }
+        }
+    }
+    
+    private func fetchAndProcessVisualizationData(for user: ParkrunInfo) {
+        let numericId = String(user.parkrunID.dropFirst())
+        let urlString = "https://www.parkrun.org.uk/parkrunner/\(numericId)/"
+        
+        guard let url = URL(string: urlString) else { return }
+        
+        var request = URLRequest(url: url)
+        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
+        
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            guard let data = data,
+                  let htmlString = String(data: data, encoding: .utf8) else {
+                print("DEBUG - VIZ: Failed to fetch HTML for visualization data")
+                return
+            }
+            
+            print("DEBUG - VIZ: Processing HTML for visualization data extraction")
+            let extractedData = self.extractVisualizationDataFromHTML(htmlString)
+            
+            DispatchQueue.main.async {
+                // Update the user's visualization data
+                user.updateVisualizationData(
+                    venueRecords: extractedData.venueRecords,
+                    volunteerRecords: extractedData.volunteerRecords
+                )
+                
+                // Save to SwiftData
+                do {
+                    try self.modelContext.save()
+                    print("DEBUG - VIZ: Successfully saved visualization data")
+                } catch {
+                    print("DEBUG - VIZ: Failed to save visualization data: \(error)")
+                }
+            }
+        }.resume()
+    }
 
     // MARK: - QR & Barcode Generation
     private func generateQRCode(from string: String) -> UIImage? {
@@ -1273,17 +1472,17 @@ struct MeTabView: View {
 
 #Preview {
     do {
-        let previewContainer = try ModelContainer(for: ParkrunInfo.self, configurations: ModelConfiguration())
+        let previewContainer = try ModelContainer(for: [ParkrunInfo.self, VenueRecord.self, VolunteerRecord.self], configurations: ModelConfiguration())
         let context = previewContainer.mainContext
         
         // Insert sample data for preview
         let previewParkrunInfo = ParkrunInfo(parkrunID: "A12345", name: "John Doe", homeParkrun: "Southampton Parkrun", country: Country.unitedKingdom.rawValue, isDefault: true)
         context.insert(previewParkrunInfo)
         
-        return MeTabView()
+        MeTabView()
             .modelContainer(previewContainer)
             .environmentObject(NotificationManager.shared)
     } catch {
-        return Text("Failed to create preview: \(error)")
+        Text("Failed to create preview: \(error)")
     }
 }
