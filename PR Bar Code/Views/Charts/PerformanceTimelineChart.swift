@@ -85,7 +85,6 @@ struct PerformanceTimelineChart: View {
                     .background(Color.gray.opacity(0.05))
                     .cornerRadius(8)
             }
-            .chartAngleSelection(value: .constant(nil))
             .onTapGesture { location in
                 // Simple tap handling - in a real implementation, you'd calculate which point was tapped
                 if selectedDataPoint != nil {

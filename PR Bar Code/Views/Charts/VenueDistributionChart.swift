@@ -10,7 +10,7 @@ import Charts
 
 struct VenueDistributionChart: View {
     let venueStats: [VenueStats]
-    @State private var selectedVenue: VenueStats?
+    @State private var selectedRunCount: Int?
     
     private var displayStats: [VenueStats] {
         // Show top 8 venues, group others
@@ -54,21 +54,18 @@ struct VenueDistributionChart: View {
                         angularInset: 1.5
                     )
                     .foregroundStyle(venue.frequencyColor)
-                    .opacity(selectedVenue == nil || selectedVenue?.name == venue.name ? 1.0 : 0.5)
+                    .opacity(selectedRunCount == nil || selectedRunCount == venue.runCount ? 1.0 : 0.5)
                 }
                 .frame(height: 200)
-                .chartAngleSelection(value: .constant(nil))
+                .chartAngleSelection(value: $selectedRunCount)
                 .chartBackground { chartProxy in
                     GeometryReader { geometry in
-                        if let selectedVenue = selectedVenue {
+                        if let selectedRunCount = selectedRunCount {
                             VStack {
-                                Text("\(selectedVenue.runCount)")
+                                Text("\(selectedRunCount)")
                                     .font(.title.bold())
                                     .foregroundColor(.primary)
                                 Text("runs")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Text("\(selectedVenue.percentage, specifier: "%.1f")%")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
                             }
@@ -99,9 +96,6 @@ struct VenueDistributionChart: View {
                             Spacer()
                         }
                         .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedVenue = selectedVenue?.name == venue.name ? nil : venue
-                        }
                     }
                     
                     if displayStats.count > 6 {
@@ -123,7 +117,7 @@ struct VenueDistributionChart: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     if let topVenue = venueStats.first {
-                        InsightRow(text: "\(topVenue.name) is your home event with \(topVenue.runCount) runs (\(topVenue.percentage, specifier: "%.1f")% of total)")
+                        InsightRow(text: "\(topVenue.name) is your home event with \(topVenue.runCount) runs (\(topVenue.percentage)% of total)")
                     }
                     
                     if venueStats.count >= 2 {
@@ -133,7 +127,7 @@ struct VenueDistributionChart: View {
                     
                     if venueStats.count >= 3 {
                         let top3Percentage = venueStats.prefix(3).reduce(0) { $0 + $1.percentage }
-                        InsightRow(text: "Top 3 venues account for \(top3Percentage, specifier: "%.0f")% of all runs")
+                        InsightRow(text: "Top 3 venues account for \(top3Percentage)% of all runs")
                     }
                     
                     InsightRow(text: "You've experienced \(venueStats.count) different parkrun venues")

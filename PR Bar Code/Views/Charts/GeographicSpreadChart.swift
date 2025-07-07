@@ -63,10 +63,14 @@ struct GeographicSpreadChart: View {
                     }
                     .frame(height: 200)
                     .chartXAxis {
-                        AxisMarks(values: .automatic) { _ in
-                            AxisValueLabel()
-                                .font(.caption2)
-                                .rotationEffect(.degrees(-45))
+                        AxisMarks(values: .automatic) { value in
+                            AxisValueLabel(anchor: .topTrailing) {
+                                if let name = value.as(String.self) {
+                                    Text(name)
+                                        .font(.caption2)
+                                        .rotationEffect(.degrees(-45), anchor: .topTrailing)
+                                }
+                            }
                         }
                     }
                     .chartYAxis {

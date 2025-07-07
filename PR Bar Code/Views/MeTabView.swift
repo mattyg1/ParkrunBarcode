@@ -1471,18 +1471,15 @@ struct MeTabView: View {
 }
 
 #Preview {
-    do {
-        let previewContainer = try ModelContainer(for: [ParkrunInfo.self, VenueRecord.self, VolunteerRecord.self], configurations: ModelConfiguration())
-        let context = previewContainer.mainContext
-        
-        // Insert sample data for preview
+    let container: ModelContainer = {
+        let config = ModelConfiguration(isStoredInMemoryOnly: true)
+        let container = try! ModelContainer(for: ParkrunInfo.self, VenueRecord.self, VolunteerRecord.self, configurations: config)
         let previewParkrunInfo = ParkrunInfo(parkrunID: "A12345", name: "John Doe", homeParkrun: "Southampton Parkrun", country: Country.unitedKingdom.rawValue, isDefault: true)
-        context.insert(previewParkrunInfo)
-        
-        MeTabView()
-            .modelContainer(previewContainer)
-            .environmentObject(NotificationManager.shared)
-    } catch {
-        Text("Failed to create preview: \(error)")
-    }
+        container.mainContext.insert(previewParkrunInfo)
+        return container
+    }()
+
+    return MeTabView()
+        .modelContainer(container)
+        .environmentObject(NotificationManager.shared)
 }
