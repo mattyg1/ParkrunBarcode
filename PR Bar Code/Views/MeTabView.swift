@@ -1011,14 +1011,18 @@ struct MeTabView: View {
             if let httpResponse = response as? HTTPURLResponse {
                 print("DEBUG - FETCH: HTTP Status Code: \(httpResponse.statusCode)")
                 print("DEBUG - FETCH: Response Headers: \(httpResponse.allHeaderFields)")
-                if httpResponse.statusCode != 200 {
+                
+                // Accept both HTTP 200 (OK) and 202 (Accepted) responses
+                // HTTP 202 is returned by AWS WAF when challenge action is triggered (e.g., VPN usage)
+                // The response still contains valid HTML data that can be parsed
+                if httpResponse.statusCode != 200 && httpResponse.statusCode != 202 {
                     print("DEBUG - FETCH: HTTP Error: \(httpResponse.statusCode) - treating as failure")
                     DispatchQueue.main.async {
                         completion?()
                     }
                     return
                 } else {
-                    print("DEBUG - FETCH: HTTP 200 OK - proceeding with response processing")
+                    print("DEBUG - FETCH: HTTP \(httpResponse.statusCode) - proceeding with response processing")
                 }
             }
             
