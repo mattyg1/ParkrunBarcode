@@ -672,7 +672,21 @@ struct MeTabView: View {
     
     private func saveUpdatedDataSilently() {
         // Save updated data without triggering UI changes or watch sync
+        print("DEBUG - SAVE: Starting silent data save operation")
+        
         if let existingInfo = defaultUser {
+            print("DEBUG - SAVE: Found existing user to update: parkrunID='\(existingInfo.parkrunID)', currentName='\(existingInfo.name)'")
+            
+            // Log what we're about to save
+            print("DEBUG - SAVE: Data to save:")
+            print("DEBUG - SAVE:   - name: '\(name)' (was: '\(existingInfo.name)')")
+            print("DEBUG - SAVE:   - totalParkruns: '\(totalParkruns)' (was: '\(existingInfo.totalParkruns ?? "nil")')")
+            print("DEBUG - SAVE:   - lastParkrunDate: '\(lastParkrunDate)' (was: '\(existingInfo.lastParkrunDate ?? "nil")')")
+            print("DEBUG - SAVE:   - lastParkrunTime: '\(lastParkrunTime)' (was: '\(existingInfo.lastParkrunTime ?? "nil")')")
+            print("DEBUG - SAVE:   - lastParkrunEvent: '\(lastParkrunEvent)' (was: '\(existingInfo.lastParkrunEvent ?? "nil")')")
+            print("DEBUG - SAVE:   - lastParkrunEventURL: '\(lastParkrunEventURL)' (was: '\(existingInfo.lastParkrunEventURL ?? "nil")')")
+            
+            // Apply changes
             existingInfo.name = name
             existingInfo.totalParkruns = totalParkruns.isEmpty ? nil : totalParkruns
             existingInfo.lastParkrunDate = lastParkrunDate.isEmpty ? nil : lastParkrunDate
@@ -680,12 +694,24 @@ struct MeTabView: View {
             existingInfo.lastParkrunEvent = lastParkrunEvent.isEmpty ? nil : lastParkrunEvent
             existingInfo.lastParkrunEventURL = lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL
             
+            print("DEBUG - SAVE: Applied changes to existing user object")
+            
             do {
                 try modelContext.save()
-                print("DEBUG - MeTab saveUpdatedDataSilently: Successfully saved refreshed data")
+                print("DEBUG - SAVE: Successfully saved refreshed data to SwiftData")
+                print("DEBUG - SAVE: Verifying saved data:")
+                print("DEBUG - SAVE:   - name: '\(existingInfo.name)'")
+                print("DEBUG - SAVE:   - totalParkruns: '\(existingInfo.totalParkruns ?? "nil")'")
+                print("DEBUG - SAVE:   - lastParkrunDate: '\(existingInfo.lastParkrunDate ?? "nil")'")
+                print("DEBUG - SAVE:   - lastParkrunTime: '\(existingInfo.lastParkrunTime ?? "nil")'")
+                print("DEBUG - SAVE:   - lastParkrunEvent: '\(existingInfo.lastParkrunEvent ?? "nil")'")
+                print("DEBUG - SAVE:   - lastParkrunEventURL: '\(existingInfo.lastParkrunEventURL ?? "nil")'")
             } catch {
-                print("DEBUG - MeTab saveUpdatedDataSilently: Failed to save refreshed data: \(error)")
+                print("DEBUG - SAVE: Failed to save refreshed data: \(error)")
+                print("DEBUG - SAVE: Error details: \(error.localizedDescription)")
             }
+        } else {
+            print("DEBUG - SAVE: No existing user found to update")
         }
     }
 
@@ -700,7 +726,23 @@ struct MeTabView: View {
     }
     
     private func completeSave() {
+        print("DEBUG - SAVE: Starting complete save operation")
+        
         if let existingInfo = defaultUser {
+            print("DEBUG - SAVE: Updating existing default user: parkrunID='\(existingInfo.parkrunID)'")
+            
+            // Log what we're about to save
+            print("DEBUG - SAVE: Complete save data:")
+            print("DEBUG - SAVE:   - parkrunID: '\(inputText)' (was: '\(existingInfo.parkrunID)')")
+            print("DEBUG - SAVE:   - name: '\(name)' (was: '\(existingInfo.name)')")
+            print("DEBUG - SAVE:   - homeParkrun: '\(homeParkrun)' (was: '\(existingInfo.homeParkrun)')")
+            print("DEBUG - SAVE:   - country: '\(selectedCountryCode)' (was: '\(existingInfo.country ?? -1)')")
+            print("DEBUG - SAVE:   - totalParkruns: '\(totalParkruns)' (was: '\(existingInfo.totalParkruns ?? "nil")')")
+            print("DEBUG - SAVE:   - lastParkrunDate: '\(lastParkrunDate)' (was: '\(existingInfo.lastParkrunDate ?? "nil")')")
+            print("DEBUG - SAVE:   - lastParkrunTime: '\(lastParkrunTime)' (was: '\(existingInfo.lastParkrunTime ?? "nil")')")
+            print("DEBUG - SAVE:   - lastParkrunEvent: '\(lastParkrunEvent)' (was: '\(existingInfo.lastParkrunEvent ?? "nil")')")
+            print("DEBUG - SAVE:   - lastParkrunEventURL: '\(lastParkrunEventURL)' (was: '\(existingInfo.lastParkrunEventURL ?? "nil")')")
+            
             // Update existing default user
             existingInfo.parkrunID = inputText
             existingInfo.name = name
@@ -712,7 +754,21 @@ struct MeTabView: View {
             existingInfo.lastParkrunEvent = lastParkrunEvent.isEmpty ? nil : lastParkrunEvent
             existingInfo.lastParkrunEventURL = lastParkrunEventURL.isEmpty ? nil : lastParkrunEventURL
             existingInfo.updateDisplayName()
+            
+            print("DEBUG - SAVE: Applied changes to existing user object")
         } else {
+            print("DEBUG - SAVE: Creating new default user")
+            print("DEBUG - SAVE: New user data:")
+            print("DEBUG - SAVE:   - parkrunID: '\(inputText)'")
+            print("DEBUG - SAVE:   - name: '\(name)'")
+            print("DEBUG - SAVE:   - homeParkrun: '\(homeParkrun)'")
+            print("DEBUG - SAVE:   - country: '\(selectedCountryCode)'")
+            print("DEBUG - SAVE:   - totalParkruns: '\(totalParkruns)'")
+            print("DEBUG - SAVE:   - lastParkrunDate: '\(lastParkrunDate)'")
+            print("DEBUG - SAVE:   - lastParkrunTime: '\(lastParkrunTime)'")
+            print("DEBUG - SAVE:   - lastParkrunEvent: '\(lastParkrunEvent)'")
+            print("DEBUG - SAVE:   - lastParkrunEventURL: '\(lastParkrunEventURL)'")
+            
             // Create new default user (first user is always default)
             let newInfo = ParkrunInfo(
                 parkrunID: inputText, 
@@ -727,22 +783,29 @@ struct MeTabView: View {
                 isDefault: true // This is the default user
             )
             modelContext.insert(newInfo)
+            print("DEBUG - SAVE: Inserted new user into model context")
         }
 
         do {
             try modelContext.save()
+            print("DEBUG - SAVE: Successfully saved complete data to SwiftData")
             isEditing = false
             
             // Set up notifications for the user if enabled
             if notificationManager.hasPermission && notificationManager.isNotificationsEnabled {
+                print("DEBUG - SAVE: Setting up notifications for current user")
                 setupNotificationsForCurrentUser()
+            } else {
+                print("DEBUG - SAVE: Skipping notifications setup - no permission or disabled")
             }
             
             // Send to watch automatically for default user
+            print("DEBUG - SAVE: Sending data to watch")
             watchSyncStatus = .sending
             WatchSessionManager.shared.sendParkrunID(inputText, userName: name) { success in
                 DispatchQueue.main.async {
                     self.watchSyncStatus = success ? .success : .failed
+                    print("DEBUG - SAVE: Watch sync result: \(success ? "success" : "failed")")
                     
                     // Reset status after 3 seconds
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
@@ -751,6 +814,8 @@ struct MeTabView: View {
                 }
             }
         } catch {
+            print("DEBUG - SAVE: Failed to save complete data: \(error)")
+            print("DEBUG - SAVE: Error details: \(error.localizedDescription)")
             alertMessage = "Failed to save data. Please try again."
             showAlert = true
         }
@@ -908,7 +973,11 @@ struct MeTabView: View {
         }
         
         let urlString = "https://www.parkrun.org.uk/parkrunner/\(numericId)/"
+        print("DEBUG - FETCH: Starting HTTP request to URL: '\(urlString)'")
+        print("DEBUG - FETCH: Parkrun ID: '\(id)' -> Numeric ID: '\(numericId)'")
+        
         guard let url = URL(string: urlString) else {
+            print("DEBUG - FETCH: ERROR - Invalid URL created from string: '\(urlString)'")
             if showLoadingIndicator {
                 isLoadingName = false
             }
@@ -940,33 +1009,39 @@ struct MeTabView: View {
             }
             
             if let httpResponse = response as? HTTPURLResponse {
-                print("HTTP Status Code: \(httpResponse.statusCode)")
+                print("DEBUG - FETCH: HTTP Status Code: \(httpResponse.statusCode)")
+                print("DEBUG - FETCH: Response Headers: \(httpResponse.allHeaderFields)")
                 if httpResponse.statusCode != 200 {
-                    print("HTTP Error: \(httpResponse.statusCode)")
+                    print("DEBUG - FETCH: HTTP Error: \(httpResponse.statusCode) - treating as failure")
                     DispatchQueue.main.async {
                         completion?()
                     }
                     return
+                } else {
+                    print("DEBUG - FETCH: HTTP 200 OK - proceeding with response processing")
                 }
             }
             
             guard let data = data else {
-                print("No data received")
+                print("DEBUG - FETCH: ERROR - No data received from HTTP response")
                 DispatchQueue.main.async {
                     completion?()
                 }
                 return
             }
+            
+            print("DEBUG - FETCH: Received \(data.count) bytes of data")
             
             guard let htmlString = String(data: data, encoding: .utf8) else {
-                print("Failed to decode HTML data")
+                print("DEBUG - FETCH: ERROR - Failed to decode HTML data as UTF-8")
                 DispatchQueue.main.async {
                     completion?()
                 }
                 return
             }
             
-            print("Successfully fetched HTML for ID: \(id)")
+            print("DEBUG - FETCH: Successfully fetched HTML for ID: \(id), HTML length: \(htmlString.count)")
+            print("DEBUG - FETCH: HTML preview (first 500 chars): \(String(htmlString.prefix(500)))")
             
             // Parse the HTML to extract all information
             let extractedData = self.extractParkrunnerDataFromHTML(htmlString)
@@ -1012,72 +1087,162 @@ struct MeTabView: View {
         var lastEvent: String?
         var lastEventURL: String?
         
-        print("DEBUG - Starting HTML parsing, HTML length: \(html.count)")
+        print("DEBUG - REGEX: Starting HTML parsing, HTML length: \(html.count)")
+        print("DEBUG - REGEX: HTML sample for pattern matching: \(String(html.prefix(1000)))")
         
         // Extract runner name from h2 tag: <h2>Matt GARDNER <span style="font-weight: normal;" title="parkrun ID">(A79156)</span></h2>
-        if let nameRegex = try? NSRegularExpression(pattern: #"<h2>([^<]+?)\s*<span[^>]*title="parkrun ID"[^>]*>"#, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+        let namePattern = #"<h2>([^<]+?)\s*<span[^>]*title="parkrun ID"[^>]*>"#
+        print("DEBUG - REGEX: Attempting name extraction with pattern: \(namePattern)")
+        
+        if let nameRegex = try? NSRegularExpression(pattern: namePattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
             let nameMatches = nameRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - REGEX: Found \(nameMatches.count) name matches")
+            
             if let match = nameMatches.first, let nameRange = Range(match.range(at: 1), in: html) {
                 name = String(html[nameRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                print("DEBUG - Extracted name: '\(name ?? "nil")'")
+                print("DEBUG - REGEX: Successfully extracted name: '\(name ?? "nil")'")
             } else {
-                print("DEBUG - No name match found")
+                print("DEBUG - REGEX: No name match found - checking for h2 tags in HTML")
+                if html.contains("<h2>") {
+                    print("DEBUG - REGEX: HTML contains h2 tags but pattern didn't match")
+                } else {
+                    print("DEBUG - REGEX: No h2 tags found in HTML")
+                }
             }
         } else {
-            print("DEBUG - Failed to create name regex")
+            print("DEBUG - REGEX: Failed to create name regex")
         }
         
         // Extract total parkruns from h3 tag: <h3>279 parkruns total</h3> or <h3>50 parkruns & 1 junior parkrun total</h3>
         // Use pattern that handles both regular and junior parkrun cases
-        if let totalRegex = try? NSRegularExpression(pattern: #"(\d+)\s+parkruns?(?:\s+&\s+\d+\s+junior\s+parkrun)?\s+total"#, options: [.caseInsensitive]) {
+        let totalPattern = #"(\d+)\s+parkruns?(?:\s+&\s+\d+\s+junior\s+parkrun)?\s+total"#
+        print("DEBUG - REGEX: Attempting total parkruns extraction with pattern: \(totalPattern)")
+        
+        if let totalRegex = try? NSRegularExpression(pattern: totalPattern, options: [.caseInsensitive]) {
             let totalMatches = totalRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - REGEX: Found \(totalMatches.count) total parkruns matches")
+            
             if let match = totalMatches.first, let totalRange = Range(match.range(at: 1), in: html) {
                 totalRuns = String(html[totalRange])
-                print("DEBUG - Extracted totalRuns: '\(totalRuns ?? "nil")' using improved pattern")
+                print("DEBUG - REGEX: Successfully extracted totalRuns: '\(totalRuns ?? "nil")' using improved pattern")
             } else {
-                print("DEBUG - No total parkruns match found with improved pattern")
+                print("DEBUG - REGEX: No total parkruns match found - checking for h3 tags with 'total' in HTML")
+                if html.contains("total") {
+                    print("DEBUG - REGEX: HTML contains 'total' but pattern didn't match")
+                } else {
+                    print("DEBUG - REGEX: No 'total' text found in HTML")
+                }
             }
         } else {
-            print("DEBUG - Failed to create improved total regex")
+            print("DEBUG - REGEX: Failed to create improved total regex")
         }
         
         // Look for event name in first <td><a> combination  
-        if let eventRegex = try? NSRegularExpression(pattern: #"<td><a[^>]*>([^<]+parkrun[^<]*)</a></td>"#, options: [.caseInsensitive]) {
+        let eventPattern = #"<td><a[^>]*>([^<]+parkrun[^<]*)</a></td>"#
+        print("DEBUG - REGEX: Attempting event name extraction with pattern: \(eventPattern)")
+        
+        if let eventRegex = try? NSRegularExpression(pattern: eventPattern, options: [.caseInsensitive]) {
             let eventMatches = eventRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - REGEX: Found \(eventMatches.count) event name matches")
+            
             if let match = eventMatches.first, let eventRange = Range(match.range(at: 1), in: html) {
                 lastEvent = String(html[eventRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                print("DEBUG - Extracted lastEvent: '\(lastEvent ?? "nil")' using simple pattern")
+                print("DEBUG - REGEX: Successfully extracted lastEvent: '\(lastEvent ?? "nil")' using simple pattern")
+            } else {
+                print("DEBUG - REGEX: No event name match found - checking for 'parkrun' in HTML")
+                if html.contains("parkrun") {
+                    print("DEBUG - REGEX: HTML contains 'parkrun' but pattern didn't match")
+                } else {
+                    print("DEBUG - REGEX: No 'parkrun' text found in HTML")
+                }
             }
+        } else {
+            print("DEBUG - REGEX: Failed to create event regex")
         }
         
         // Look for date pattern DD/MM/YYYY
-        if let dateRegex = try? NSRegularExpression(pattern: #"(\d{2}/\d{2}/\d{4})"#, options: []) {
+        let datePattern = #"(\d{2}/\d{2}/\d{4})"#
+        print("DEBUG - REGEX: Attempting date extraction with pattern: \(datePattern)")
+        
+        if let dateRegex = try? NSRegularExpression(pattern: datePattern, options: []) {
             let dateMatches = dateRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - REGEX: Found \(dateMatches.count) date matches")
+            
             if let match = dateMatches.first, let dateRange = Range(match.range(at: 1), in: html) {
                 lastDate = String(html[dateRange])
-                print("DEBUG - Extracted lastDate: '\(lastDate ?? "nil")' using simple pattern")
+                print("DEBUG - REGEX: Successfully extracted lastDate: '\(lastDate ?? "nil")' using simple pattern")
+                // Log all date matches found
+                for (index, match) in dateMatches.enumerated() {
+                    if let range = Range(match.range(at: 1), in: html) {
+                        print("DEBUG - REGEX: Date match \(index + 1): '\(String(html[range]))'")
+                    }
+                }
+            } else {
+                print("DEBUG - REGEX: No date matches found")
             }
+        } else {
+            print("DEBUG - REGEX: Failed to create date regex")
         }
         
         // Look for time pattern MM:SS in table
-        if let timeRegex = try? NSRegularExpression(pattern: #"<td>(\d{2}:\d{2})</td>"#, options: []) {
+        let timePattern = #"<td>(\d{2}:\d{2})</td>"#
+        print("DEBUG - REGEX: Attempting time extraction with pattern: \(timePattern)")
+        
+        if let timeRegex = try? NSRegularExpression(pattern: timePattern, options: []) {
             let timeMatches = timeRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - REGEX: Found \(timeMatches.count) time matches")
+            
             if let match = timeMatches.first, let timeRange = Range(match.range(at: 1), in: html) {
                 lastTime = String(html[timeRange])
-                print("DEBUG - Extracted lastTime: '\(lastTime ?? "nil")' using simple pattern")
+                print("DEBUG - REGEX: Successfully extracted lastTime: '\(lastTime ?? "nil")' using simple pattern")
+                // Log all time matches found
+                for (index, match) in timeMatches.enumerated() {
+                    if let range = Range(match.range(at: 1), in: html) {
+                        print("DEBUG - REGEX: Time match \(index + 1): '\(String(html[range]))'")
+                    }
+                }
+            } else {
+                print("DEBUG - REGEX: No time matches found")
             }
+        } else {
+            print("DEBUG - REGEX: Failed to create time regex")
         }
         
         // Look for event results URL from date link pattern
-        if let eventURLRegex = try? NSRegularExpression(pattern: #"<td><a href="(https://www\.parkrun\.(?:org\.uk|com|us|au|org\.nz|co\.za|it|se|dk|pl|ie|ca|fi|fr|sg|de|no|ru|my)/[^/]+/results/\d+/)"[^>]*>\d{2}/\d{2}/\d{4}</a></td>"#, options: [.caseInsensitive]) {
+        let eventURLPattern = #"<td><a href="(https://www\.parkrun\.(?:org\.uk|com|us|au|org\.nz|co\.za|it|se|dk|pl|ie|ca|fi|fr|sg|de|no|ru|my)/[^/]+/results/\d+/)"[^>]*>\d{2}/\d{2}/\d{4}</a></td>"#
+        print("DEBUG - REGEX: Attempting event URL extraction with pattern: \(eventURLPattern)")
+        
+        if let eventURLRegex = try? NSRegularExpression(pattern: eventURLPattern, options: [.caseInsensitive]) {
             let urlMatches = eventURLRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - REGEX: Found \(urlMatches.count) event URL matches")
+            
             if let match = urlMatches.first, let urlRange = Range(match.range(at: 1), in: html) {
                 lastEventURL = String(html[urlRange])
-                print("DEBUG - Extracted lastEventURL: '\(lastEventURL ?? "nil")' using corrected pattern with <td> wrapper")
+                print("DEBUG - REGEX: Successfully extracted lastEventURL: '\(lastEventURL ?? "nil")' using corrected pattern with <td> wrapper")
+            } else {
+                print("DEBUG - REGEX: No event URL match found - checking for parkrun.org URLs in HTML")
+                if html.contains("parkrun.org") {
+                    print("DEBUG - REGEX: HTML contains parkrun.org URLs but pattern didn't match")
+                    // Try to find any parkrun URLs for debugging
+                    if let simpleURLRegex = try? NSRegularExpression(pattern: #"https://www\.parkrun\.[^\s"'<>]+"#, options: [.caseInsensitive]) {
+                        let simpleMatches = simpleURLRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                        print("DEBUG - REGEX: Found \(simpleMatches.count) simple parkrun URLs in HTML")
+                        for (index, match) in simpleMatches.prefix(3).enumerated() {
+                            if let range = Range(match.range, in: html) {
+                                print("DEBUG - REGEX: Simple URL \(index + 1): '\(String(html[range]))'")
+                            }
+                        }
+                    }
+                } else {
+                    print("DEBUG - REGEX: No parkrun.org URLs found in HTML")
+                }
             }
+        } else {
+            print("DEBUG - REGEX: Failed to create event URL regex")
         }
         
-        print("DEBUG - Final extracted data: name='\(name ?? "nil")', totalRuns='\(totalRuns ?? "nil")', lastEvent='\(lastEvent ?? "nil")', lastDate='\(lastDate ?? "nil")', lastTime='\(lastTime ?? "nil")', lastEventURL='\(lastEventURL ?? "nil")'")
+        print("DEBUG - REGEX: Final extracted data: name='\(name ?? "nil")', totalRuns='\(totalRuns ?? "nil")', lastEvent='\(lastEvent ?? "nil")', lastDate='\(lastDate ?? "nil")', lastTime='\(lastTime ?? "nil")', lastEventURL='\(lastEventURL ?? "nil")'")
+        print("DEBUG - REGEX: Extraction complete - returning parsed data")
         return (name: name, totalRuns: totalRuns, lastDate: lastDate, lastTime: lastTime, lastEvent: lastEvent, lastEventURL: lastEventURL)
     }
 
