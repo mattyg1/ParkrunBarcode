@@ -1667,6 +1667,29 @@ struct MeTabView: View {
     }
     
     private func fetchAndProcessVisualizationData(for user: ParkrunInfo) {
+        // TEMPORARY: Use local test file for debugging volunteer extraction
+        if user.parkrunID == "A79156" {
+            print("DEBUG - VIZ: Using local test file for user A79156")
+            guard let path = Bundle.main.path(forResource: "results | parkrun UK - Matt Gardner", ofType: "html"),
+                  let htmlString = try? String(contentsOfFile: path) else {
+                print("DEBUG - VIZ: Failed to load local test HTML file")
+                return
+            }
+            
+            print("DEBUG - VIZ: Loaded local HTML file, length: \(htmlString.count)")
+            let extractedData = self.extractVisualizationDataFromHTML(htmlString)
+            
+            DispatchQueue.main.async {
+                user.updateVisualizationData(
+                    venueRecords: extractedData.venueRecords,
+                    volunteerRecords: extractedData.volunteerRecords
+                )
+                print("DEBUG - VIZ: Updated user with local test data - \(extractedData.venueRecords.count) venues, \(extractedData.volunteerRecords.count) volunteers")
+            }
+            return
+        }
+        
+        // Regular web fetch for other users
         let numericId = String(user.parkrunID.dropFirst())
         let urlString = "https://www.parkrun.org.uk/parkrunner/\(numericId)/"
         
