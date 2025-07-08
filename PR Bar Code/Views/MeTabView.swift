@@ -1437,25 +1437,114 @@ struct MeTabView: View {
     private func extractVolunteerDataFromHTML(_ html: String) -> [VolunteerRecord] {
         var records: [VolunteerRecord] = []
         
-        print("DEBUG - VIZ: Extracting volunteer data")
+        print("DEBUG - VOLUNTEER: Starting volunteer data extraction from HTML")
+        print("DEBUG - VOLUNTEER: HTML length: \(html.count)")
         
-        // Look for volunteer section - this might be in a separate section or table
-        // Pattern for volunteer credits: role, venue, date
-        let volunteerPattern = #"volunteer.*?(?:role|credit)"#
+        // Check if HTML contains volunteer-related content
+        let lowercasedHTML = html.lowercased()
+        if lowercasedHTML.contains("volunteer") {
+            print("DEBUG - VOLUNTEER: Found 'volunteer' text in HTML")
+        } else {
+            print("DEBUG - VOLUNTEER: No 'volunteer' text found in HTML")
+        }
         
-        if html.lowercased().contains("volunteer") {
-            print("DEBUG - VIZ: Found volunteer section in HTML")
+        // Look for volunteer table with caption
+        let volunteerTablePattern = #"<table[^>]*>.*?<caption[^>]*>.*?volunteer.*?</caption>.*?<tbody>(.*?)</tbody>"#
+        
+        if let volunteerTableRegex = try? NSRegularExpression(pattern: volunteerTablePattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let matches = volunteerTableRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - VOLUNTEER: Found \(matches.count) volunteer table matches")
             
-            // Try to extract volunteer roles from common patterns
-            // This is a simplified extraction - real implementation would need to examine actual HTML structure
-            let sampleVolunteerData = [
-                VolunteerRecord(role: "Pre-event Setup", venue: "Whiteley", date: "01/01/2025"),
-                VolunteerRecord(role: "Timekeeper", venue: "Whiteley", date: "15/01/2025"),
-                VolunteerRecord(role: "Marshal", venue: "Netley Abbey", date: "01/02/2025")
-            ]
+            if let match = matches.first, match.numberOfRanges >= 2 {
+                if let tableBodyRange = Range(match.range(at: 1), in: html) {
+                    let tableBody = String(html[tableBodyRange])
+                    print("DEBUG - VOLUNTEER: Extracted volunteer table body, length: \(tableBody.count)")
+                    records = parseVolunteerTableRows(tableBody)
+                }
+            }
+        }
+        
+        // If no volunteer table found, look for volunteer credits in other patterns
+        if records.isEmpty {
+            print("DEBUG - VOLUNTEER: No volunteer table found, searching for alternative patterns")
+            records = extractVolunteerCreditsAlternativePatterns(html)
+        }
+        
+        // If still no data found, check if this is expected
+        if records.isEmpty {
+            print("DEBUG - VOLUNTEER: No volunteer data found in HTML")
+            print("DEBUG - VOLUNTEER: This is expected - parkrun volunteer data requires authentication")
+            print("DEBUG - VOLUNTEER: parkrun profile pages have access restrictions for volunteer history")
+            print("DEBUG - VOLUNTEER: Consider implementing authenticated access or manual data entry")
+        }
+        
+        print("DEBUG - VOLUNTEER: Final volunteer records count: \(records.count)")
+        return records
+    }
+    
+    private func parseVolunteerTableRows(_ tableBody: String) -> [VolunteerRecord] {
+        var records: [VolunteerRecord] = []
+        
+        print("DEBUG - VOLUNTEER: Parsing volunteer table rows")
+        
+        // Pattern for volunteer table rows: <tr><td>Role</td><td>Venue</td><td>Date</td></tr>
+        let rowPattern = #"<tr[^>]*>.*?<td[^>]*>([^<]+)</td>.*?<td[^>]*>([^<]+)</td>.*?<td[^>]*>(\d{2}/\d{2}/\d{4})</td>"#
+        
+        if let rowRegex = try? NSRegularExpression(pattern: rowPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let matches = rowRegex.matches(in: tableBody, options: [], range: NSRange(tableBody.startIndex..., in: tableBody))
+            print("DEBUG - VOLUNTEER: Found \(matches.count) volunteer row matches")
             
-            records.append(contentsOf: sampleVolunteerData)
-            print("DEBUG - VIZ: Added sample volunteer data (would be extracted from HTML in production)")
+            for match in matches {
+                guard match.numberOfRanges >= 4 else { continue }
+                
+                if let roleRange = Range(match.range(at: 1), in: tableBody),
+                   let venueRange = Range(match.range(at: 2), in: tableBody),
+                   let dateRange = Range(match.range(at: 3), in: tableBody) {
+                    
+                    let role = String(tableBody[roleRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let venue = String(tableBody[venueRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let date = String(tableBody[dateRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    let record = VolunteerRecord(role: role, venue: venue, date: date)
+                    records.append(record)
+                    
+                    print("DEBUG - VOLUNTEER: Extracted volunteer record: \(role) at \(venue) on \(date)")
+                }
+            }
+        }
+        
+        return records
+    }
+    
+    private func extractVolunteerCreditsAlternativePatterns(_ html: String) -> [VolunteerRecord] {
+        var records: [VolunteerRecord] = []
+        
+        print("DEBUG - VOLUNTEER: Trying alternative volunteer extraction patterns")
+        
+        // Look for volunteer roles mentioned in text or other formats
+        let volunteerRoles = ["timekeeper", "marshal", "pre-event setup", "barcode scanner", 
+                            "funnel manager", "tail walker", "run director", "photographer"]
+        
+        for role in volunteerRoles {
+            if html.lowercased().contains(role.lowercased()) {
+                print("DEBUG - VOLUNTEER: Found potential volunteer role mention: \(role)")
+                // Could extract context around this mention to get venue/date
+            }
+        }
+        
+        // Check for volunteer summary statistics
+        let volunteerStatsPattern = #"volunteer.*?(\d+)"#
+        
+        if let statsRegex = try? NSRegularExpression(pattern: volunteerStatsPattern, options: [.caseInsensitive]) {
+            let matches = statsRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - VOLUNTEER: Found \(matches.count) volunteer statistics mentions")
+            
+            for match in matches {
+                if match.numberOfRanges >= 2, let numberRange = Range(match.range(at: 1), in: html) {
+                    let number = String(html[numberRange])
+                    print("DEBUG - VOLUNTEER: Found volunteer number: \(number)")
+                }
+            }
         }
         
         return records

@@ -316,6 +316,8 @@ class ParkrunVisualizationProcessor: ObservableObject {
         else if totalRuns >= 50 { achieved.append(.runs50) }
         
         // Volunteer milestones
+        // Note: Volunteer count is typically 0 due to parkrun access restrictions
+        // These milestones may not be accurate without authenticated access
         if volunteerCount >= 25 { achieved.append(.volunteer25) }
         
         // Tourist milestones

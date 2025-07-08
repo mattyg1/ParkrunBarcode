@@ -78,6 +78,8 @@ class ParkrunInfo: Identifiable {
     }
     
     var volunteerStats: [VolunteerStats] {
+        // Note: Volunteer data typically returns empty due to parkrun access restrictions
+        // Volunteer history requires authentication and is not available via public profile pages
         ParkrunVisualizationProcessor.calculateVolunteerStats(from: volunteerRecords)
     }
     

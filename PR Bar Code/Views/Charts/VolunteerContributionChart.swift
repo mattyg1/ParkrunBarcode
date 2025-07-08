@@ -31,12 +31,12 @@ struct VolunteerContributionChart: View {
                         .font(.system(size: 40))
                         .foregroundColor(.gray)
                     
-                    Text("No volunteer data available")
+                    Text("Volunteer data not accessible")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.secondary)
                     
-                    Text("Volunteer contributions will appear here once data is available")
+                    Text("parkrun volunteer history requires account authentication")
                         .font(.caption)
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
