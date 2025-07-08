@@ -26,7 +26,7 @@ struct PR_Bar_CodeApp: App {
                     clearBadgeIfNeeded()
                 }
         }
-        .modelContainer(for: ParkrunInfo.self) // Attach SwiftData Model Container
+        .modelContainer(for: [ParkrunInfo.self, VenueRecord.self, VolunteerRecord.self]) // Attach SwiftData Model Container
     }
     
     private func setupNotifications() {
