@@ -9,6 +9,7 @@ import SwiftUI
 
 struct AllYearsActivityHeatmapView: View {
     let allYearsData: [Int: [ActivityDay]]
+    let totalParkruns: Int? // Add parameter for correct total
     @State private var selectedCell: (year: Int, month: Int)?
     
     private let cellHeight: CGFloat = 20
@@ -224,7 +225,7 @@ struct AllYearsActivityHeatmapView: View {
     }
     
     private var totalRuns: Int {
-        allYearsData.values.flatMap { $0 }.filter { $0.hasRun }.count
+        totalParkruns ?? allYearsData.values.flatMap { $0 }.filter { $0.hasRun }.count
     }
     
     private func cellColor(for count: Int) -> Color {
@@ -266,7 +267,7 @@ struct AllYearsActivityHeatmapView: View {
 #Preview {
     let sampleData = createSampleData()
     
-    return AllYearsActivityHeatmapView(allYearsData: sampleData)
+    return AllYearsActivityHeatmapView(allYearsData: sampleData, totalParkruns: 283)
         .padding()
 }
 

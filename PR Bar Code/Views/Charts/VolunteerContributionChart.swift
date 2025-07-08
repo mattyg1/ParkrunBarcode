@@ -74,18 +74,10 @@ struct VolunteerContributionChart: View {
                                 }
                                 .position(x: geometry.frame(in: .local).midX, y: geometry.frame(in: .local).midY)
                             } else {
-                                VStack(spacing: 2) {
-                                    Text("\(totalVolunteerOccasions)")
-                                        .font(.title2.bold())
-                                        .foregroundColor(.primary)
-                                    Text("total")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Text("occasions")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                }
-                                .position(x: geometry.frame(in: .local).midX, y: geometry.frame(in: .local).midY)
+                                Text("\(totalVolunteerOccasions)")
+                                    .font(.title.bold())
+                                    .foregroundColor(.primary)
+                                    .position(x: geometry.frame(in: .local).midX, y: geometry.frame(in: .local).midY)
                             }
                         }
                     }

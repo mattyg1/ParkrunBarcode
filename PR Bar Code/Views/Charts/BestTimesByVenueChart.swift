@@ -41,19 +41,8 @@ struct BestTimesByVenueChart: View {
                 .opacity(selectedVenue == nil || selectedVenue?.name == venue.name ? 1.0 : 0.5)
                 .cornerRadius(4)
             }
-            .frame(height: 300)
-            .chartXAxis {
-                AxisMarks(values: .automatic) { value in
-                    AxisGridLine()
-                    AxisValueLabel(anchor: .topTrailing) {
-                        if let name = value.as(String.self) {
-                            Text(name.replacingOccurrences(of: " parkrun", with: ""))
-                                .font(.caption2)
-                                .rotationEffect(.degrees(-45), anchor: .topTrailing)
-                        }
-                    }
-                }
-            }
+            .frame(height: 320)
+                        .chartXAxis(.hidden)
             .chartYAxis {
                 AxisMarks(values: .automatic) { value in
                     AxisValueLabel {
@@ -70,12 +59,23 @@ struct BestTimesByVenueChart: View {
                     .background(Color.gray.opacity(0.05))
                     .cornerRadius(8)
             }
-            .onTapGesture { location in
-                // Simple selection toggle
-                if selectedVenue != nil {
-                    selectedVenue = nil
-                } else if let firstVenue = sortedByBestTime.first {
-                    selectedVenue = firstVenue
+            .padding(.bottom, 20)
+            .chartOverlay { proxy in
+                GeometryReader { innerGeometry in
+                    Rectangle().fill(.clear).contentShape(Rectangle())
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    let location = value.location
+                                    if let venueName: String = proxy.value(atX: location.x) {
+                                        selectedVenue = sortedByBestTime.first(where: { $0.name == venueName })
+                                    }
+                                }
+                                .onEnded { _ in
+                                    // Optionally clear selection when gesture ends
+                                    // selectedVenue = nil
+                                }
+                        )
                 }
             }
             
@@ -166,7 +166,7 @@ struct BestTimesByVenueChart: View {
                         InsightRow(text: "Sub-22 minute times at \(sub22Venues.count) venues: \(venueNames)")
                     }
                     
-                    if let slowest = sortedByBestTime.last {
+                    if let slowest = venueStats.max(by: { $0.bestTimeInMinutes < $1.bestTimeInMinutes }) {
                         InsightRow(text: "\(slowest.name) shows your slowest time (\(slowest.bestTime)), possibly a challenging course")
                     }
                     

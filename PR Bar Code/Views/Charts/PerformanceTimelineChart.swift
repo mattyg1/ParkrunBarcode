@@ -17,7 +17,7 @@ struct PerformanceTimelineChart: View {
         performanceData.sorted { data1, data2 in
             let date1 = parseDate(data1.date) ?? Date.distantPast
             let date2 = parseDate(data2.date) ?? Date.distantPast
-            return date1 < date2
+            return date1 > date2
         }
     }
     
@@ -29,6 +29,33 @@ struct PerformanceTimelineChart: View {
         let padding = (maxTime - minTime) * 0.1
         
         return (minTime - padding)...(maxTime + padding)
+    }
+    
+    private var yearAxisValues: [Date] {
+        guard !displayData.isEmpty else { return [] }
+        
+        let dates = displayData.compactMap { parseDate($0.date) }
+        guard !dates.isEmpty else { return [] }
+        
+        let sortedDates = dates.sorted()
+        let startYear = Calendar.current.component(.year, from: sortedDates.first!)
+        let endYear = Calendar.current.component(.year, from: sortedDates.last!)
+        
+        let yearRange = endYear - startYear + 1
+        let maxLabels = 8
+        
+        if yearRange <= maxLabels {
+            // Show all years if we have 8 or fewer
+            return (startYear...endYear).compactMap { year in
+                Calendar.current.date(from: DateComponents(year: year, month: 1, day: 1))
+            }
+        } else {
+            // Show evenly spaced years to get approximately 8 labels
+            let step = max(1, yearRange / maxLabels)
+            return stride(from: startYear, through: endYear, by: step).compactMap { year in
+                Calendar.current.date(from: DateComponents(year: year, month: 1, day: 1))
+            }
+        }
     }
     
     var body: some View {
@@ -49,27 +76,28 @@ struct PerformanceTimelineChart: View {
                     y: .value("Time", data.timeInMinutes)
                 )
                 .foregroundStyle(Color.adaptiveParkrunGreen)
-                .lineStyle(StrokeStyle(lineWidth: 3))
-                
-                PointMark(
-                    x: .value("Date", parseDate(data.date) ?? Date()),
-                    y: .value("Time", data.timeInMinutes)
-                )
-                .foregroundStyle(Color.adaptiveParkrunGreen)
-                .symbolSize(selectedDataPoint?.id == data.id ? 80 : 50)
+                .lineStyle(StrokeStyle(lineWidth: 1.5))
                 
                 if let selectedDataPoint = selectedDataPoint, selectedDataPoint.id == data.id {
+                    PointMark(
+                        x: .value("Date", parseDate(data.date) ?? Date()),
+                        y: .value("Time", data.timeInMinutes)
+                    )
+                    .foregroundStyle(Color.adaptiveParkrunGreen)
+                    .symbolSize(60)
+                    
                     RuleMark(x: .value("Selected Date", parseDate(data.date) ?? Date()))
                         .foregroundStyle(Color.adaptiveParkrunGreen.opacity(0.3))
                         .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 5]))
                 }
             }
-            .frame(height: 200)
+            .frame(height: 220)
             .chartYScale(domain: yAxisRange)
             .chartXAxis {
-                AxisMarks(values: .stride(by: .year)) { value in
+                AxisMarks(values: yearAxisValues) { value in
                     AxisValueLabel(format: .dateTime.year(.defaultDigits))
                         .font(.caption2)
+                        .foregroundStyle(.secondary)
                     AxisGridLine()
                 }
             }
