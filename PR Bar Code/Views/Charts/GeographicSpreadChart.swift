@@ -61,14 +61,17 @@ struct GeographicSpreadChart: View {
                         .opacity(selectedRegion == nil || selectedRegion?.region == stats.region ? 1.0 : 0.5)
                         .cornerRadius(4)
                     }
-                    .frame(height: 200)
+                    .frame(height: 250)
                     .chartXAxis {
                         AxisMarks(values: .automatic) { value in
+                            AxisGridLine()
                             AxisValueLabel(anchor: .topTrailing) {
                                 if let name = value.as(String.self) {
                                     Text(name)
                                         .font(.caption2)
                                         .rotationEffect(.degrees(-45), anchor: .topTrailing)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.trailing)
                                 }
                             }
                         }

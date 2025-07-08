@@ -13,8 +13,12 @@ struct PerformanceTimelineChart: View {
     @State private var selectedDataPoint: PerformanceData?
     
     private var displayData: [PerformanceData] {
-        // Show last 10 runs for better mobile display
-        Array(performanceData.prefix(10))
+        // Show all data sorted by date
+        performanceData.sorted { data1, data2 in
+            let date1 = parseDate(data1.date) ?? Date.distantPast
+            let date2 = parseDate(data2.date) ?? Date.distantPast
+            return date1 < date2
+        }
     }
     
     private var yAxisRange: ClosedRange<Double> {
@@ -34,28 +38,28 @@ struct PerformanceTimelineChart: View {
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                Text("Your recent parkrun times and trends")
+                Text("Your complete parkrun performance history")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
             
-            Chart(displayData.reversed(), id: \.id) { data in
+            Chart(displayData, id: \.id) { data in
                 LineMark(
-                    x: .value("Date", formatDateForChart(data.date)),
+                    x: .value("Date", parseDate(data.date) ?? Date()),
                     y: .value("Time", data.timeInMinutes)
                 )
                 .foregroundStyle(Color.adaptiveParkrunGreen)
                 .lineStyle(StrokeStyle(lineWidth: 3))
                 
                 PointMark(
-                    x: .value("Date", formatDateForChart(data.date)),
+                    x: .value("Date", parseDate(data.date) ?? Date()),
                     y: .value("Time", data.timeInMinutes)
                 )
                 .foregroundStyle(Color.adaptiveParkrunGreen)
                 .symbolSize(selectedDataPoint?.id == data.id ? 80 : 50)
                 
                 if let selectedDataPoint = selectedDataPoint, selectedDataPoint.id == data.id {
-                    RuleMark(x: .value("Selected Date", formatDateForChart(data.date)))
+                    RuleMark(x: .value("Selected Date", parseDate(data.date) ?? Date()))
                         .foregroundStyle(Color.adaptiveParkrunGreen.opacity(0.3))
                         .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 5]))
                 }
@@ -63,8 +67,8 @@ struct PerformanceTimelineChart: View {
             .frame(height: 200)
             .chartYScale(domain: yAxisRange)
             .chartXAxis {
-                AxisMarks(values: .automatic) { _ in
-                    AxisValueLabel()
+                AxisMarks(values: .stride(by: .year)) { value in
+                    AxisValueLabel(format: .dateTime.year(.defaultDigits))
                         .font(.caption2)
                     AxisGridLine()
                 }
@@ -171,6 +175,12 @@ struct PerformanceTimelineChart: View {
             .background(Color.adaptiveParkrunGreen.opacity(0.05))
             .cornerRadius(8)
         }
+    }
+    
+    private func parseDate(_ dateString: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.date(from: dateString)
     }
     
     private func formatDateForChart(_ dateString: String) -> String {

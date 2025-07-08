@@ -11,43 +11,45 @@ struct ParkrunStatsCards: View {
     let parkrunInfo: ParkrunInfo
     
     var body: some View {
-        LazyVGrid(columns: [
-            GridItem(.flexible()),
-            GridItem(.flexible())
-        ], spacing: 12) {
+        VStack(spacing: 12) {
+            // Stats cards in 2x2 grid
+            LazyVGrid(columns: [
+                GridItem(.flexible()),
+                GridItem(.flexible())
+            ], spacing: 12) {
+                
+                StatCard(
+                    title: "Total parkruns",
+                    value: "\(parkrunInfo.totalParkrunsInt)",
+                    icon: "figure.run",
+                    color: .blue
+                )
+                
+                StatCard(
+                    title: "Best Time",
+                    value: parkrunInfo.bestPersonalTime ?? "N/A",
+                    icon: "stopwatch",
+                    color: .green
+                )
+                
+                StatCard(
+                    title: "Venues Visited",
+                    value: "\(parkrunInfo.uniqueVenuesCount)",
+                    icon: "location",
+                    color: .orange
+                )
+                
+                StatCard(
+                    title: "Volunteer Credits",
+                    value: "\(parkrunInfo.volunteerCount)",
+                    icon: "hands.and.sparkles",
+                    color: .purple
+                )
+            }
             
-            StatCard(
-                title: "Total parkruns",
-                value: "\(parkrunInfo.totalParkrunsInt)",
-                icon: "figure.run",
-                color: .blue
-            )
-            
-            StatCard(
-                title: "Best Time",
-                value: parkrunInfo.bestPersonalTime ?? "N/A",
-                icon: "stopwatch",
-                color: .green
-            )
-            
-            StatCard(
-                title: "Venues Visited",
-                value: "\(parkrunInfo.uniqueVenuesCount)",
-                icon: "location",
-                color: .orange
-            )
-            
-            StatCard(
-                title: "Volunteer Credits",
-                value: "\(parkrunInfo.volunteerCount)",
-                icon: "hands.and.sparkles",
-                color: .purple
-            )
-            
-            // Milestone badges (span two columns if applicable)
+            // Full-width achievement card
             if !parkrunInfo.achievedMilestones.isEmpty {
                 MilestoneCard(milestones: parkrunInfo.achievedMilestones)
-                    .gridColumnSpan(2)
             }
         }
     }
@@ -113,13 +115,35 @@ struct MilestoneCard: View {
                 Spacer()
             }
             
-            LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible()),
-                GridItem(.flexible())
-            ], spacing: 8) {
-                ForEach(milestones, id: \.rawValue) { milestone in
-                    MilestoneBadge(milestone: milestone)
+            // Group milestones by category for better organization
+            let groupedMilestones = Dictionary(grouping: milestones) { $0.category }
+            
+            VStack(spacing: 8) {
+                ForEach(["Running", "Volunteering", "Tourism"], id: \.self) { category in
+                    if let categoryMilestones = groupedMilestones[category], !categoryMilestones.isEmpty {
+                        VStack(alignment: .leading, spacing: 4) {
+                            HStack {
+                                Text(category)
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.white.opacity(0.9))
+                                Spacer()
+                            }
+                            
+                            LazyVGrid(columns: [
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible()),
+                                GridItem(.flexible())
+                            ], spacing: 6) {
+                                ForEach(categoryMilestones.sorted(by: { $0.threshold < $1.threshold }), id: \.rawValue) { milestone in
+                                    CompactMilestoneBadge(milestone: milestone)
+                                }
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -145,20 +169,38 @@ struct MilestoneBadge: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: milestone.icon)
-                .font(.title3)
+                .font(.system(size: 18, weight: .regular, design: .default))
                 .foregroundColor(.yellow)
             
             Text(milestone.rawValue)
-                .font(.caption2)
-                .fontWeight(.medium)
+                .font(.system(size: 11, weight: .medium, design: .default))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .minimumScaleFactor(0.8)
         }
         .padding(8)
         .background(Color.white.opacity(0.2))
         .cornerRadius(8)
+    }
+}
+
+struct CompactMilestoneBadge: View {
+    let milestone: ParkrunMilestone
+    
+    var body: some View {
+        VStack(spacing: 2) {
+            Image(systemName: milestone.icon)
+                .font(.system(size: 10, weight: .regular, design: .default))
+                .foregroundColor(.yellow)
+            
+            Text("\(milestone.threshold)")
+                .font(.system(size: 10, weight: .bold, design: .default))
+                .foregroundColor(.white)
+                .lineLimit(1)
+        }
+        .frame(width: 40, height: 32)
+        .background(Color.white.opacity(0.2))
+        .cornerRadius(6)
     }
 }
 
@@ -191,7 +233,7 @@ struct ParkrunJourneyStatsView: View {
                 VStack(spacing: 8) {
                     QuickStatRow(
                         icon: "house",
-                        label: "Home Venue",
+                        label: "Top Venue",
                         value: parkrunInfo.homeParkrun.isEmpty ? "Not set" : parkrunInfo.homeParkrun
                     )
                     

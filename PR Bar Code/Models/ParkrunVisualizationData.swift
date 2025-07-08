@@ -178,31 +178,66 @@ struct ActivityDay: Identifiable {
 // MARK: - Milestone and Achievement Structures
 
 enum ParkrunMilestone: String, CaseIterable {
+    // Running milestones
+    case runs25 = "25 Club"
     case runs50 = "50 Club"
     case runs100 = "100 Club"  
     case runs250 = "250 Club"
     case runs500 = "500 Club"
-    case volunteer25 = "25 Volunteer"
-    case tourist10 = "10 Event Tourist"
-    case tourist20 = "20 Event Tourist"
+    case runs1000 = "1000 Club"
+    
+    // Volunteer milestones
+    case volunteer25 = "v25"
+    case volunteer50 = "v50"
+    case volunteer100 = "v100"
+    case volunteer250 = "v250"
+    case volunteer500 = "v500"
+    case volunteer1000 = "v1000"
+    
+    // Tourist milestones (different events)
+    case tourist10 = "10 Events"
+    case tourist25 = "25 Events"
+    case tourist50 = "50 Events"
     
     var threshold: Int {
         switch self {
+        case .runs25: return 25
         case .runs50: return 50
         case .runs100: return 100
         case .runs250: return 250
         case .runs500: return 500
+        case .runs1000: return 1000
         case .volunteer25: return 25
+        case .volunteer50: return 50
+        case .volunteer100: return 100
+        case .volunteer250: return 250
+        case .volunteer500: return 500
+        case .volunteer1000: return 1000
         case .tourist10: return 10
-        case .tourist20: return 20
+        case .tourist25: return 25
+        case .tourist50: return 50
         }
     }
     
     var icon: String {
         switch self {
-        case .runs50, .runs100, .runs250, .runs500: return "figure.run"
-        case .volunteer25: return "hands.and.sparkles"
-        case .tourist10, .tourist20: return "location"
+        case .runs25, .runs50, .runs100, .runs250, .runs500, .runs1000: 
+            return "figure.run"
+        case .volunteer25, .volunteer50, .volunteer100, .volunteer250, .volunteer500, .volunteer1000: 
+            return "hands.and.sparkles"
+        case .tourist10, .tourist25, .tourist50: 
+            return "location"
+        }
+    }
+    
+    var category: String {
+        switch self {
+        case .runs25, .runs50, .runs100, .runs250, .runs500, .runs1000:
+            return "Running"
+        case .volunteer25, .volunteer50, .volunteer100, .volunteer250, .volunteer500, .volunteer1000:
+            return "Volunteering"
+        case .tourist10, .tourist25, .tourist50:
+            return "Tourism"
         }
     }
 }
@@ -309,18 +344,28 @@ class ParkrunVisualizationProcessor: ObservableObject {
     static func checkMilestones(totalRuns: Int, volunteerCount: Int, venueCount: Int) -> [ParkrunMilestone] {
         var achieved: [ParkrunMilestone] = []
         
-        // Running milestones
+        // Running milestones - add all achieved milestones
+        if totalRuns >= 1000 { achieved.append(.runs1000) }
         if totalRuns >= 500 { achieved.append(.runs500) }
-        else if totalRuns >= 250 { achieved.append(.runs250) }
-        else if totalRuns >= 100 { achieved.append(.runs100) }
-        else if totalRuns >= 50 { achieved.append(.runs50) }
+        if totalRuns >= 250 { achieved.append(.runs250) }
+        if totalRuns >= 100 { achieved.append(.runs100) }
+        if totalRuns >= 50 { achieved.append(.runs50) }
+        if totalRuns >= 25 { achieved.append(.runs25) }
         
-        // Volunteer milestones
+        // Volunteer milestones - add all achieved milestones
+        // Note: Volunteer count is typically 0 due to parkrun access restrictions
+        // These milestones may not be accurate without authenticated access
+        if volunteerCount >= 1000 { achieved.append(.volunteer1000) }
+        if volunteerCount >= 500 { achieved.append(.volunteer500) }
+        if volunteerCount >= 250 { achieved.append(.volunteer250) }
+        if volunteerCount >= 100 { achieved.append(.volunteer100) }
+        if volunteerCount >= 50 { achieved.append(.volunteer50) }
         if volunteerCount >= 25 { achieved.append(.volunteer25) }
         
-        // Tourist milestones
-        if venueCount >= 20 { achieved.append(.tourist20) }
-        else if venueCount >= 10 { achieved.append(.tourist10) }
+        // Tourist milestones - add all achieved milestones
+        if venueCount >= 50 { achieved.append(.tourist50) }
+        if venueCount >= 25 { achieved.append(.tourist25) }
+        if venueCount >= 10 { achieved.append(.tourist10) }
         
         return achieved
     }
@@ -358,5 +403,9 @@ class ParkrunVisualizationProcessor: ObservableObject {
 extension Date {
     var startOfDay: Date {
         Calendar.current.startOfDay(for: self)
+    }
+    
+    var year: Int {
+        Calendar.current.component(.year, from: self)
     }
 }
