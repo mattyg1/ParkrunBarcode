@@ -139,7 +139,7 @@ struct ParkrunVisualizationsView: View {
             }
             
         case 3: // Activity
-            AllYearsActivityHeatmapView(allYearsData: parkrunInfo.allYearsActivityData)
+            AllYearsActivityHeatmapView(allYearsData: parkrunInfo.allYearsActivityData, totalParkruns: parkrunInfo.totalParkrunsInt)
             
         case 4: // Volunteer
             VolunteerContributionChart(volunteerStats: parkrunInfo.volunteerStats)
