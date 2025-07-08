@@ -1677,12 +1677,14 @@ struct MeTabView: View {
             }
             
             print("DEBUG - VIZ: Loaded local HTML file, length: \(htmlString.count)")
-            let extractedData = self.extractVisualizationDataFromHTML(htmlString)
+            let extractedData = self.extractCompleteResultsFromHTML(htmlString)
             
             DispatchQueue.main.async {
-                user.updateVisualizationData(
+                user.updateCompleteVisualizationData(
                     venueRecords: extractedData.venueRecords,
-                    volunteerRecords: extractedData.volunteerRecords
+                    volunteerRecords: extractedData.volunteerRecords,
+                    annualPerformances: extractedData.annualPerformances,
+                    overallStats: extractedData.overallStats
                 )
                 print("DEBUG - VIZ: Updated user with local test data - \(extractedData.venueRecords.count) venues, \(extractedData.volunteerRecords.count) volunteers")
             }
@@ -1712,27 +1714,25 @@ struct MeTabView: View {
                 return
             }
             
-            print("DEBUG - VIZ: Processing HTML for basic visualization data extraction")
-            let extractedData = self.extractVisualizationDataFromHTML(htmlString)
+            print("DEBUG - VIZ: Processing HTML for complete visualization data extraction")
+            let extractedData = self.extractCompleteResultsFromHTML(htmlString)
             
             DispatchQueue.main.async {
-                // Update the user's basic visualization data
-                user.updateVisualizationData(
+                // Update the user's complete visualization data
+                user.updateCompleteVisualizationData(
                     venueRecords: extractedData.venueRecords,
-                    volunteerRecords: extractedData.volunteerRecords
+                    volunteerRecords: extractedData.volunteerRecords,
+                    annualPerformances: extractedData.annualPerformances,
+                    overallStats: extractedData.overallStats
                 )
                 
                 // Save to SwiftData
                 do {
                     try self.modelContext.save()
-                    print("DEBUG - VIZ: Successfully saved basic visualization data")
+                    print("DEBUG - VIZ: Successfully saved complete visualization data")
                 } catch {
-                    print("DEBUG - VIZ: Failed to save basic visualization data: \(error)")
+                    print("DEBUG - VIZ: Failed to save complete visualization data: \(error)")
                 }
-                
-                // Now fetch comprehensive data from /all/ endpoint
-                print("DEBUG - VIZ: Starting comprehensive data fetch from /all/ endpoint")
-                self.fetchAndProcessCompleteResultsData(for: user)
             }
         }.resume()
     }
