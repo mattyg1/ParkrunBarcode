@@ -9,14 +9,32 @@ import SwiftUI
 
 struct AllYearsActivityHeatmapView: View {
     let allYearsData: [Int: [ActivityDay]]
-    @State private var selectedDay: ActivityDay?
+    @State private var selectedCell: (year: Int, month: Int)?
     
-    private let cellSize: CGFloat = 10
-    private let cellSpacing: CGFloat = 1
-    private let monthLabels = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"]
+    private let cellHeight: CGFloat = 20
+    private let cellSpacing: CGFloat = 2
+    private let monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     
     private var sortedYears: [Int] {
         allYearsData.keys.sorted()
+    }
+    
+    private var monthlyData: [Int: [Int: Int]] {
+        var result: [Int: [Int: Int]] = [:]
+        
+        for (year, days) in allYearsData {
+            var monthCounts: [Int: Int] = [:]
+            let calendar = Calendar.current
+            
+            for day in days.filter({ $0.hasRun }) {
+                let month = calendar.component(.month, from: day.date)
+                monthCounts[month, default: 0] += 1
+            }
+            
+            result[year] = monthCounts
+        }
+        
+        return result
     }
     
     var body: some View {
@@ -26,7 +44,7 @@ struct AllYearsActivityHeatmapView: View {
                     .font(.headline)
                     .foregroundColor(.primary)
                 
-                Text("Your complete parkrun history across all years")
+                Text("Monthly parkrun activity across all years")
                     .font(.caption)
                     .foregroundColor(.secondary)
             }
@@ -34,61 +52,59 @@ struct AllYearsActivityHeatmapView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 VStack(spacing: 0) {
                     // Month labels header
-                    HStack(spacing: 0) {
+                    HStack(spacing: cellSpacing) {
                         // Spacer for year labels
-                        VStack { }
+                        Text("")
                             .frame(width: 50)
                         
                         ForEach(0..<12, id: \.self) { monthIndex in
                             Text(monthLabels[monthIndex])
                                 .font(.caption2)
                                 .foregroundColor(.secondary)
-                                .frame(width: getMonthWidth(monthIndex: monthIndex))
+                                .frame(width: 40)
                         }
                     }
-                    .padding(.bottom, 4)
+                    .padding(.bottom, 8)
                     
                     // Year rows
                     ForEach(sortedYears, id: \.self) { year in
-                        HStack(spacing: 0) {
+                        HStack(spacing: cellSpacing) {
                             // Year label
                             Text(String(year))
-                                .font(.caption2)
+                                .font(.caption)
                                 .foregroundColor(.secondary)
-                                .frame(width: 45, alignment: .trailing)
-                                .padding(.trailing, 5)
+                                .frame(width: 50, alignment: .trailing)
                             
-                            // Activity cells for the year
-                            HStack(spacing: 0) {
-                                ForEach(0..<12, id: \.self) { monthIndex in
-                                    let monthData = getMonthData(year: year, monthIndex: monthIndex)
-                                    let weeksInMonth = ceil(Double(monthData.count) / 7.0)
-                                    
-                                    HStack(spacing: cellSpacing) {
-                                        ForEach(0..<Int(weeksInMonth), id: \.self) { weekIndex in
-                                            VStack(spacing: cellSpacing) {
-                                                ForEach(0..<7, id: \.self) { dayIndex in
-                                                    let dayData = getDayData(monthData: monthData, week: weekIndex, day: dayIndex)
-                                                    
-                                                    RoundedRectangle(cornerRadius: 1)
-                                                        .fill(cellColor(for: dayData))
-                                                        .frame(width: cellSize, height: cellSize)
-                                                        .overlay(
-                                                            RoundedRectangle(cornerRadius: 1)
-                                                                .stroke(selectedDay?.id == dayData?.id ? Color.blue : Color.clear, lineWidth: 1)
-                                                        )
-                                                        .onTapGesture {
-                                                            selectedDay = selectedDay?.id == dayData?.id ? nil : dayData
-                                                        }
-                                                }
-                                            }
+                            // Monthly activity cells for the year
+                            ForEach(1...12, id: \.self) { month in
+                                let count = monthlyData[year]?[month] ?? 0
+                                
+                                RoundedRectangle(cornerRadius: 3)
+                                    .fill(cellColor(for: count))
+                                    .frame(width: 40, height: cellHeight)
+                                    .overlay(
+                                        Text(count > 0 ? "\(count)" : "")
+                                            .font(.caption2)
+                                            .fontWeight(.medium)
+                                            .foregroundColor(count > 0 ? .white : .clear)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 3)
+                                            .stroke(
+                                                selectedCell?.year == year && selectedCell?.month == month ? Color.blue : Color.clear,
+                                                lineWidth: 2
+                                            )
+                                    )
+                                    .onTapGesture {
+                                        if selectedCell?.year == year && selectedCell?.month == month {
+                                            selectedCell = nil
+                                        } else {
+                                            selectedCell = (year: year, month: month)
                                         }
                                     }
-                                    .frame(width: getMonthWidth(monthIndex: monthIndex))
-                                }
                             }
                         }
-                        .padding(.vertical, 2)
+                        .padding(.vertical, 1)
                     }
                 }
                 .padding(.horizontal)
@@ -98,21 +114,29 @@ struct AllYearsActivityHeatmapView: View {
             HStack(spacing: 16) {
                 // Legend
                 HStack(spacing: 8) {
-                    Text("Less")
+                    Text("0")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                     
                     HStack(spacing: 2) {
-                        RoundedRectangle(cornerRadius: 1)
+                        RoundedRectangle(cornerRadius: 2)
                             .fill(Color.gray.opacity(0.15))
-                            .frame(width: cellSize, height: cellSize)
+                            .frame(width: 16, height: 16)
                         
-                        RoundedRectangle(cornerRadius: 1)
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color(red: 0.58, green: 0.45, blue: 0.80).opacity(0.5))
+                            .frame(width: 16, height: 16)
+                        
+                        RoundedRectangle(cornerRadius: 2)
                             .fill(Color(red: 0.58, green: 0.45, blue: 0.80))
-                            .frame(width: cellSize, height: cellSize)
+                            .frame(width: 16, height: 16)
+                        
+                        RoundedRectangle(cornerRadius: 2)
+                            .fill(Color(red: 0.45, green: 0.25, blue: 0.65))
+                            .frame(width: 16, height: 16)
                     }
                     
-                    Text("More")
+                    Text("5+")
                         .font(.caption2)
                         .foregroundColor(.secondary)
                 }
@@ -131,53 +155,34 @@ struct AllYearsActivityHeatmapView: View {
                 }
             }
             
-            // Selected day details
-            if let selectedDay = selectedDay {
+            // Selected cell details
+            if let selectedCell = selectedCell {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Selected Day")
+                    Text("Selected Month")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.blue)
                     
                     HStack {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Date")
+                            Text("Month")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text(formatDate(selectedDay.date))
+                            Text("\(monthLabels[selectedCell.month - 1]) \(selectedCell.year)")
                                 .font(.body)
                                 .fontWeight(.medium)
                         }
                         
                         Spacer()
                         
-                        if selectedDay.hasRun {
-                            VStack(alignment: .center, spacing: 2) {
-                                Text("Venue")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Text(selectedDay.venue ?? "Unknown")
-                                    .font(.body)
-                                    .fontWeight(.medium)
-                                    .multilineTextAlignment(.center)
-                            }
-                            
-                            Spacer()
-                            
-                            VStack(alignment: .trailing, spacing: 2) {
-                                Text("Time")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-                                Text(selectedDay.time ?? "N/A")
-                                    .font(.body)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.blue)
-                            }
-                        } else {
-                            Text("No parkrun")
-                                .font(.body)
+                        VStack(alignment: .trailing, spacing: 2) {
+                            Text("parkruns")
+                                .font(.caption)
                                 .foregroundColor(.secondary)
-                                .italic()
+                            Text("\(monthlyData[selectedCell.year]?[selectedCell.month] ?? 0)")
+                                .font(.title2)
+                                .fontWeight(.bold)
+                                .foregroundColor(.blue)
                         }
                     }
                 }
@@ -200,6 +205,10 @@ struct AllYearsActivityHeatmapView: View {
                         InsightRow(text: "Most active year: \(mostActiveYear.year) with \(mostActiveYear.count) parkruns")
                     }
                     
+                    if let mostActiveMonth = getMostActiveMonth() {
+                        InsightRow(text: "Most active month: \(monthLabels[mostActiveMonth.month - 1]) with \(mostActiveMonth.totalCount) total parkruns")
+                    }
+                    
                     if let firstYear = sortedYears.first, let lastYear = sortedYears.last, firstYear != lastYear {
                         InsightRow(text: "parkrun journey spans from \(firstYear) to \(lastYear)")
                     }
@@ -218,42 +227,17 @@ struct AllYearsActivityHeatmapView: View {
         allYearsData.values.flatMap { $0 }.filter { $0.hasRun }.count
     }
     
-    private func cellColor(for day: ActivityDay?) -> Color {
-        guard let day = day else { return Color.gray.opacity(0.1) }
-        
-        if day.hasRun {
-            return Color(red: 0.58, green: 0.45, blue: 0.80) // Purple for parkrun days
-        } else {
+    private func cellColor(for count: Int) -> Color {
+        switch count {
+        case 0:
             return Color.gray.opacity(0.15)
+        case 1:
+            return Color(red: 0.58, green: 0.45, blue: 0.80).opacity(0.5)
+        case 2...4:
+            return Color(red: 0.58, green: 0.45, blue: 0.80)
+        default: // 5+
+            return Color(red: 0.45, green: 0.25, blue: 0.65)
         }
-    }
-    
-    private func getMonthWidth(monthIndex: Int) -> CGFloat {
-        // Calculate approximate width needed for each month
-        // This is a simplified calculation - in a real implementation you'd calculate based on actual days
-        let daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][monthIndex]
-        let weeksInMonth = ceil(Double(daysInMonth) / 7.0)
-        return max(CGFloat(weeksInMonth) * (cellSize + cellSpacing), 20)
-    }
-    
-    private func getMonthData(year: Int, monthIndex: Int) -> [ActivityDay] {
-        guard let yearData = allYearsData[year] else { return [] }
-        
-        let calendar = Calendar.current
-        return yearData.filter { day in
-            calendar.component(.month, from: day.date) == monthIndex + 1
-        }
-    }
-    
-    private func getDayData(monthData: [ActivityDay], week: Int, day: Int) -> ActivityDay? {
-        let dayIndex = week * 7 + day
-        return dayIndex < monthData.count ? monthData[dayIndex] : nil
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .medium
-        return formatter.string(from: date)
     }
     
     private func getMostActiveYear() -> (year: Int, count: Int)? {
@@ -263,6 +247,19 @@ struct AllYearsActivityHeatmapView: View {
         
         guard let maxEntry = yearCounts.max(by: { $0.value < $1.value }) else { return nil }
         return (year: maxEntry.key, count: maxEntry.value)
+    }
+    
+    private func getMostActiveMonth() -> (month: Int, totalCount: Int)? {
+        var monthTotals: [Int: Int] = [:]
+        
+        for (_, yearData) in monthlyData {
+            for (month, count) in yearData {
+                monthTotals[month, default: 0] += count
+            }
+        }
+        
+        guard let maxEntry = monthTotals.max(by: { $0.value < $1.value }) else { return nil }
+        return (month: maxEntry.key, totalCount: maxEntry.value)
     }
 }
 
