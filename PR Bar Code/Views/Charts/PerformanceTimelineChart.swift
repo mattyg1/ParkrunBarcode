@@ -49,27 +49,28 @@ struct PerformanceTimelineChart: View {
                     y: .value("Time", data.timeInMinutes)
                 )
                 .foregroundStyle(Color.adaptiveParkrunGreen)
-                .lineStyle(StrokeStyle(lineWidth: 3))
-                
-                PointMark(
-                    x: .value("Date", parseDate(data.date) ?? Date()),
-                    y: .value("Time", data.timeInMinutes)
-                )
-                .foregroundStyle(Color.adaptiveParkrunGreen)
-                .symbolSize(selectedDataPoint?.id == data.id ? 80 : 50)
+                .lineStyle(StrokeStyle(lineWidth: 1.5))
                 
                 if let selectedDataPoint = selectedDataPoint, selectedDataPoint.id == data.id {
+                    PointMark(
+                        x: .value("Date", parseDate(data.date) ?? Date()),
+                        y: .value("Time", data.timeInMinutes)
+                    )
+                    .foregroundStyle(Color.adaptiveParkrunGreen)
+                    .symbolSize(60)
+                    
                     RuleMark(x: .value("Selected Date", parseDate(data.date) ?? Date()))
                         .foregroundStyle(Color.adaptiveParkrunGreen.opacity(0.3))
                         .lineStyle(StrokeStyle(lineWidth: 2, dash: [5, 5]))
                 }
             }
-            .frame(height: 200)
+            .frame(height: 220)
             .chartYScale(domain: yAxisRange)
             .chartXAxis {
                 AxisMarks(values: .stride(by: .year)) { value in
                     AxisValueLabel(format: .dateTime.year(.defaultDigits))
                         .font(.caption2)
+                        .foregroundStyle(.secondary)
                     AxisGridLine()
                 }
             }

@@ -41,7 +41,7 @@ struct BestTimesByVenueChart: View {
                 .opacity(selectedVenue == nil || selectedVenue?.name == venue.name ? 1.0 : 0.5)
                 .cornerRadius(4)
             }
-            .frame(height: 300)
+            .frame(height: 320)
             .chartXAxis {
                 AxisMarks(values: .automatic) { value in
                     AxisGridLine()
@@ -70,6 +70,7 @@ struct BestTimesByVenueChart: View {
                     .background(Color.gray.opacity(0.05))
                     .cornerRadius(8)
             }
+            .padding(.bottom, 20)
             .onTapGesture { location in
                 // Simple selection toggle
                 if selectedVenue != nil {
