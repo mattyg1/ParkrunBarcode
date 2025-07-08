@@ -42,7 +42,7 @@ struct BestTimesByVenueChart: View {
                 .cornerRadius(4)
             }
             .frame(height: 320)
-            .chartXAxis { }
+                        .chartXAxis(.hidden)
             .chartYAxis {
                 AxisMarks(values: .automatic) { value in
                     AxisValueLabel {
@@ -60,12 +60,22 @@ struct BestTimesByVenueChart: View {
                     .cornerRadius(8)
             }
             .padding(.bottom, 20)
-            .onTapGesture { location in
-                // Simple selection toggle
-                if selectedVenue != nil {
-                    selectedVenue = nil
-                } else if let firstVenue = sortedByBestTime.first {
-                    selectedVenue = firstVenue
+            .chartOverlay { proxy in
+                GeometryReader { innerGeometry in
+                    Rectangle().fill(.clear).contentShape(Rectangle())
+                        .gesture(
+                            DragGesture()
+                                .onChanged { value in
+                                    let location = value.location
+                                    if let venueName: String = proxy.value(atX: location.x) {
+                                        selectedVenue = sortedByBestTime.first(where: { $0.name == venueName })
+                                    }
+                                }
+                                .onEnded { _ in
+                                    // Optionally clear selection when gesture ends
+                                    // selectedVenue = nil
+                                }
+                        )
                 }
             }
             
