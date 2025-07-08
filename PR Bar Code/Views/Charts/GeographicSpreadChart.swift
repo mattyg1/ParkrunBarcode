@@ -58,228 +58,165 @@ struct GeographicSpreadChart: View {
                             y: .value("Venues", stats.venueCount)
                         )
                         .foregroundStyle(Color.blue.gradient)
-                        .opacity(selectedRegion == nil || selectedRegion?.region
-   == stats.region ? 1.0 : 0.5)
+                        .opacity(selectedRegion == nil || selectedRegion?.region == stats.region ? 1.0 : 0.5)
                         .cornerRadius(4)
                     }
-                    .chartOverlay { proxy in
-                        GeometryReader { innerGeometry in
-                            Rectangle().fill(.clear).contentShape(Rectangle())
-                                .gesture(
-                                    DragGesture()
-                                        .onChanged { value in
-                                            let location = value.location
-                                            if let region: String = proxy.value(atX: location.x) {
-                                                selectedRegion = geographicStats.first(where: { $0.region == region })
-                                            }
-                                        }
-                                        .onEnded { _ in
-                                            selectedRegion = nil
-                                        }
-                                )
+                    .chartYAxis {
+                        AxisMarks(position: .leading, values: .automatic) { value in
+                            AxisValueLabel {
+                                if let venueCount = value.as(Int.self) {
+                                    Text("\(venueCount)")
+                                        .font(.caption2)
+                                }
+                            }
                         }
                     }
-                    .chartBackground { proxy in
-                        if let selectedRegion = selectedRegion {
-                            let xPosition = proxy.position(forX: selectedRegion.region) ?? 0
-                            let yPosition = proxy.position(forY: selectedRegion.venueCount) ?? 0
-
-                            Text(selectedRegion.region)
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.8)))
-                                .shadow(radius: 2)
-                                .position(x: xPosition, y: yPosition - 20) // Position above the bar
-                        }
-                    }
-                    }
-                    .chartOverlay { proxy in
-                        GeometryReader { innerGeometry in
-                            Rectangle().fill(.clear).contentShape(Rectangle())
-                                .gesture(
-                                    DragGesture()
-                                        .onChanged { value in
-                                            let location = value.location
-                                            if let region: String = proxy.value(atX: location.x) {
-                                                selectedRegion = geographicStats.first(where: { $0.region == region })
-                                            }
-                                        }
-                                        .onEnded { _ in
-                                            selectedRegion = nil
-                                        }
-                                )
-                        }
-                    }
-                    .chartBackground { proxy in
-                        if let selectedRegion = selectedRegion {
-                            let xPosition = proxy.position(forX: selectedRegion.region) ?? 0
-                            let yPosition = proxy.position(forY: selectedRegion.venueCount) ?? 0
-
-                            Text(selectedRegion.region)
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.8)))
-                                .shadow(radius: 2)
-                                .position(x: xPosition, y: yPosition - 20) // Position above the bar
-                        }
-                    }
-                    .frame(width: geometry.size.width, height:
-  geometry.size.height)
-                    
-                    
                     .chartYScale(domain: 0...20)
                     .chartPlotStyle { plotArea in
                         plotArea
                             .background(Color.gray.opacity(0.05))
                             .cornerRadius(8)
                     }
+                    .chartOverlay { proxy in
+                        Rectangle().fill(.clear).contentShape(Rectangle())
+                            .gesture(
+                                DragGesture()
+                                    .onChanged { value in
+                                        let location = value.location
+                                        if let region: String = proxy.value(atX: location.x) {
+                                            selectedRegion = geographicStats.first(where: { $0.region == region })
+                                        }
+                                    }
+                                    .onEnded { _ in
+                                        selectedRegion = nil
+                                    }
+                            )
+                    }
+                    .chartBackground { proxy in
+                        if let selectedRegion = selectedRegion {
+                            let xPosition = proxy.position(forX: selectedRegion.region) ?? 0
+                            let yPosition = proxy.position(forY: selectedRegion.venueCount) ?? 0
+
+                            Text(selectedRegion.region)
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.8)))
+                                .shadow(radius: 2)
+                                .position(x: xPosition, y: yPosition - 20) // Position above the bar
+                        }
+                    }
+                    .frame(width: geometry.size.width, height: geometry.size.height)
                 }
                 .frame(height: 300) // this includes space for rotated labels
                 .padding(.horizontal, 20)
             }
                 
-                // Region breakdown
+            // Region breakdown
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Regional Breakdown")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.blue)
+                
+                ForEach(geographicStats, id: \.region) { stats in
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(stats.region)
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .foregroundColor(.primary)
+                            
+                            Text("\(stats.venueCount) venues • \(stats.totalRuns) runs")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                        
+                        Spacer()
+                        
+                        // Progress bar
+                        GeometryReader { geometry in
+                            ZStack(alignment: .leading) {
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(Color.gray.opacity(0.2))
+                                    .frame(height: 4)
+                                
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(Color.blue)
+                                    .frame(width: geometry.size.width * progressRatio(for: stats), height: 4)
+                            }
+                        }
+                        .frame(width: 60, height: 4)
+                        
+                        Text("\(stats.venueCount)")
+                            .font(.caption)
+                            .fontWeight(.medium)
+                            .foregroundColor(.blue)
+                            .frame(width: 20, alignment: .trailing)
+                    }
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        selectedRegion = selectedRegion?.region == stats.region ? nil : stats
+                    }
+                }
+            }
+            .padding(12)
+            .background(Color.gray.opacity(0.05))
+            .cornerRadius(8)
+            
+            // Selected region details
+            if let selectedRegion = selectedRegion {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Regional Breakdown")
+                    Text("Region Details")
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.blue)
                     
-                    ForEach(geographicStats, id: \.region) { stats in
+                    VStack(spacing: 8) {
                         HStack {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(stats.region)
+                                Text("Region")
                                     .font(.caption)
-                                    .fontWeight(.medium)
-                                    .foregroundColor(.primary)
-                                
-                                Text("\(stats.venueCount) venues • \(stats.totalRuns) runs")
-                                    .font(.caption2)
                                     .foregroundColor(.secondary)
+                                Text(selectedRegion.region)
+                                    .font(.body)
+                                    .fontWeight(.medium)
                             }
                             
                             Spacer()
                             
-                            // Progress bar
-                            GeometryReader { geometry in
-                                ZStack(alignment: .leading) {
-                                    RoundedRectangle(cornerRadius: 2)
-                                        .fill(Color.gray.opacity(0.2))
-                                        .frame(height: 4)
-                                    
-                                    RoundedRectangle(cornerRadius: 2)
-                                        .fill(Color.blue)
-                                        .frame(width: geometry.size.width * progressRatio(for: stats), height: 4)
-                                }
-                            }
-                            .frame(width: 60, height: 4)
-                            
-                            Text("\(stats.venueCount)")
-                                .font(.caption)
-                                .fontWeight(.medium)
-                                .foregroundColor(.blue)
-                                .frame(width: 20, alignment: .trailing)
-                        }
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedRegion = selectedRegion?.region == stats.region ? nil : stats
-                        }
-                    }
-                }
-                .padding(12)
-                .background(Color.gray.opacity(0.05))
-                .cornerRadius(8)
-                
-                // Selected region details
-                if let selectedRegion = selectedRegion {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Region Details")
-                            .font(.subheadline)
-                            .fontWeight(.medium)
-                            .foregroundColor(.blue)
-                        
-                        VStack(spacing: 8) {
-                            HStack {
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text("Region")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Text(selectedRegion.region)
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                }
-                                
-                                Spacer()
-                                
-                                VStack(alignment: .center, spacing: 2) {
-                                    Text("Venues")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Text("\(selectedRegion.venueCount)")
-                                        .font(.title2)
-                                        .fontWeight(.bold)
-                                        .foregroundColor(.blue)
-                                }
-                                
-                                Spacer()
-                                
-                                VStack(alignment: .trailing, spacing: 2) {
-                                    Text("Total Runs")
-                                        .font(.caption)
-                                        .foregroundColor(.secondary)
-                                    Text("\(selectedRegion.totalRuns)")
-                                        .font(.body)
-                                        .fontWeight(.medium)
-                                }
-                            }
-                            
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Venues in this region:")
+                            VStack(alignment: .center, spacing: 2) {
+                                Text("Venues")
                                     .font(.caption)
                                     .foregroundColor(.secondary)
-                                
-                                Text(selectedRegion.venues.map { $0.replacingOccurrences(of: " parkrun", with: "") }.joined(separator: " • "))
+                                Text("\(selectedRegion.venueCount)")
+                                    .font(.title2)
+                                    .fontWeight(.bold)
+                                    .foregroundColor(.blue)
+                            }
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .trailing, spacing: 2) {
+                                Text("Total Runs")
                                     .font(.caption)
+                                    .foregroundColor(.secondary)
+                                Text("\(selectedRegion.totalRuns)")
+                                    .font(.body)
                                     .fontWeight(.medium)
-                                    .lineLimit(3)
                             }
                         }
-                    }
-                    .padding(12)
-                    .background(Color.blue.opacity(0.05))
-                    .cornerRadius(8)
-                }
-                
-                // Geographic insights
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("parkrun Tourism")
-                        .font(.subheadline)
-                        .fontWeight(.medium)
-                        .foregroundColor(.blue)
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        if let primaryRegion = geographicStats.max(by: { $0.venueCount < $1.venueCount }) {
-                            InsightRow(text: "Primary area: \(primaryRegion.region) (\(primaryRegion.venueCount) venues)")
-                        }
                         
-                        let internationalVenues = geographicStats.filter { $0.region.contains("International") }
-                        if !internationalVenues.isEmpty {
-                            let internationalVenueNames = internationalVenues.flatMap { $0.venues }.joined(separator: ", ")
-                            InsightRow(text: "International experience: \(internationalVenueNames)")
-                        }
-                        
-                        if let furthestUK = getFurthestUKVenue() {
-                            InsightRow(text: "Furthest UK venue: \(furthestUK)")
-                        }
-                        
-                        let nonPrimaryRegions = geographicStats.filter { $0.region != geographicStats.max(by: { $0.venueCount < $1.venueCount })?.region }
-                        if !nonPrimaryRegions.isEmpty {
-                            let regionNames = nonPrimaryRegions.map { $0.region }.joined(separator: ", ")
-                            InsightRow(text: "Also visited: \(regionNames)")
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Venues in this region:")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            
+                            Text(selectedRegion.venues.map { $0.replacingOccurrences(of: " parkrun", with: "") }.joined(separator: " • "))
+                                .font(.caption)
+                                .fontWeight(.medium)
+                                .lineLimit(3)
                         }
                     }
                 }
@@ -287,6 +224,39 @@ struct GeographicSpreadChart: View {
                 .background(Color.blue.opacity(0.05))
                 .cornerRadius(8)
             }
+            
+            // Geographic insights
+            VStack(alignment: .leading, spacing: 8) {
+                Text("parkrun Tourism")
+                    .font(.subheadline)
+                    .fontWeight(.medium)
+                    .foregroundColor(.blue)
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    if let primaryRegion = geographicStats.max(by: { $0.venueCount < $1.venueCount }) {
+                        InsightRow(text: "Primary area: \(primaryRegion.region) (\(primaryRegion.venueCount) venues)")
+                    }
+                    
+                    let internationalVenues = geographicStats.filter { $0.region.contains("International") }
+                    if !internationalVenues.isEmpty {
+                        let internationalVenueNames = internationalVenues.flatMap { $0.venues }.joined(separator: ", ")
+                        InsightRow(text: "International experience: \(internationalVenueNames)")
+                    }
+                    
+                    if let furthestUK = getFurthestUKVenue() {
+                        InsightRow(text: "Furthest UK venue: \(furthestUK)")
+                    }
+                    
+                    let nonPrimaryRegions = geographicStats.filter { $0.region != geographicStats.max(by: { $0.venueCount < $1.venueCount })?.region }
+                    if !nonPrimaryRegions.isEmpty {
+                        let regionNames = nonPrimaryRegions.map { $0.region }.joined(separator: ", ")
+                        InsightRow(text: "Also visited: \(regionNames)")
+                    }
+                }
+            }
+            .padding(12)
+            .background(Color.blue.opacity(0.05))
+            .cornerRadius(8)
         }
     }
     
