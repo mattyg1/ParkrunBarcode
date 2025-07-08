@@ -1677,14 +1677,12 @@ struct MeTabView: View {
             }
             
             print("DEBUG - VIZ: Loaded local HTML file, length: \(htmlString.count)")
-            let extractedData = self.extractCompleteResultsFromHTML(htmlString)
+            let extractedData = self.extractVisualizationDataFromHTML(htmlString)
             
             DispatchQueue.main.async {
-                user.updateCompleteVisualizationData(
+                user.updateVisualizationData(
                     venueRecords: extractedData.venueRecords,
-                    volunteerRecords: extractedData.volunteerRecords,
-                    annualPerformances: extractedData.annualPerformances,
-                    overallStats: extractedData.overallStats
+                    volunteerRecords: extractedData.volunteerRecords
                 )
                 print("DEBUG - VIZ: Updated user with local test data - \(extractedData.venueRecords.count) venues, \(extractedData.volunteerRecords.count) volunteers")
             }
@@ -1714,25 +1712,27 @@ struct MeTabView: View {
                 return
             }
             
-            print("DEBUG - VIZ: Processing HTML for complete visualization data extraction")
-            let extractedData = self.extractCompleteResultsFromHTML(htmlString)
+            print("DEBUG - VIZ: Processing HTML for basic visualization data extraction")
+            let extractedData = self.extractVisualizationDataFromHTML(htmlString)
             
             DispatchQueue.main.async {
-                // Update the user's complete visualization data
-                user.updateCompleteVisualizationData(
+                // Update the user's basic visualization data
+                user.updateVisualizationData(
                     venueRecords: extractedData.venueRecords,
-                    volunteerRecords: extractedData.volunteerRecords,
-                    annualPerformances: extractedData.annualPerformances,
-                    overallStats: extractedData.overallStats
+                    volunteerRecords: extractedData.volunteerRecords
                 )
                 
                 // Save to SwiftData
                 do {
                     try self.modelContext.save()
-                    print("DEBUG - VIZ: Successfully saved complete visualization data")
+                    print("DEBUG - VIZ: Successfully saved basic visualization data")
                 } catch {
-                    print("DEBUG - VIZ: Failed to save complete visualization data: \(error)")
+                    print("DEBUG - VIZ: Failed to save basic visualization data: \(error)")
                 }
+                
+                // Now fetch comprehensive data from /all/ endpoint
+                print("DEBUG - VIZ: Starting comprehensive data fetch from /all/ endpoint")
+                self.fetchAndProcessCompleteResultsData(for: user)
             }
         }.resume()
     }
@@ -1935,34 +1935,95 @@ struct MeTabView: View {
     private func extractCompleteResultsSimplePattern(_ html: String) -> [VenueRecord] {
         var records: [VenueRecord] = []
         
-        print("DEBUG - COMPLETE: Using simpler pattern extraction for complete results")
+        print("DEBUG - COMPLETE: Using simpler pattern extraction for complete results - falling back to basic extraction logic")
         
-        // Look for format-date spans which indicate result rows
-        let datePattern = #"<span[^>]*class="format-date"[^>]*>(\d{2}/\d{2}/\d{4})</span>"#
+        // Use the same successful table row pattern as the basic extraction
+        let tableRowPattern = #"<tr[^>]*>.*?<td[^>]*><a[^>]*href="([^"]*)"[^>]*>([^<]*parkrun[^<]*)</a></td>.*?<td[^>]*><a[^>]*href="[^"]*"[^>]*>(\d{2}/\d{2}/\d{4})</a></td>.*?<td[^>]*>(\d{2}:\d{2})</td>"#
         
-        if let dateRegex = try? NSRegularExpression(pattern: datePattern, options: []) {
-            let dateMatches = dateRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            print("DEBUG - COMPLETE: Found \(dateMatches.count) format-date spans")
+        if let tableRegex = try? NSRegularExpression(pattern: tableRowPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let matches = tableRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - COMPLETE: Found \(matches.count) table row matches using basic pattern")
             
-            // For each date, try to find associated venue, time, position, and age grading
-            for (index, dateMatch) in dateMatches.enumerated() {
-                if let dateRange = Range(dateMatch.range(at: 1), in: html) {
-                    let date = String(html[dateRange])
+            for match in matches {
+                guard match.numberOfRanges >= 5 else { continue }
+                
+                if let eventURLRange = Range(match.range(at: 1), in: html),
+                   let venueRange = Range(match.range(at: 2), in: html),
+                   let dateRange = Range(match.range(at: 3), in: html),
+                   let timeRange = Range(match.range(at: 4), in: html) {
                     
-                    // Look for venue and other data in nearby table cells
-                    // This is a simplified approach - would need refinement for production
-                    let sampleRecord = VenueRecord(
-                        venue: "Sample Venue \(index + 1)",
-                        date: date,
-                        time: "25:00",
-                        eventURL: nil,
-                        runNumber: 100 + index,
-                        position: 50 + index,
-                        ageGrading: 60.0 + Double(index),
-                        isPB: index % 5 == 0
-                    )
-                    records.append(sampleRecord)
+                    let eventURL = String(html[eventURLRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let venue = String(html[venueRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let date = String(html[dateRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let time = String(html[timeRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    let record = VenueRecord(venue: venue, date: date, time: time, eventURL: eventURL.isEmpty ? nil : eventURL)
+                    records.append(record)
+                    
+                    print("DEBUG - COMPLETE: Extracted venue record: \(venue) on \(date) - \(time)")
                 }
+            }
+        }
+        
+        // If still no results, try the individual element extraction approach
+        if records.isEmpty {
+            print("DEBUG - COMPLETE: Table row pattern failed, trying individual element extraction")
+            
+            // Find all event links
+            let eventPattern = #"<td><a[^>]*href="([^"]*)"[^>]*>([^<]*parkrun[^<]*)</a></td>"#
+            let datePattern = #"<td><a[^>]*href="[^"]*"[^>]*>(\d{2}/\d{2}/\d{4})</a></td>"#
+            let timePattern = #"<td>(\d{2}:\d{2})</td>"#
+            
+            var events: [(String, String)] = []  // (URL, venue)
+            var dates: [String] = []
+            var times: [String] = []
+            
+            // Extract events
+            if let eventRegex = try? NSRegularExpression(pattern: eventPattern, options: []) {
+                let eventMatches = eventRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                for match in eventMatches {
+                    if let urlRange = Range(match.range(at: 1), in: html),
+                       let venueRange = Range(match.range(at: 2), in: html) {
+                        let url = String(html[urlRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        let venue = String(html[venueRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        events.append((url, venue))
+                    }
+                }
+            }
+            
+            // Extract dates
+            if let dateRegex = try? NSRegularExpression(pattern: datePattern, options: []) {
+                let dateMatches = dateRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                for match in dateMatches {
+                    if let dateRange = Range(match.range(at: 1), in: html) {
+                        let date = String(html[dateRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        dates.append(date)
+                    }
+                }
+            }
+            
+            // Extract times
+            if let timeRegex = try? NSRegularExpression(pattern: timePattern, options: []) {
+                let timeMatches = timeRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                for match in timeMatches {
+                    if let timeRange = Range(match.range(at: 1), in: html) {
+                        let time = String(html[timeRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                        times.append(time)
+                    }
+                }
+            }
+            
+            // Combine the extracted data
+            let maxCount = min(events.count, min(dates.count, times.count))
+            for i in 0..<maxCount {
+                let record = VenueRecord(
+                    venue: events[i].1,
+                    date: dates[i],
+                    time: times[i],
+                    eventURL: events[i].0.isEmpty ? nil : events[i].0
+                )
+                records.append(record)
+                print("DEBUG - COMPLETE: Combined extracted record: \(events[i].1) on \(dates[i]) - \(times[i])")
             }
         }
         
