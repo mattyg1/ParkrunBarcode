@@ -1500,7 +1500,8 @@ struct MeTabView: View {
         print("DEBUG - VOLUNTEER: Parsing volunteer summary table rows")
         
         // Pattern for volunteer summary table rows: <tr><td>Role</td><td>Occasions</td></tr>
-        let rowPattern = #"<tr[^>]*>\s*<td[^>]*>([^<]+)</td>\s*<td[^>]*>(\d+)</td>\s*</tr>"#
+        // Handle multi-line text content with whitespace/newlines
+        let rowPattern = #"<tr[^>]*>\s*<td[^>]*>\s*([^<]+?)\s*</td>\s*<td[^>]*>(\d+)</td>\s*</tr>"#
         
         if let rowRegex = try? NSRegularExpression(pattern: rowPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
             let matches = rowRegex.matches(in: tableBody, options: [], range: NSRange(tableBody.startIndex..., in: tableBody))
@@ -1512,7 +1513,10 @@ struct MeTabView: View {
                 if let roleRange = Range(match.range(at: 1), in: tableBody),
                    let occasionsRange = Range(match.range(at: 2), in: tableBody) {
                     
-                    let role = String(tableBody[roleRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let role = String(tableBody[roleRange])
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .replacingOccurrences(of: "\n", with: " ")
+                        .replacingOccurrences(of: "\\s+", with: " ", options: .regularExpression)
                     let occasionsStr = String(tableBody[occasionsRange]).trimmingCharacters(in: .whitespacesAndNewlines)
                     
                     // Create volunteer records for each occasion
