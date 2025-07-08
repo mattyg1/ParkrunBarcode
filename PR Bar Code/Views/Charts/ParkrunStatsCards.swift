@@ -169,16 +169,14 @@ struct MilestoneBadge: View {
     var body: some View {
         VStack(spacing: 4) {
             Image(systemName: milestone.icon)
-                .font(.title3)
+                .font(.system(size: 18, weight: .regular, design: .default))
                 .foregroundColor(.yellow)
             
             Text(milestone.rawValue)
-                .font(.caption2)
-                .fontWeight(.medium)
+                .font(.system(size: 11, weight: .medium, design: .default))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
-                .minimumScaleFactor(0.8)
         }
         .padding(8)
         .background(Color.white.opacity(0.2))
@@ -192,12 +190,11 @@ struct CompactMilestoneBadge: View {
     var body: some View {
         VStack(spacing: 2) {
             Image(systemName: milestone.icon)
-                .font(.caption2)
+                .font(.system(size: 10, weight: .regular, design: .default))
                 .foregroundColor(.yellow)
             
             Text("\(milestone.threshold)")
-                .font(.caption2)
-                .fontWeight(.bold)
+                .font(.system(size: 10, weight: .bold, design: .default))
                 .foregroundColor(.white)
                 .lineLimit(1)
         }
