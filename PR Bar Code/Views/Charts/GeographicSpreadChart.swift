@@ -61,7 +61,7 @@ struct GeographicSpreadChart: View {
                         .opacity(selectedRegion == nil || selectedRegion?.region == stats.region ? 1.0 : 0.5)
                         .cornerRadius(4)
                     }
-                    .frame(height: 300)
+                    .frame(height: 320)
                     .chartXAxis {
                         AxisMarks(values: .automatic) { value in
                             AxisGridLine()
@@ -91,7 +91,7 @@ struct GeographicSpreadChart: View {
                             .background(Color.gray.opacity(0.05))
                             .cornerRadius(8)
                     }
-                    .padding(.bottom, 40)
+                    .padding(.bottom, 60)
                     .onTapGesture { location in
                         // Simple selection toggle
                         if selectedRegion != nil {
