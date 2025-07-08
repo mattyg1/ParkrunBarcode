@@ -1667,24 +1667,41 @@ struct MeTabView: View {
     }
     
     private func fetchAndProcessVisualizationData(for user: ParkrunInfo) {
-        // TEMPORARY: Use local test file for debugging volunteer extraction
+        // TEMPORARY: Use local test files for debugging data extraction
         if user.parkrunID == "A79156" {
-            print("DEBUG - VIZ: Using local test file for user A79156")
-            guard let path = Bundle.main.path(forResource: "results | parkrun UK - Matt Gardner", ofType: "html"),
-                  let htmlString = try? String(contentsOfFile: path) else {
-                print("DEBUG - VIZ: Failed to load local test HTML file")
+            print("DEBUG - VIZ: Using local test files for user A79156")
+            
+            // Load basic profile page for volunteer data
+            guard let basicPath = Bundle.main.path(forResource: "results | parkrun UK - Matt Gardner", ofType: "html"),
+                  let basicHtmlString = try? String(contentsOfFile: basicPath) else {
+                print("DEBUG - VIZ: Failed to load basic profile HTML file")
                 return
             }
             
-            print("DEBUG - VIZ: Loaded local HTML file, length: \(htmlString.count)")
-            let extractedData = self.extractVisualizationDataFromHTML(htmlString)
+            // Load complete results page for venue/performance data  
+            guard let completePath = Bundle.main.path(forResource: "results all | parkrun UK - Matt Gardner", ofType: "html"),
+                  let completeHtmlString = try? String(contentsOfFile: completePath) else {
+                print("DEBUG - VIZ: Failed to load complete results HTML file")
+                return
+            }
+            
+            print("DEBUG - VIZ: Loaded basic HTML file, length: \(basicHtmlString.count)")
+            print("DEBUG - VIZ: Loaded complete HTML file, length: \(completeHtmlString.count)")
+            
+            // Extract volunteer data from basic profile page
+            let volunteerRecords = self.extractVolunteerDataFromHTML(basicHtmlString)
+            
+            // Extract complete venue/performance data from /all/ page
+            let completeData = self.extractCompleteResultsFromHTML(completeHtmlString)
             
             DispatchQueue.main.async {
-                user.updateVisualizationData(
-                    venueRecords: extractedData.venueRecords,
-                    volunteerRecords: extractedData.volunteerRecords
+                user.updateCompleteVisualizationData(
+                    venueRecords: completeData.venueRecords,
+                    volunteerRecords: volunteerRecords,
+                    annualPerformances: completeData.annualPerformances,
+                    overallStats: completeData.overallStats
                 )
-                print("DEBUG - VIZ: Updated user with local test data - \(extractedData.venueRecords.count) venues, \(extractedData.volunteerRecords.count) volunteers")
+                print("DEBUG - VIZ: Updated user with combined local test data - \(completeData.venueRecords.count) venues from /all/, \(volunteerRecords.count) volunteers from basic")
             }
             return
         }
@@ -1836,7 +1853,7 @@ struct MeTabView: View {
         
         // Look for the "All Results" table specifically
         // Pattern: <table class="sortable" id="results">...<caption>All Results</caption>
-        let tablePattern = #"<table[^>]*class="sortable"[^>]*>.*?<caption[^>]*>\s*All\s+Results\s*</caption>.*?<tbody>(.*?)</tbody>"#
+        let tablePattern = #"<table[^>]*class="sortable"[^>]*id="results"[^>]*>.*?<caption[^>]*>\s*All\s+Results\s*</caption>.*?<tbody>(.*?)</tbody>"#
         
         // Also check for simpler table patterns and log what we find
         if html.lowercased().contains("all results") {
