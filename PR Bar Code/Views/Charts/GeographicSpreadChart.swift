@@ -65,8 +65,14 @@ struct GeographicSpreadChart: View {
                     .chartXAxis {
                         AxisMarks(values: .automatic) { value in
                             AxisGridLine()
-                            AxisValueLabel {
-                                Text("")
+                            AxisValueLabel(anchor: .topTrailing) {
+                                if let name = value.as(String.self) {
+                                    Text(name)
+                                        .font(.caption2)
+                                        .rotationEffect(.degrees(-45), anchor: .topTrailing)
+                                        .lineLimit(2)
+                                        .multilineTextAlignment(.trailing)
+                                }
                             }
                         }
                     }
@@ -85,7 +91,7 @@ struct GeographicSpreadChart: View {
                             .background(Color.gray.opacity(0.05))
                             .cornerRadius(8)
                     }
-                    .padding(.bottom, 10)
+                    .padding(.bottom, 100)
                     .onTapGesture { location in
                         // Simple selection toggle
                         if selectedRegion != nil {
@@ -94,19 +100,6 @@ struct GeographicSpreadChart: View {
                             selectedRegion = firstRegion
                         }
                     }
-                    
-                    // Custom region labels below the chart
-                    HStack(spacing: 0) {
-                        ForEach(geographicStats, id: \.region) { stats in
-                            Text(stats.region)
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
-                                .frame(maxWidth: .infinity)
-                                .multilineTextAlignment(.center)
-                                .lineLimit(2)
-                        }
-                    }
-                    .padding(.top, 8)
                 }
                 
                 // Region breakdown
