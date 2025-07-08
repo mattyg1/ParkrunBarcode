@@ -1499,11 +1499,11 @@ struct MeTabView: View {
                 return
             }
             
-            print("DEBUG - VIZ: Processing HTML for visualization data extraction")
+            print("DEBUG - VIZ: Processing HTML for basic visualization data extraction")
             let extractedData = self.extractVisualizationDataFromHTML(htmlString)
             
             DispatchQueue.main.async {
-                // Update the user's visualization data
+                // Update the user's basic visualization data
                 user.updateVisualizationData(
                     venueRecords: extractedData.venueRecords,
                     volunteerRecords: extractedData.volunteerRecords
@@ -1512,10 +1512,14 @@ struct MeTabView: View {
                 // Save to SwiftData
                 do {
                     try self.modelContext.save()
-                    print("DEBUG - VIZ: Successfully saved visualization data")
+                    print("DEBUG - VIZ: Successfully saved basic visualization data")
                 } catch {
-                    print("DEBUG - VIZ: Failed to save visualization data: \(error)")
+                    print("DEBUG - VIZ: Failed to save basic visualization data: \(error)")
                 }
+                
+                // Now fetch comprehensive data from /all/ endpoint
+                print("DEBUG - VIZ: Starting comprehensive data fetch from /all/ endpoint")
+                self.fetchAndProcessCompleteResultsData(for: user)
             }
         }.resume()
     }
@@ -1534,13 +1538,28 @@ struct MeTabView: View {
         print("DEBUG - COMPLETE: Starting fetch of complete results data from: \(urlString)")
         
         URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("DEBUG - COMPLETE: Network error: \(error.localizedDescription)")
+                return
+            }
+            
+            if let httpResponse = response as? HTTPURLResponse {
+                print("DEBUG - COMPLETE: HTTP Status Code: \(httpResponse.statusCode)")
+                
+                if httpResponse.statusCode != 200 && httpResponse.statusCode != 202 {
+                    print("DEBUG - COMPLETE: HTTP Error: \(httpResponse.statusCode) - treating as failure")
+                    return
+                }
+            }
+            
             guard let data = data,
                   let htmlString = String(data: data, encoding: .utf8) else {
-                print("DEBUG - COMPLETE: Failed to fetch complete results HTML")
+                print("DEBUG - COMPLETE: Failed to fetch complete results HTML - no data or encoding error")
                 return
             }
             
             print("DEBUG - COMPLETE: Received complete results HTML, length: \(htmlString.count)")
+            print("DEBUG - COMPLETE: HTML preview (first 500 chars): \(String(htmlString.prefix(500)))")
             
             // Check if this is a WAF challenge response
             if self.isWAFChallengeResponse(htmlString, httpResponse: response as? HTTPURLResponse) {
@@ -1605,6 +1624,19 @@ struct MeTabView: View {
         // Look for the "All Results" table specifically
         // Pattern: <table class="sortable" id="results">...<caption>All Results</caption>
         let tablePattern = #"<table[^>]*class="sortable"[^>]*>.*?<caption[^>]*>\s*All\s+Results\s*</caption>.*?<tbody>(.*?)</tbody>"#
+        
+        // Also check for simpler table patterns and log what we find
+        if html.lowercased().contains("all results") {
+            print("DEBUG - COMPLETE: HTML contains 'All Results' text")
+        } else {
+            print("DEBUG - COMPLETE: HTML does not contain 'All Results' text")
+        }
+        
+        if html.lowercased().contains("class=\"sortable\"") {
+            print("DEBUG - COMPLETE: HTML contains sortable table class")
+        } else {
+            print("DEBUG - COMPLETE: HTML does not contain sortable table class")
+        }
         
         if let tableRegex = try? NSRegularExpression(pattern: tablePattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
             let matches = tableRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
@@ -1886,6 +1918,16 @@ struct MeTabView: View {
                 self.fetchAndProcessCompleteResultsData(for: defaultUser)
             }
         }
+    }
+    
+    private func debugTriggerCompleteDataRefresh() {
+        guard let defaultUser = defaultUser else {
+            print("DEBUG - MANUAL: No default user found")
+            return
+        }
+        
+        print("DEBUG - MANUAL: Manually triggering complete data refresh for \(defaultUser.parkrunID)")
+        fetchAndProcessCompleteResultsData(for: defaultUser)
     }
 
     // MARK: - QR & Barcode Generation
