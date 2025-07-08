@@ -65,13 +65,14 @@ struct GeographicSpreadChart: View {
                     .chartXAxis {
                         AxisMarks(values: .automatic) { value in
                             AxisGridLine()
-                            AxisValueLabel(anchor: .topTrailing) {
+                            AxisValueLabel(anchor: .top) {
                                 if let name = value.as(String.self) {
                                     Text(name)
                                         .font(.caption2)
-                                        .rotationEffect(.degrees(-45), anchor: .topTrailing)
+                                        .rotationEffect(.degrees(-45), anchor: .center)
                                         .lineLimit(2)
-                                        .multilineTextAlignment(.trailing)
+                                        .multilineTextAlignment(.center)
+                                        .offset(y: 10)
                                 }
                             }
                         }
@@ -91,7 +92,7 @@ struct GeographicSpreadChart: View {
                             .background(Color.gray.opacity(0.05))
                             .cornerRadius(8)
                     }
-                    .padding(.bottom, 60)
+                    .padding(.bottom, 80)
                     .onTapGesture { location in
                         // Simple selection toggle
                         if selectedRegion != nil {
