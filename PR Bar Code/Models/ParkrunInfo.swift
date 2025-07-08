@@ -84,21 +84,29 @@ class ParkrunInfo: Identifiable {
     }
     
     var recentPerformanceData: [PerformanceData] {
-        let recentRecords = venueRecords
-            .sorted { record1, record2 in
-                let formatter = DateFormatter()
-                formatter.dateFormat = "dd/MM/yyyy"
-                let date1 = formatter.date(from: record1.date) ?? Date.distantPast
-                let date2 = formatter.date(from: record2.date) ?? Date.distantPast
-                return date1 > date2
-            }
-            .prefix(15)
-        
-        return recentRecords.map { PerformanceData(venueRecord: $0) }
+        // Return all performance data for comprehensive timeline visualization
+        return venueRecords.map { PerformanceData(venueRecord: $0) }
     }
     
     var activityData2025: [ActivityDay] {
         ParkrunVisualizationProcessor.calculateActivityDays(from: venueRecords, year: 2025)
+    }
+    
+    var allYearsActivityData: [Int: [ActivityDay]] {
+        // Get all years from venue records
+        let formatter = DateFormatter()
+        formatter.dateFormat = "dd/MM/yyyy"
+        
+        let years = Set(venueRecords.compactMap { record in
+            formatter.date(from: record.date)?.year
+        })
+        
+        var yearlyData: [Int: [ActivityDay]] = [:]
+        for year in years {
+            yearlyData[year] = ParkrunVisualizationProcessor.calculateActivityDays(from: venueRecords, year: year)
+        }
+        
+        return yearlyData
     }
     
     // MARK: - Data Management Methods
@@ -133,6 +141,13 @@ class ParkrunInfo: Identifiable {
         if let bestRecord = venueRecords.min(by: { $0.timeInMinutes < $1.timeInMinutes }) {
             self.bestPersonalTime = bestRecord.time
             self.bestPersonalTimeVenue = bestRecord.venue
+        }
+        
+        // Update home parkrun to most attended venue
+        let venueGroups = Dictionary(grouping: venueRecords, by: { $0.venue })
+        if let mostAttendedVenue = venueGroups.max(by: { $0.value.count < $1.value.count })?.key {
+            self.homeParkrun = mostAttendedVenue
+            print("DEBUG - ParkrunInfo: Updated home parkrun to most attended venue: \(mostAttendedVenue)")
         }
         
         self.lastDataRefresh = Date()

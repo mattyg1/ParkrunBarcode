@@ -88,7 +88,7 @@ struct VenueDistributionChart: View {
                                     .lineLimit(1)
                                     .foregroundColor(.primary)
                                 
-                                Text("\(venue.runCount) runs (\(venue.percentage, specifier: "%.1f")%)")
+                                Text("\(venue.runCount) runs (\(String(format: "%.1f", venue.percentage))%)")
                                     .font(.caption2)
                                     .foregroundColor(.secondary)
                             }
@@ -117,7 +117,7 @@ struct VenueDistributionChart: View {
                 
                 VStack(alignment: .leading, spacing: 4) {
                     if let topVenue = venueStats.first {
-                        InsightRow(text: "\(topVenue.name) is your home event with \(topVenue.runCount) runs (\(topVenue.percentage)% of total)")
+                        InsightRow(text: "\(topVenue.name) is your top event with \(topVenue.runCount) runs (\(String(format: "%.1f", topVenue.percentage))% of total)")
                     }
                     
                     if venueStats.count >= 2 {
@@ -127,7 +127,7 @@ struct VenueDistributionChart: View {
                     
                     if venueStats.count >= 3 {
                         let top3Percentage = venueStats.prefix(3).reduce(0) { $0 + $1.percentage }
-                        InsightRow(text: "Top 3 venues account for \(top3Percentage)% of all runs")
+                        InsightRow(text: "Top 3 venues account for \(String(format: "%.1f", top3Percentage))% of all runs")
                     }
                     
                     InsightRow(text: "You've experienced \(venueStats.count) different parkrun venues")

@@ -41,13 +41,13 @@ struct BestTimesByVenueChart: View {
                 .opacity(selectedVenue == nil || selectedVenue?.name == venue.name ? 1.0 : 0.5)
                 .cornerRadius(4)
             }
-            .frame(height: 250)
+            .frame(height: 300)
             .chartXAxis {
                 AxisMarks(values: .automatic) { value in
                     AxisGridLine()
                     AxisValueLabel(anchor: .topTrailing) {
                         if let name = value.as(String.self) {
-                            Text(name)
+                            Text(name.replacingOccurrences(of: " parkrun", with: ""))
                                 .font(.caption2)
                                 .rotationEffect(.degrees(-45), anchor: .topTrailing)
                         }
@@ -81,7 +81,7 @@ struct BestTimesByVenueChart: View {
             
             // Performance tiers legend
             HStack(spacing: 20) {
-                PerformanceTierIndicator(color: colorForTime(21.5), label: "Sub-22 min", description: "Elite")
+                PerformanceTierIndicator(color: colorForTime(21.5), label: "Sub-22 min", description: "Best")
                 PerformanceTierIndicator(color: colorForTime(22.5), label: "Sub-23 min", description: "Strong")
                 PerformanceTierIndicator(color: colorForTime(24.0), label: "23+ min", description: "Steady")
             }
@@ -172,7 +172,7 @@ struct BestTimesByVenueChart: View {
                     
                     // Find home venue performance
                     if let homeVenue = venueStats.max(by: { $0.runCount < $1.runCount }), !homeVenue.bestTime.isEmpty {
-                        InsightRow(text: "Home venue (\(homeVenue.name)) best time: \(homeVenue.bestTime)")
+                        InsightRow(text: "Top venue (\(homeVenue.name)) best time: \(homeVenue.bestTime)")
                     }
                 }
             }
