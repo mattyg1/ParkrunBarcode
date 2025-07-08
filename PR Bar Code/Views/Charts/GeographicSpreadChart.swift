@@ -61,6 +61,7 @@ struct GeographicSpreadChart: View {
                         .opacity(selectedRegion == nil || selectedRegion?.region == stats.region ? 1.0 : 0.5)
                         .cornerRadius(4)
                     }
+                    .chartXAxis { }
                     .chartYAxis {
                         AxisMarks(position: .leading, values: .automatic) { value in
                             AxisValueLabel {
