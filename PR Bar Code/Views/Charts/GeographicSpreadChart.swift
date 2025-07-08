@@ -72,6 +72,7 @@ struct GeographicSpreadChart: View {
                                         .rotationEffect(.degrees(-45), anchor: .topTrailing)
                                         .lineLimit(2)
                                         .multilineTextAlignment(.trailing)
+                                        .offset(y: 20)
                                 }
                             }
                         }
@@ -91,7 +92,7 @@ struct GeographicSpreadChart: View {
                             .background(Color.gray.opacity(0.05))
                             .cornerRadius(8)
                     }
-                    .padding(.bottom, 100)
+                    .padding(.bottom, 60)
                     .onTapGesture { location in
                         // Simple selection toggle
                         if selectedRegion != nil {
