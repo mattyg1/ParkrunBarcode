@@ -1448,37 +1448,90 @@ struct MeTabView: View {
             print("DEBUG - VOLUNTEER: No 'volunteer' text found in HTML")
         }
         
-        // Look for volunteer table with caption
-        let volunteerTablePattern = #"<table[^>]*>.*?<caption[^>]*>.*?volunteer.*?</caption>.*?<tbody>(.*?)</tbody>"#
+        // Look for volunteer summary section with ID "volunteer-summary"
+        let volunteerSummaryPattern = #"<h3[^>]*id="volunteer-summary"[^>]*>.*?</h3>.*?<table[^>]*class="sortable"[^>]*id="results"[^>]*>.*?<tbody>(.*?)</tbody>.*?<tfoot>(.*?)</tfoot>"#
         
-        if let volunteerTableRegex = try? NSRegularExpression(pattern: volunteerTablePattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
-            let matches = volunteerTableRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            print("DEBUG - VOLUNTEER: Found \(matches.count) volunteer table matches")
+        if let volunteerSummaryRegex = try? NSRegularExpression(pattern: volunteerSummaryPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let matches = volunteerSummaryRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - VOLUNTEER: Found \(matches.count) volunteer summary matches")
             
-            if let match = matches.first, match.numberOfRanges >= 2 {
-                if let tableBodyRange = Range(match.range(at: 1), in: html) {
+            if let match = matches.first, match.numberOfRanges >= 3 {
+                if let tableBodyRange = Range(match.range(at: 1), in: html),
+                   let tableFootRange = Range(match.range(at: 2), in: html) {
                     let tableBody = String(html[tableBodyRange])
+                    let tableFoot = String(html[tableFootRange])
                     print("DEBUG - VOLUNTEER: Extracted volunteer table body, length: \(tableBody.count)")
-                    records = parseVolunteerTableRows(tableBody)
+                    print("DEBUG - VOLUNTEER: Extracted volunteer table foot, length: \(tableFoot.count)")
+                    records = parseVolunteerSummaryTableRows(tableBody)
+                    
+                    // Extract total credits from footer
+                    let totalCreditsPattern = #"<strong>(\d+)</strong>"#
+                    if let totalRegex = try? NSRegularExpression(pattern: totalCreditsPattern, options: []) {
+                        let totalMatches = totalRegex.matches(in: tableFoot, options: [], range: NSRange(tableFoot.startIndex..., in: tableFoot))
+                        if let totalMatch = totalMatches.first, let totalRange = Range(totalMatch.range(at: 1), in: tableFoot) {
+                            let totalCredits = String(tableFoot[totalRange])
+                            print("DEBUG - VOLUNTEER: Found total volunteer credits: \(totalCredits)")
+                        }
+                    }
                 }
             }
         }
         
-        // If no volunteer table found, look for volunteer credits in other patterns
+        // If no volunteer summary table found, try fallback patterns
         if records.isEmpty {
-            print("DEBUG - VOLUNTEER: No volunteer table found, searching for alternative patterns")
+            print("DEBUG - VOLUNTEER: No volunteer summary table found, searching for alternative patterns")
             records = extractVolunteerCreditsAlternativePatterns(html)
         }
         
         // If still no data found, check if this is expected
         if records.isEmpty {
             print("DEBUG - VOLUNTEER: No volunteer data found in HTML")
-            print("DEBUG - VOLUNTEER: This is expected - parkrun volunteer data requires authentication")
-            print("DEBUG - VOLUNTEER: parkrun profile pages have access restrictions for volunteer history")
-            print("DEBUG - VOLUNTEER: Consider implementing authenticated access or manual data entry")
+            print("DEBUG - VOLUNTEER: This may be due to parkrun's authentication requirements")
+            print("DEBUG - VOLUNTEER: Or the user may not have any volunteer history")
         }
         
         print("DEBUG - VOLUNTEER: Final volunteer records count: \(records.count)")
+        return records
+    }
+    
+    private func parseVolunteerSummaryTableRows(_ tableBody: String) -> [VolunteerRecord] {
+        var records: [VolunteerRecord] = []
+        
+        print("DEBUG - VOLUNTEER: Parsing volunteer summary table rows")
+        
+        // Pattern for volunteer summary table rows: <tr><td>Role</td><td>Occasions</td></tr>
+        let rowPattern = #"<tr[^>]*>\s*<td[^>]*>([^<]+)</td>\s*<td[^>]*>(\d+)</td>\s*</tr>"#
+        
+        if let rowRegex = try? NSRegularExpression(pattern: rowPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let matches = rowRegex.matches(in: tableBody, options: [], range: NSRange(tableBody.startIndex..., in: tableBody))
+            print("DEBUG - VOLUNTEER: Found \(matches.count) volunteer summary row matches")
+            
+            for match in matches {
+                guard match.numberOfRanges >= 3 else { continue }
+                
+                if let roleRange = Range(match.range(at: 1), in: tableBody),
+                   let occasionsRange = Range(match.range(at: 2), in: tableBody) {
+                    
+                    let role = String(tableBody[roleRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    let occasionsStr = String(tableBody[occasionsRange]).trimmingCharacters(in: .whitespacesAndNewlines)
+                    
+                    // Create volunteer records for each occasion
+                    if let occasions = Int(occasionsStr) {
+                        for i in 1...occasions {
+                            let record = VolunteerRecord(
+                                role: role,
+                                venue: "Various", // We don't have specific venue info in summary
+                                date: "Unknown"   // We don't have specific date info in summary
+                            )
+                            records.append(record)
+                        }
+                        
+                        print("DEBUG - VOLUNTEER: Extracted \(occasions) volunteer occasions for role: \(role)")
+                    }
+                }
+            }
+        }
+        
         return records
     }
     
