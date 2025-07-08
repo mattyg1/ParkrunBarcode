@@ -50,61 +50,97 @@ struct GeographicSpreadChart: View {
                 .background(Color.gray.opacity(0.05))
                 .cornerRadius(8)
             } else {
-                HStack(spacing: 20) {
-                    // Chart with proper spacing for rotated labels
+                // Chart with proper spacing for rotated labels
+                GeometryReader { geometry in
                     Chart(geographicStats, id: \.region) { stats in
                         BarMark(
                             x: .value("Region", stats.region),
                             y: .value("Venues", stats.venueCount)
                         )
                         .foregroundStyle(Color.blue.gradient)
-                        .opacity(selectedRegion == nil || selectedRegion?.region == stats.region ? 1.0 : 0.5)
+                        .opacity(selectedRegion == nil || selectedRegion?.region
+   == stats.region ? 1.0 : 0.5)
                         .cornerRadius(4)
                     }
-                    .frame(height: 250) // Reduced height to accommodate labels
-                    .chartXAxis {
-                        AxisMarks(values: .automatic) { value in
-                            AxisGridLine()
-                            AxisValueLabel(anchor: .top) {
-                                if let name = value.as(String.self) {
-                                    Text(name)
-                                        .font(.caption2)
-                                        .rotationEffect(.degrees(-45))
-                                        .offset(x: 0, y: 5)
-                                        .lineLimit(1)
-                                        .fixedSize()
-                                }
-                            }
+                    .chartOverlay { proxy in
+                        GeometryReader { innerGeometry in
+                            Rectangle().fill(.clear).contentShape(Rectangle())
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { value in
+                                            let location = value.location
+                                            if let region: String = proxy.value(atX: location.x) {
+                                                selectedRegion = geographicStats.first(where: { $0.region == region })
+                                            }
+                                        }
+                                        .onEnded { _ in
+                                            selectedRegion = nil
+                                        }
+                                )
                         }
                     }
-                    .chartYAxis {
-                        AxisMarks(position: .leading, values: .automatic) { value in
-                            AxisValueLabel {
-                                if let venueCount = value.as(Int.self) {
-                                    Text("\(venueCount)")
-                                        .font(.caption2)
-                                }
-                            }
+                    .chartBackground { proxy in
+                        if let selectedRegion = selectedRegion {
+                            let xPosition = proxy.position(forX: selectedRegion.region) ?? 0
+                            let yPosition = proxy.position(forY: selectedRegion.venueCount) ?? 0
+
+                            Text(selectedRegion.region)
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.8)))
+                                .shadow(radius: 2)
+                                .position(x: xPosition, y: yPosition - 20) // Position above the bar
                         }
                     }
+                    }
+                    .chartOverlay { proxy in
+                        GeometryReader { innerGeometry in
+                            Rectangle().fill(.clear).contentShape(Rectangle())
+                                .gesture(
+                                    DragGesture()
+                                        .onChanged { value in
+                                            let location = value.location
+                                            if let region: String = proxy.value(atX: location.x) {
+                                                selectedRegion = geographicStats.first(where: { $0.region == region })
+                                            }
+                                        }
+                                        .onEnded { _ in
+                                            selectedRegion = nil
+                                        }
+                                )
+                        }
+                    }
+                    .chartBackground { proxy in
+                        if let selectedRegion = selectedRegion {
+                            let xPosition = proxy.position(forX: selectedRegion.region) ?? 0
+                            let yPosition = proxy.position(forY: selectedRegion.venueCount) ?? 0
+
+                            Text(selectedRegion.region)
+                                .font(.caption)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(Color.white.opacity(0.8)))
+                                .shadow(radius: 2)
+                                .position(x: xPosition, y: yPosition - 20) // Position above the bar
+                        }
+                    }
+                    .frame(width: geometry.size.width, height:
+  geometry.size.height)
+                    
+                    
                     .chartYScale(domain: 0...20)
                     .chartPlotStyle { plotArea in
                         plotArea
                             .background(Color.gray.opacity(0.05))
                             .cornerRadius(8)
                     }
-                    .padding(.bottom, 80) // Increased bottom padding for rotated labels
-                    .padding(.leading, 20) // Add leading padding
-                    .padding(.trailing, 20) // Add trailing padding
-                    .onTapGesture { location in
-                        // Simple selection toggle
-                        if selectedRegion != nil {
-                            selectedRegion = nil
-                        } else if let firstRegion = geographicStats.first {
-                            selectedRegion = firstRegion
-                        }
-                    }
                 }
+                .frame(height: 300) // this includes space for rotated labels
+                .padding(.horizontal, 20)
+            }
                 
                 // Region breakdown
                 VStack(alignment: .leading, spacing: 8) {
