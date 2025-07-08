@@ -1448,8 +1448,21 @@ struct MeTabView: View {
             print("DEBUG - VOLUNTEER: No 'volunteer' text found in HTML")
         }
         
+        // Check for individual components first
+        if html.contains("id=\"volunteer-summary\"") {
+            print("DEBUG - VOLUNTEER: Found volunteer-summary ID in HTML")
+        } else {
+            print("DEBUG - VOLUNTEER: volunteer-summary ID NOT found in HTML")
+        }
+        
+        if html.contains("class=\"sortable\"") {
+            print("DEBUG - VOLUNTEER: Found sortable class in HTML")
+        } else {
+            print("DEBUG - VOLUNTEER: sortable class NOT found in HTML")
+        }
+        
         // Look for volunteer summary section with ID "volunteer-summary"
-        let volunteerSummaryPattern = #"<h3[^>]*id="volunteer-summary"[^>]*>.*?</h3>.*?<table[^>]*class="sortable"[^>]*id="results"[^>]*>.*?<tbody>(.*?)</tbody>.*?<tfoot>(.*?)</tfoot>"#
+        let volunteerSummaryPattern = #"<h3[^>]*id="volunteer-summary"[^>]*>.*?</h3><table[^>]*class="sortable"[^>]*>.*?<tbody>(.*?)</tbody>.*?<tfoot>(.*?)</tfoot>"#
         
         if let volunteerSummaryRegex = try? NSRegularExpression(pattern: volunteerSummaryPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
             let matches = volunteerSummaryRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
