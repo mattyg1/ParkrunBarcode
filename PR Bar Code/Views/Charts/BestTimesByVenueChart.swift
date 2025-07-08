@@ -42,18 +42,7 @@ struct BestTimesByVenueChart: View {
                 .cornerRadius(4)
             }
             .frame(height: 320)
-            .chartXAxis {
-                AxisMarks(values: .automatic) { value in
-                    AxisGridLine()
-                    AxisValueLabel(anchor: .topTrailing) {
-                        if let name = value.as(String.self) {
-                            Text(name.replacingOccurrences(of: " parkrun", with: ""))
-                                .font(.caption2)
-                                .rotationEffect(.degrees(-45), anchor: .topTrailing)
-                        }
-                    }
-                }
-            }
+            .chartXAxis { }
             .chartYAxis {
                 AxisMarks(values: .automatic) { value in
                     AxisValueLabel {

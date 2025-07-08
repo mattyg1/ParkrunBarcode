@@ -17,7 +17,7 @@ struct PerformanceTimelineChart: View {
         performanceData.sorted { data1, data2 in
             let date1 = parseDate(data1.date) ?? Date.distantPast
             let date2 = parseDate(data2.date) ?? Date.distantPast
-            return date1 < date2
+            return date1 > date2
         }
     }
     
