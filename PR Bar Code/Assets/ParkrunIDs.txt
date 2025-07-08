@@ -1,0 +1,7 @@
+    func testValidateParkrunData() {
+        let parkrunIDs = [
+            "A79156", // Matt Gardner
+            "A433032", // Mia Gardner
+            "A79151", // Larry MOORE
+            "A79154", // Mark STRINGER
+            //"A79157" // Tony ASHTON

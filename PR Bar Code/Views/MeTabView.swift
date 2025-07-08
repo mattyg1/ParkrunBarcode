@@ -187,7 +187,13 @@ struct MeTabView: View {
                         Button("Save") {
                             withAnimation(AnimationConstants.springAnimation) {
                                 // Refresh user details and show confirmation dialog without saving
-                                fetchParkrunnerName(id: inputText) {
+                                ParkrunDataFetcher.shared.fetchParkrunnerData(for: inputText) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
+                                    self.name = name ?? ""
+                                    self.totalParkruns = totalRuns ?? ""
+                                    self.lastParkrunDate = lastDate ?? ""
+                                    self.lastParkrunTime = lastTime ?? ""
+                                    self.lastParkrunEvent = lastEvent ?? ""
+                                    self.lastParkrunEventURL = lastEventURL ?? ""
                                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                                         self.showConfirmationDialog = true
                                     }
@@ -247,7 +253,14 @@ struct MeTabView: View {
                 isEditing = true
                 
                 // Fetch data for the ID
-                fetchParkrunnerName(id: parkrunID)
+                ParkrunDataFetcher.shared.fetchParkrunnerData(for: parkrunID) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
+                    self.name = name ?? ""
+                    self.totalParkruns = totalRuns ?? ""
+                    self.lastParkrunDate = lastDate ?? ""
+                    self.lastParkrunTime = lastTime ?? ""
+                    self.lastParkrunEvent = lastEvent ?? ""
+                    self.lastParkrunEventURL = lastEventURL ?? ""
+                }
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunIDWithConfirmation"))) { notification in
@@ -265,7 +278,13 @@ struct MeTabView: View {
                 isEditing = true
                 
                 // Fetch data for the ID and show confirmation dialog when done
-                fetchParkrunnerName(id: parkrunID) {
+                ParkrunDataFetcher.shared.fetchParkrunnerData(for: parkrunID) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
+                    self.name = name ?? ""
+                    self.totalParkruns = totalRuns ?? ""
+                    self.lastParkrunDate = lastDate ?? ""
+                    self.lastParkrunTime = lastTime ?? ""
+                    self.lastParkrunEvent = lastEvent ?? ""
+                    self.lastParkrunEventURL = lastEventURL ?? ""
                     // Show confirmation dialog after API call completes
                     print("Onboarding: API lookup completed, showing confirmation dialog")
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
@@ -673,7 +692,13 @@ struct MeTabView: View {
         print("DEBUG - MeTab refreshEventDataIfNeeded: Refreshing event data for ID: \(inputText)")
         
         // Refresh the parkrun data in background without showing loading indicators
-        fetchParkrunnerName(id: inputText, showLoadingIndicator: false) {
+        ParkrunDataFetcher.shared.fetchParkrunnerData(for: inputText) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
+            self.name = name ?? ""
+            self.totalParkruns = totalRuns ?? ""
+            self.lastParkrunDate = lastDate ?? ""
+            self.lastParkrunTime = lastTime ?? ""
+            self.lastParkrunEvent = lastEvent ?? ""
+            self.lastParkrunEventURL = lastEventURL ?? ""
             print("DEBUG - MeTab refreshEventDataIfNeeded: Background refresh completed")
             // Auto-save the updated data and refresh visualization data
             DispatchQueue.main.async {
@@ -979,302 +1004,7 @@ struct MeTabView: View {
         #endif
     }
     
-    // MARK: - Parkrun API Functions
-    private func fetchParkrunnerName(id: String, showLoadingIndicator: Bool = true, completion: (() -> Void)? = nil) {
-        // Extract numeric part from ID (remove 'A' prefix)
-        let numericId = String(id.dropFirst())
-        
-        if showLoadingIndicator {
-            isLoadingName = true
-        }
-        
-        let urlString = "https://www.parkrun.org.uk/parkrunner/\(numericId)/"
-        print("DEBUG - FETCH: Starting HTTP request to URL: '\(urlString)'")
-        print("DEBUG - FETCH: Parkrun ID: '\(id)' -> Numeric ID: '\(numericId)'")
-        
-        guard let url = URL(string: urlString) else {
-            print("DEBUG - FETCH: ERROR - Invalid URL created from string: '\(urlString)'")
-            if showLoadingIndicator {
-                isLoadingName = false
-            }
-            completion?()
-            return
-        }
-        
-        // Create request with proper headers to avoid 403
-        var request = URLRequest(url: url)
-        request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
-        request.setValue("text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8", forHTTPHeaderField: "Accept")
-        request.setValue("en-US,en;q=0.5", forHTTPHeaderField: "Accept-Language")
-        request.setValue("gzip, deflate, br", forHTTPHeaderField: "Accept-Encoding")
-        request.setValue("no-cache", forHTTPHeaderField: "Cache-Control")
-        
-        URLSession.shared.dataTask(with: request) { data, response, error in
-            DispatchQueue.main.async {
-                if showLoadingIndicator {
-                    self.isLoadingName = false
-                }
-            }
-            
-            if let error = error {
-                print("Network error: \(error.localizedDescription)")
-                DispatchQueue.main.async {
-                    completion?()
-                }
-                return
-            }
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                print("DEBUG - FETCH: HTTP Status Code: \(httpResponse.statusCode)")
-                print("DEBUG - FETCH: Response Headers: \(httpResponse.allHeaderFields)")
-                
-                // Accept both HTTP 200 (OK) and 202 (Accepted) responses
-                // HTTP 202 is returned by AWS WAF when challenge action is triggered (e.g., VPN usage)
-                // The response still contains valid HTML data that can be parsed
-                if httpResponse.statusCode != 200 && httpResponse.statusCode != 202 {
-                    print("DEBUG - FETCH: HTTP Error: \(httpResponse.statusCode) - treating as failure")
-                    DispatchQueue.main.async {
-                        completion?()
-                    }
-                    return
-                } else {
-                    print("DEBUG - FETCH: HTTP \(httpResponse.statusCode) - proceeding with response processing")
-                }
-            }
-            
-            guard let data = data else {
-                print("DEBUG - FETCH: ERROR - No data received from HTTP response")
-                DispatchQueue.main.async {
-                    completion?()
-                }
-                return
-            }
-            
-            print("DEBUG - FETCH: Received \(data.count) bytes of data")
-            
-            guard let htmlString = String(data: data, encoding: .utf8) else {
-                print("DEBUG - FETCH: ERROR - Failed to decode HTML data as UTF-8")
-                DispatchQueue.main.async {
-                    completion?()
-                }
-                return
-            }
-            
-            print("DEBUG - FETCH: Successfully fetched HTML for ID: \(id), HTML length: \(htmlString.count)")
-            print("DEBUG - FETCH: HTML preview (first 500 chars): \(String(htmlString.prefix(500)))")
-            
-            // Check if this is a WAF challenge response instead of actual parkrun data
-            if self.isWAFChallengeResponse(htmlString, httpResponse: response as? HTTPURLResponse) {
-                print("DEBUG - FETCH: Detected AWS WAF challenge response - skipping data extraction")
-                print("DEBUG - FETCH: Challenge response detected, keeping existing data unchanged")
-                DispatchQueue.main.async {
-                    completion?()
-                }
-                return
-            }
-            
-            // Parse the HTML to extract all information
-            let extractedData = self.extractParkrunnerDataFromHTML(htmlString)
-            
-            DispatchQueue.main.async {
-                if let name = extractedData.name {
-                    self.name = name
-                    print("Successfully extracted name: \(name)")
-                }
-                if let totalRuns = extractedData.totalRuns {
-                    self.totalParkruns = totalRuns
-                    print("Total parkruns: \(totalRuns)")
-                }
-                if let lastDate = extractedData.lastDate {
-                    self.lastParkrunDate = lastDate
-                    print("Last parkrun date: \(lastDate)")
-                }
-                if let lastTime = extractedData.lastTime {
-                    self.lastParkrunTime = lastTime
-                    print("Last parkrun time: \(lastTime)")
-                }
-                if let lastEvent = extractedData.lastEvent {
-                    self.lastParkrunEvent = lastEvent
-                    print("Last parkrun event: \(lastEvent)")
-                }
-                if let lastEventURL = extractedData.lastEventURL {
-                    self.lastParkrunEventURL = lastEventURL
-                    print("Last parkrun event URL: \(lastEventURL)")
-                    print("DEBUG - lastParkrunEventURL is now set to: '\(self.lastParkrunEventURL)'")
-                } else {
-                    print("DEBUG - No lastEventURL found in extracted data, lastParkrunEventURL remains: '\(self.lastParkrunEventURL)'")
-                }
-                completion?()
-            }
-        }.resume()
-    }
     
-    private func extractParkrunnerDataFromHTML(_ html: String) -> (name: String?, totalRuns: String?, lastDate: String?, lastTime: String?, lastEvent: String?, lastEventURL: String?) {
-        var name: String?
-        var totalRuns: String?
-        var lastDate: String?
-        var lastTime: String?
-        var lastEvent: String?
-        var lastEventURL: String?
-        
-        print("DEBUG - REGEX: Starting HTML parsing, HTML length: \(html.count)")
-        print("DEBUG - REGEX: HTML sample for pattern matching: \(String(html.prefix(1000)))")
-        
-        // Extract runner name from h2 tag: <h2>Matt GARDNER <span style="font-weight: normal;" title="parkrun ID">(A79156)</span></h2>
-        let namePattern = #"<h2>([^<]+?)\s*<span[^>]*title="parkrun ID"[^>]*>"#
-        print("DEBUG - REGEX: Attempting name extraction with pattern: \(namePattern)")
-        
-        if let nameRegex = try? NSRegularExpression(pattern: namePattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
-            let nameMatches = nameRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            print("DEBUG - REGEX: Found \(nameMatches.count) name matches")
-            
-            if let match = nameMatches.first, let nameRange = Range(match.range(at: 1), in: html) {
-                name = String(html[nameRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                print("DEBUG - REGEX: Successfully extracted name: '\(name ?? "nil")'")
-            } else {
-                print("DEBUG - REGEX: No name match found - checking for h2 tags in HTML")
-                if html.contains("<h2>") {
-                    print("DEBUG - REGEX: HTML contains h2 tags but pattern didn't match")
-                } else {
-                    print("DEBUG - REGEX: No h2 tags found in HTML")
-                }
-            }
-        } else {
-            print("DEBUG - REGEX: Failed to create name regex")
-        }
-        
-        // Extract total parkruns from h3 tag: <h3>279 parkruns total</h3> or <h3>50 parkruns & 1 junior parkrun total</h3>
-        // Use pattern that handles both regular and junior parkrun cases
-        let totalPattern = #"(\d+)\s+parkruns?(?:\s+&\s+\d+\s+junior\s+parkrun)?\s+total"#
-        print("DEBUG - REGEX: Attempting total parkruns extraction with pattern: \(totalPattern)")
-        
-        if let totalRegex = try? NSRegularExpression(pattern: totalPattern, options: [.caseInsensitive]) {
-            let totalMatches = totalRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            print("DEBUG - REGEX: Found \(totalMatches.count) total parkruns matches")
-            
-            if let match = totalMatches.first, let totalRange = Range(match.range(at: 1), in: html) {
-                totalRuns = String(html[totalRange])
-                print("DEBUG - REGEX: Successfully extracted totalRuns: '\(totalRuns ?? "nil")' using improved pattern")
-            } else {
-                print("DEBUG - REGEX: No total parkruns match found - checking for h3 tags with 'total' in HTML")
-                if html.contains("total") {
-                    print("DEBUG - REGEX: HTML contains 'total' but pattern didn't match")
-                } else {
-                    print("DEBUG - REGEX: No 'total' text found in HTML")
-                }
-            }
-        } else {
-            print("DEBUG - REGEX: Failed to create improved total regex")
-        }
-        
-        // Look for event name in first <td><a> combination  
-        let eventPattern = #"<td><a[^>]*>([^<]+parkrun[^<]*)</a></td>"#
-        print("DEBUG - REGEX: Attempting event name extraction with pattern: \(eventPattern)")
-        
-        if let eventRegex = try? NSRegularExpression(pattern: eventPattern, options: [.caseInsensitive]) {
-            let eventMatches = eventRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            print("DEBUG - REGEX: Found \(eventMatches.count) event name matches")
-            
-            if let match = eventMatches.first, let eventRange = Range(match.range(at: 1), in: html) {
-                lastEvent = String(html[eventRange]).trimmingCharacters(in: .whitespacesAndNewlines)
-                print("DEBUG - REGEX: Successfully extracted lastEvent: '\(lastEvent ?? "nil")' using simple pattern")
-            } else {
-                print("DEBUG - REGEX: No event name match found - checking for 'parkrun' in HTML")
-                if html.contains("parkrun") {
-                    print("DEBUG - REGEX: HTML contains 'parkrun' but pattern didn't match")
-                } else {
-                    print("DEBUG - REGEX: No 'parkrun' text found in HTML")
-                }
-            }
-        } else {
-            print("DEBUG - REGEX: Failed to create event regex")
-        }
-        
-        // Look for date pattern DD/MM/YYYY
-        let datePattern = #"(\d{2}/\d{2}/\d{4})"#
-        print("DEBUG - REGEX: Attempting date extraction with pattern: \(datePattern)")
-        
-        if let dateRegex = try? NSRegularExpression(pattern: datePattern, options: []) {
-            let dateMatches = dateRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            print("DEBUG - REGEX: Found \(dateMatches.count) date matches")
-            
-            if let match = dateMatches.first, let dateRange = Range(match.range(at: 1), in: html) {
-                lastDate = String(html[dateRange])
-                print("DEBUG - REGEX: Successfully extracted lastDate: '\(lastDate ?? "nil")' using simple pattern")
-                // Log all date matches found
-                for (index, match) in dateMatches.enumerated() {
-                    if let range = Range(match.range(at: 1), in: html) {
-                        print("DEBUG - REGEX: Date match \(index + 1): '\(String(html[range]))'")
-                    }
-                }
-            } else {
-                print("DEBUG - REGEX: No date matches found")
-            }
-        } else {
-            print("DEBUG - REGEX: Failed to create date regex")
-        }
-        
-        // Look for time pattern MM:SS in table
-        let timePattern = #"<td>(\d{2}:\d{2})</td>"#
-        print("DEBUG - REGEX: Attempting time extraction with pattern: \(timePattern)")
-        
-        if let timeRegex = try? NSRegularExpression(pattern: timePattern, options: []) {
-            let timeMatches = timeRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            print("DEBUG - REGEX: Found \(timeMatches.count) time matches")
-            
-            if let match = timeMatches.first, let timeRange = Range(match.range(at: 1), in: html) {
-                lastTime = String(html[timeRange])
-                print("DEBUG - REGEX: Successfully extracted lastTime: '\(lastTime ?? "nil")' using simple pattern")
-                // Log all time matches found
-                for (index, match) in timeMatches.enumerated() {
-                    if let range = Range(match.range(at: 1), in: html) {
-                        print("DEBUG - REGEX: Time match \(index + 1): '\(String(html[range]))'")
-                    }
-                }
-            } else {
-                print("DEBUG - REGEX: No time matches found")
-            }
-        } else {
-            print("DEBUG - REGEX: Failed to create time regex")
-        }
-        
-        // Look for event results URL from date link pattern
-        let eventURLPattern = #"<td><a href="(https://www\.parkrun\.(?:org\.uk|com|us|au|org\.nz|co\.za|it|se|dk|pl|ie|ca|fi|fr|sg|de|no|ru|my)/[^/]+/results/\d+/)"[^>]*>\d{2}/\d{2}/\d{4}</a></td>"#
-        print("DEBUG - REGEX: Attempting event URL extraction with pattern: \(eventURLPattern)")
-        
-        if let eventURLRegex = try? NSRegularExpression(pattern: eventURLPattern, options: [.caseInsensitive]) {
-            let urlMatches = eventURLRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            print("DEBUG - REGEX: Found \(urlMatches.count) event URL matches")
-            
-            if let match = urlMatches.first, let urlRange = Range(match.range(at: 1), in: html) {
-                lastEventURL = String(html[urlRange])
-                print("DEBUG - REGEX: Successfully extracted lastEventURL: '\(lastEventURL ?? "nil")' using corrected pattern with <td> wrapper")
-            } else {
-                print("DEBUG - REGEX: No event URL match found - checking for parkrun.org URLs in HTML")
-                if html.contains("parkrun.org") {
-                    print("DEBUG - REGEX: HTML contains parkrun.org URLs but pattern didn't match")
-                    // Try to find any parkrun URLs for debugging
-                    if let simpleURLRegex = try? NSRegularExpression(pattern: #"https://www\.parkrun\.[^\s"'<>]+"#, options: [.caseInsensitive]) {
-                        let simpleMatches = simpleURLRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-                        print("DEBUG - REGEX: Found \(simpleMatches.count) simple parkrun URLs in HTML")
-                        for (index, match) in simpleMatches.prefix(3).enumerated() {
-                            if let range = Range(match.range, in: html) {
-                                print("DEBUG - REGEX: Simple URL \(index + 1): '\(String(html[range]))'")
-                            }
-                        }
-                    }
-                } else {
-                    print("DEBUG - REGEX: No parkrun.org URLs found in HTML")
-                }
-            }
-        } else {
-            print("DEBUG - REGEX: Failed to create event URL regex")
-        }
-        
-        print("DEBUG - REGEX: Final extracted data: name='\(name ?? "nil")', totalRuns='\(totalRuns ?? "nil")', lastEvent='\(lastEvent ?? "nil")', lastDate='\(lastDate ?? "nil")', lastTime='\(lastTime ?? "nil")', lastEventURL='\(lastEventURL ?? "nil")'")
-        print("DEBUG - REGEX: Extraction complete - returning parsed data")
-        return (name: name, totalRuns: totalRuns, lastDate: lastDate, lastTime: lastTime, lastEvent: lastEvent, lastEventURL: lastEventURL)
-    }
     
     // MARK: - WAF Challenge Detection
     
@@ -1653,12 +1383,21 @@ struct MeTabView: View {
     
     private func updateVisualizationDataSilently() {
         // Enhanced data refresh that includes visualization data
-        guard let existingInfo = defaultUser else { return }
+        guard let existingInfo = defaultUser else {
+            print("DEBUG - VIZ: No default user found for visualization data update")
+            return
+        }
         
         print("DEBUG - VIZ: Starting visualization data update")
         
         // Fetch fresh data and extract visualization information
-        fetchParkrunnerName(id: inputText, showLoadingIndicator: false) {
+        ParkrunDataFetcher.shared.fetchParkrunnerData(for: inputText) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
+            self.name = name ?? ""
+            self.totalParkruns = totalRuns ?? ""
+            self.lastParkrunDate = lastDate ?? ""
+            self.lastParkrunTime = lastTime ?? ""
+            self.lastParkrunEvent = lastEvent ?? ""
+            self.lastParkrunEventURL = lastEventURL ?? ""
             // After basic data is fetched, we need to get the full HTML for visualization parsing
             DispatchQueue.main.async {
                 self.fetchAndProcessVisualizationData(for: existingInfo)
@@ -2088,7 +1827,7 @@ struct MeTabView: View {
                                         bestAgeGrading: ageGrading
                                     )
                                     performances.append(performance)
-                                    print("DEBUG - COMPLETE: Extracted annual performance: \(year) - \(time) (\(ageGrading)%)")
+                                    print("DEBUG - COMPLETE: Extracted annual performance: \(year) - \(time) (\(ageGrading)%) ")
                                 }
                             }
                         }
@@ -2181,7 +1920,7 @@ struct MeTabView: View {
                         worstPosition: worstPosition
                     )
                     
-                    print("DEBUG - COMPLETE: Extracted overall stats - Fastest: \(fastestTime), Best AG: \(bestAgeGrading)%")
+                    print("DEBUG - COMPLETE: Extracted overall stats - Fastest: \(fastestTime), Best AG: \(bestAgeGrading)% ")
                     return overallStats
                 }
             }
@@ -2201,7 +1940,13 @@ struct MeTabView: View {
         print("DEBUG - DUAL: Starting dual-source data refresh for user: \(defaultUser.parkrunID)")
         
         // First refresh basic summary data
-        fetchParkrunnerName(id: defaultUser.parkrunID, showLoadingIndicator: false) {
+        ParkrunDataFetcher.shared.fetchParkrunnerData(for: defaultUser.parkrunID) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
+            self.name = name ?? ""
+            self.totalParkruns = totalRuns ?? ""
+            self.lastParkrunDate = lastDate ?? ""
+            self.lastParkrunTime = lastTime ?? ""
+            self.lastParkrunEvent = lastEvent ?? ""
+            self.lastParkrunEventURL = lastEventURL ?? ""
             print("DEBUG - DUAL: Basic summary data refresh completed")
             
             // Then fetch comprehensive data from /all/ endpoint with WAF protection
