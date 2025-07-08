@@ -1461,12 +1461,42 @@ struct MeTabView: View {
             print("DEBUG - VOLUNTEER: sortable class NOT found in HTML")
         }
         
-        // Look for volunteer summary section with ID "volunteer-summary"
-        let volunteerSummaryPattern = #"<h3[^>]*id="volunteer-summary"[^>]*>.*?</h3><table[^>]*class="sortable"[^>]*>.*?<tbody>(.*?)</tbody>.*?<tfoot>(.*?)</tfoot>"#
+        // Try a simpler pattern first - just look for the volunteer summary table
+        let simplePattern = #"id="volunteer-summary".*?<tbody>(.*?)</tbody>.*?<tfoot>(.*?)</tfoot>"#
         
-        if let volunteerSummaryRegex = try? NSRegularExpression(pattern: volunteerSummaryPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
-            let matches = volunteerSummaryRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
-            print("DEBUG - VOLUNTEER: Found \(matches.count) volunteer summary matches")
+        if let simpleRegex = try? NSRegularExpression(pattern: simplePattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+            let simpleMatches = simpleRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+            print("DEBUG - VOLUNTEER: Found \(simpleMatches.count) simple pattern matches")
+            
+            if let match = simpleMatches.first, match.numberOfRanges >= 3 {
+                if let tableBodyRange = Range(match.range(at: 1), in: html),
+                   let tableFootRange = Range(match.range(at: 2), in: html) {
+                    let tableBody = String(html[tableBodyRange])
+                    let tableFoot = String(html[tableFootRange])
+                    print("DEBUG - VOLUNTEER: Found simple match - extracting data")
+                    records = parseVolunteerSummaryTableRows(tableBody)
+                    
+                    // Extract total credits from footer
+                    let totalCreditsPattern = #"<strong>(\d+)</strong>"#
+                    if let totalRegex = try? NSRegularExpression(pattern: totalCreditsPattern, options: []) {
+                        let totalMatches = totalRegex.matches(in: tableFoot, options: [], range: NSRange(tableFoot.startIndex..., in: tableFoot))
+                        if let totalMatch = totalMatches.first, let totalRange = Range(totalMatch.range(at: 1), in: tableFoot) {
+                            let totalCredits = String(tableFoot[totalRange])
+                            print("DEBUG - VOLUNTEER: Found total volunteer credits: \(totalCredits)")
+                        }
+                    }
+                }
+            }
+        }
+        
+        // If simple pattern worked, use it; otherwise try the more complex pattern
+        if records.isEmpty {
+            // Look for volunteer summary section with ID "volunteer-summary"
+            let volunteerSummaryPattern = #"<h3[^>]*id="volunteer-summary"[^>]*>.*?</h3><table[^>]*class="sortable"[^>]*>.*?<tbody>(.*?)</tbody>.*?<tfoot>(.*?)</tfoot>"#
+            
+            if let volunteerSummaryRegex = try? NSRegularExpression(pattern: volunteerSummaryPattern, options: [.caseInsensitive, .dotMatchesLineSeparators]) {
+                let matches = volunteerSummaryRegex.matches(in: html, options: [], range: NSRange(html.startIndex..., in: html))
+                print("DEBUG - VOLUNTEER: Found \(matches.count) volunteer summary matches")
             
             if let match = matches.first, match.numberOfRanges >= 3 {
                 if let tableBodyRange = Range(match.range(at: 1), in: html),
@@ -1487,6 +1517,7 @@ struct MeTabView: View {
                         }
                     }
                 }
+            }
             }
         }
         
