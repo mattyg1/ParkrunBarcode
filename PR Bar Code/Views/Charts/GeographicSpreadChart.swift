@@ -51,7 +51,7 @@ struct GeographicSpreadChart: View {
                 .cornerRadius(8)
             } else {
                 HStack(spacing: 20) {
-                    // Radar chart (simplified as bar chart for better mobile display)
+                    // Chart with proper spacing for rotated labels
                     Chart(geographicStats, id: \.region) { stats in
                         BarMark(
                             x: .value("Region", stats.region),
@@ -61,24 +61,24 @@ struct GeographicSpreadChart: View {
                         .opacity(selectedRegion == nil || selectedRegion?.region == stats.region ? 1.0 : 0.5)
                         .cornerRadius(4)
                     }
-                    .frame(height: 320)
+                    .frame(height: 250) // Reduced height to accommodate labels
                     .chartXAxis {
                         AxisMarks(values: .automatic) { value in
                             AxisGridLine()
-                            AxisValueLabel(anchor: .topTrailing) {
+                            AxisValueLabel(anchor: .top) {
                                 if let name = value.as(String.self) {
                                     Text(name)
                                         .font(.caption2)
-                                        .rotationEffect(.degrees(-45), anchor: .topTrailing)
-                                        .lineLimit(2)
-                                        .multilineTextAlignment(.trailing)
-                                        .offset(y: 20)
+                                        .rotationEffect(.degrees(-45))
+                                        .offset(x: 0, y: 5)
+                                        .lineLimit(1)
+                                        .fixedSize()
                                 }
                             }
                         }
                     }
                     .chartYAxis {
-                        AxisMarks(values: .automatic) { value in
+                        AxisMarks(position: .leading, values: .automatic) { value in
                             AxisValueLabel {
                                 if let venueCount = value.as(Int.self) {
                                     Text("\(venueCount)")
@@ -87,12 +87,15 @@ struct GeographicSpreadChart: View {
                             }
                         }
                     }
+                    .chartYScale(domain: 0...20)
                     .chartPlotStyle { plotArea in
                         plotArea
                             .background(Color.gray.opacity(0.05))
                             .cornerRadius(8)
                     }
-                    .padding(.bottom, 60)
+                    .padding(.bottom, 80) // Increased bottom padding for rotated labels
+                    .padding(.leading, 20) // Add leading padding
+                    .padding(.trailing, 20) // Add trailing padding
                     .onTapGesture { location in
                         // Simple selection toggle
                         if selectedRegion != nil {
