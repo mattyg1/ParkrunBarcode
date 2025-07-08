@@ -27,6 +27,8 @@ class ParkrunInfo: Identifiable {
     // Visualization data relationships
     @Relationship(deleteRule: .cascade) var venueRecords: [VenueRecord] = []
     @Relationship(deleteRule: .cascade) var volunteerRecords: [VolunteerRecord] = []
+    @Relationship(deleteRule: .cascade) var annualPerformances: [AnnualPerformance] = []
+    @Relationship(deleteRule: .cascade) var overallStats: OverallStats?
     
     // Additional fields for visualization insights
     var bestPersonalTime: String?
@@ -112,5 +114,26 @@ class ParkrunInfo: Identifiable {
         }
         
         self.lastDataRefresh = Date()
+    }
+    
+    func updateCompleteVisualizationData(venueRecords: [VenueRecord], volunteerRecords: [VolunteerRecord], annualPerformances: [AnnualPerformance], overallStats: OverallStats?) {
+        // Update all visualization data with comprehensive dataset
+        self.venueRecords = venueRecords
+        self.volunteerRecords = volunteerRecords
+        self.annualPerformances = annualPerformances
+        self.overallStats = overallStats
+        
+        // Update computed statistics
+        self.volunteerCount = volunteerRecords.count
+        self.uniqueVenuesCount = Set(venueRecords.map { $0.venue }).count
+        
+        // Update best personal time from comprehensive data
+        if let bestRecord = venueRecords.min(by: { $0.timeInMinutes < $1.timeInMinutes }) {
+            self.bestPersonalTime = bestRecord.time
+            self.bestPersonalTimeVenue = bestRecord.venue
+        }
+        
+        self.lastDataRefresh = Date()
+        print("DEBUG - ParkrunInfo: Updated complete visualization data - \(venueRecords.count) venues, \(annualPerformances.count) annual performances")
     }
 }

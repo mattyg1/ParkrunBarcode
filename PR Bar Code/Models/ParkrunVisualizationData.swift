@@ -17,13 +17,21 @@ class VenueRecord {
     var date: String
     var time: String
     var eventURL: String?
+    var runNumber: Int?
+    var position: Int?
+    var ageGrading: Double?
+    var isPB: Bool = false
     var parkrunInfo: ParkrunInfo?
     
-    init(venue: String, date: String, time: String, eventURL: String? = nil) {
+    init(venue: String, date: String, time: String, eventURL: String? = nil, runNumber: Int? = nil, position: Int? = nil, ageGrading: Double? = nil, isPB: Bool = false) {
         self.venue = venue
         self.date = date
         self.time = time
         self.eventURL = eventURL
+        self.runNumber = runNumber
+        self.position = position
+        self.ageGrading = ageGrading
+        self.isPB = isPB
     }
     
     // Convert time string (MM:SS) to decimal minutes for calculations
@@ -49,6 +57,50 @@ class VolunteerRecord {
         self.role = role
         self.venue = venue
         self.date = date
+    }
+}
+
+@Model
+class AnnualPerformance {
+    var year: Int
+    var bestTime: String
+    var bestAgeGrading: Double
+    var totalRuns: Int
+    var parkrunInfo: ParkrunInfo?
+    
+    init(year: Int, bestTime: String, bestAgeGrading: Double, totalRuns: Int = 0) {
+        self.year = year
+        self.bestTime = bestTime
+        self.bestAgeGrading = bestAgeGrading
+        self.totalRuns = totalRuns
+    }
+}
+
+@Model
+class OverallStats {
+    var fastestTime: String
+    var averageTime: String
+    var slowestTime: String
+    var bestAgeGrading: Double
+    var averageAgeGrading: Double
+    var worstAgeGrading: Double
+    var bestPosition: Int
+    var averagePosition: Double
+    var worstPosition: Int
+    var parkrunInfo: ParkrunInfo?
+    
+    init(fastestTime: String, averageTime: String, slowestTime: String, 
+         bestAgeGrading: Double, averageAgeGrading: Double, worstAgeGrading: Double,
+         bestPosition: Int, averagePosition: Double, worstPosition: Int) {
+        self.fastestTime = fastestTime
+        self.averageTime = averageTime
+        self.slowestTime = slowestTime
+        self.bestAgeGrading = bestAgeGrading
+        self.averageAgeGrading = averageAgeGrading
+        self.worstAgeGrading = worstAgeGrading
+        self.bestPosition = bestPosition
+        self.averagePosition = averagePosition
+        self.worstPosition = worstPosition
     }
 }
 
