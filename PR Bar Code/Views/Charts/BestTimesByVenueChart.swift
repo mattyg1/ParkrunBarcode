@@ -156,7 +156,7 @@ struct BestTimesByVenueChart: View {
                         InsightRow(text: "Sub-22 minute times at \(sub22Venues.count) venues: \(venueNames)")
                     }
                     
-                    if let slowest = sortedByBestTime.last {
+                    if let slowest = venueStats.max(by: { $0.bestTimeInMinutes < $1.bestTimeInMinutes }) {
                         InsightRow(text: "\(slowest.name) shows your slowest time (\(slowest.bestTime)), possibly a challenging course")
                     }
                     
