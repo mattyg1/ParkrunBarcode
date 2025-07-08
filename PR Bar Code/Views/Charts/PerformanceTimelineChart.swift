@@ -31,6 +31,33 @@ struct PerformanceTimelineChart: View {
         return (minTime - padding)...(maxTime + padding)
     }
     
+    private var yearAxisValues: [Date] {
+        guard !displayData.isEmpty else { return [] }
+        
+        let dates = displayData.compactMap { parseDate($0.date) }
+        guard !dates.isEmpty else { return [] }
+        
+        let sortedDates = dates.sorted()
+        let startYear = Calendar.current.component(.year, from: sortedDates.first!)
+        let endYear = Calendar.current.component(.year, from: sortedDates.last!)
+        
+        let yearRange = endYear - startYear + 1
+        let maxLabels = 8
+        
+        if yearRange <= maxLabels {
+            // Show all years if we have 8 or fewer
+            return (startYear...endYear).compactMap { year in
+                Calendar.current.date(from: DateComponents(year: year, month: 1, day: 1))
+            }
+        } else {
+            // Show evenly spaced years to get approximately 8 labels
+            let step = max(1, yearRange / maxLabels)
+            return stride(from: startYear, through: endYear, by: step).compactMap { year in
+                Calendar.current.date(from: DateComponents(year: year, month: 1, day: 1))
+            }
+        }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             VStack(alignment: .leading, spacing: 8) {
@@ -67,7 +94,7 @@ struct PerformanceTimelineChart: View {
             .frame(height: 220)
             .chartYScale(domain: yAxisRange)
             .chartXAxis {
-                AxisMarks(values: .stride(by: .year)) { value in
+                AxisMarks(values: yearAxisValues) { value in
                     AxisValueLabel(format: .dateTime.year(.defaultDigits))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
