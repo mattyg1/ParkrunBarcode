@@ -97,4 +97,3 @@ Potential areas for additional testing:
 - SwiftData model persistence tests
 - Network request mocking
 - User interaction testing
-- 
