@@ -1063,6 +1063,16 @@ struct MeTabView: View {
             print("DEBUG - FETCH: Successfully fetched HTML for ID: \(id), HTML length: \(htmlString.count)")
             print("DEBUG - FETCH: HTML preview (first 500 chars): \(String(htmlString.prefix(500)))")
             
+            // Check if this is a WAF challenge response instead of actual parkrun data
+            if self.isWAFChallengeResponse(htmlString, httpResponse: response as? HTTPURLResponse) {
+                print("DEBUG - FETCH: Detected AWS WAF challenge response - skipping data extraction")
+                print("DEBUG - FETCH: Challenge response detected, keeping existing data unchanged")
+                DispatchQueue.main.async {
+                    completion?()
+                }
+                return
+            }
+            
             // Parse the HTML to extract all information
             let extractedData = self.extractParkrunnerDataFromHTML(htmlString)
             
@@ -1266,6 +1276,60 @@ struct MeTabView: View {
         return (name: name, totalRuns: totalRuns, lastDate: lastDate, lastTime: lastTime, lastEvent: lastEvent, lastEventURL: lastEventURL)
     }
     
+    // MARK: - WAF Challenge Detection
+    
+    private func isWAFChallengeResponse(_ html: String, httpResponse: HTTPURLResponse?) -> Bool {
+        // Check for AWS WAF challenge indicators
+        
+        // 1. Check HTTP headers for WAF challenge action
+        if let headers = httpResponse?.allHeaderFields {
+            if let wafAction = headers["x-amzn-waf-action"] as? String {
+                print("DEBUG - WAF: Found x-amzn-waf-action header: \(wafAction)")
+                if wafAction.lowercased() == "challenge" {
+                    return true
+                }
+            }
+        }
+        
+        // 2. Check HTML content for WAF challenge indicators
+        let lowercasedHTML = html.lowercased()
+        
+        // Common WAF challenge page indicators
+        let wafIndicators = [
+            "window.awswafcookiedomainlist",
+            "window.gokuprops",
+            "awselb/2.0",
+            "challenge",
+            "verification",
+            "captcha"
+        ]
+        
+        for indicator in wafIndicators {
+            if lowercasedHTML.contains(indicator) {
+                print("DEBUG - WAF: Found WAF challenge indicator in HTML content: \(indicator)")
+                return true
+            }
+        }
+        
+        // 3. Check if HTML lacks expected parkrun content
+        let parkrunIndicators = [
+            "parkrun",
+            "results",
+            "total</h3>",
+            "<h2>", // Name header
+            "parkrunner"
+        ]
+        
+        let foundParkrunContent = parkrunIndicators.contains { lowercasedHTML.contains($0) }
+        
+        if !foundParkrunContent && html.count < 5000 {
+            print("DEBUG - WAF: HTML lacks parkrun content and is suspiciously small (\(html.count) chars)")
+            return true
+        }
+        
+        return false
+    }
+    
     // MARK: - Enhanced HTML Parsing for Visualizations
     
     private func extractVisualizationDataFromHTML(_ html: String) -> (venueRecords: [VenueRecord], volunteerRecords: [VolunteerRecord]) {
@@ -1425,6 +1489,13 @@ struct MeTabView: View {
             guard let data = data,
                   let htmlString = String(data: data, encoding: .utf8) else {
                 print("DEBUG - VIZ: Failed to fetch HTML for visualization data")
+                return
+            }
+            
+            // Check if this is a WAF challenge response
+            if self.isWAFChallengeResponse(htmlString, httpResponse: response as? HTTPURLResponse) {
+                print("DEBUG - VIZ: Detected AWS WAF challenge response - skipping visualization data extraction")
+                print("DEBUG - VIZ: Challenge response detected, keeping existing visualization data unchanged")
                 return
             }
             
