@@ -240,6 +240,38 @@ enum ParkrunMilestone: String, CaseIterable {
             return "Tourism"
         }
     }
+    
+    var milestoneColor: Color {
+        switch self.threshold {
+        case 10:
+            return .white
+        case 25:
+            return .purple
+        case 50:
+            return .red
+        case 100:
+            return .black
+        case 250:
+            return Color(.systemGreen).opacity(0.8) // Dark green
+        case 500:
+            return .blue
+        case 1000:
+            return Color(.systemIndigo) // Deep blue/indigo for 1000+
+        default:
+            return .gray
+        }
+    }
+    
+    var textColor: Color {
+        switch self.threshold {
+        case 10:
+            return .black // Black text on white background
+        case 100:
+            return .white // White text on black background
+        default:
+            return .white // White text on colored backgrounds
+        }
+    }
 }
 
 // MARK: - Visualization Data Processor

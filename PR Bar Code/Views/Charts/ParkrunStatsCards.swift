@@ -170,17 +170,21 @@ struct MilestoneBadge: View {
         VStack(spacing: 4) {
             Image(systemName: milestone.icon)
                 .font(.system(size: 18, weight: .regular, design: .default))
-                .foregroundColor(.yellow)
+                .foregroundColor(milestone.textColor)
             
             Text(milestone.rawValue)
                 .font(.system(size: 11, weight: .medium, design: .default))
-                .foregroundColor(.white)
+                .foregroundColor(milestone.textColor)
                 .multilineTextAlignment(.center)
                 .lineLimit(2)
         }
         .padding(8)
-        .background(Color.adaptiveCardBackground.opacity(0.2))
+        .background(milestone.milestoneColor)
         .cornerRadius(8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .stroke(milestone.threshold == 10 ? Color.gray.opacity(0.3) : Color.clear, lineWidth: 1)
+        )
     }
 }
 
@@ -191,16 +195,20 @@ struct CompactMilestoneBadge: View {
         VStack(spacing: 2) {
             Image(systemName: milestone.icon)
                 .font(.system(size: 10, weight: .regular, design: .default))
-                .foregroundColor(.yellow)
+                .foregroundColor(milestone.textColor)
             
             Text("\(milestone.threshold)")
                 .font(.system(size: 10, weight: .bold, design: .default))
-                .foregroundColor(.white)
+                .foregroundColor(milestone.textColor)
                 .lineLimit(1)
         }
         .frame(width: 40, height: 32)
-        .background(Color.adaptiveCardBackground.opacity(0.2))
+        .background(milestone.milestoneColor)
         .cornerRadius(6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(milestone.threshold == 10 ? Color.gray.opacity(0.3) : Color.clear, lineWidth: 1)
+        )
     }
 }
 
