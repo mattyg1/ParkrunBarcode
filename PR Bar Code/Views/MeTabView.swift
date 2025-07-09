@@ -34,6 +34,14 @@ struct MeTabView: View {
     @State private var watchSyncStatus: WatchSyncStatus = .idle
     @State private var showOnboarding: Bool = false
     
+    // Temporary variables to hold fetched data until user hits Save
+    @State private var tempName: String = ""
+    @State private var tempTotalParkruns: String = ""
+    @State private var tempLastParkrunDate: String = ""
+    @State private var tempLastParkrunTime: String = ""
+    @State private var tempLastParkrunEvent: String = ""
+    @State private var tempLastParkrunEventURL: String = ""
+    
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
     private let barcodeFilter = CIFilter.code128BarcodeGenerator()
@@ -49,17 +57,17 @@ struct MeTabView: View {
     private var confirmationMessage: String {
         var message = "Please confirm your details:\n\nParkrun ID: \(inputText)"
         
-        if !name.isEmpty {
-            message += "\nName: \(name)"
+        if !tempName.isEmpty {
+            message += "\nName: \(tempName)"
         }
         
-        if !totalParkruns.isEmpty {
-            message += "\nTotal Parkruns: \(totalParkruns)"
+        if !tempTotalParkruns.isEmpty {
+            message += "\nTotal Parkruns: \(tempTotalParkruns)"
         }
         
-        if !lastParkrunDate.isEmpty && !lastParkrunTime.isEmpty && !lastParkrunEvent.isEmpty {
-            message += "\nLast Parkrun: \(lastParkrunEvent)"
-            message += "\nDate: \(lastParkrunDate), Time: \(lastParkrunTime)"
+        if !tempLastParkrunDate.isEmpty && !tempLastParkrunTime.isEmpty && !tempLastParkrunEvent.isEmpty {
+            message += "\nLast Parkrun: \(tempLastParkrunEvent)"
+            message += "\nDate: \(tempLastParkrunDate), Time: \(tempLastParkrunTime)"
         }
         
         return message
@@ -219,8 +227,25 @@ struct MeTabView: View {
                 saveParkrunInfo()
             }
             Button("Cancel", role: .cancel) {
-                // Revert Parkrun details back to original
-                loadInitialData()
+                // Clear temporary variables and return to add barcode screen
+                tempName = ""
+                tempTotalParkruns = ""
+                tempLastParkrunDate = ""
+                tempLastParkrunTime = ""
+                tempLastParkrunEvent = ""
+                tempLastParkrunEventURL = ""
+                
+                // Clear main variables and return to onboarding
+                name = ""
+                totalParkruns = ""
+                lastParkrunDate = ""
+                lastParkrunTime = ""
+                lastParkrunEvent = ""
+                lastParkrunEventURL = ""
+                inputText = ""
+                
+                // Show onboarding again
+                showOnboarding = true
             }
         } message: {
             Text(confirmationMessage)
@@ -277,14 +302,23 @@ struct MeTabView: View {
                 // Trigger edit mode to show the new ID
                 isEditing = true
                 
+                // Clear temporary variables
+                tempName = ""
+                tempTotalParkruns = ""
+                tempLastParkrunDate = ""
+                tempLastParkrunTime = ""
+                tempLastParkrunEvent = ""
+                tempLastParkrunEventURL = ""
+                
                 // Fetch data for the ID and show confirmation dialog when done
                 ParkrunDataFetcher.shared.fetchParkrunnerData(for: parkrunID) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
-                    self.name = name ?? ""
-                    self.totalParkruns = totalRuns ?? ""
-                    self.lastParkrunDate = lastDate ?? ""
-                    self.lastParkrunTime = lastTime ?? ""
-                    self.lastParkrunEvent = lastEvent ?? ""
-                    self.lastParkrunEventURL = lastEventURL ?? ""
+                    // Store in temporary variables instead of main variables
+                    self.tempName = name ?? ""
+                    self.tempTotalParkruns = totalRuns ?? ""
+                    self.tempLastParkrunDate = lastDate ?? ""
+                    self.tempLastParkrunTime = lastTime ?? ""
+                    self.tempLastParkrunEvent = lastEvent ?? ""
+                    self.tempLastParkrunEventURL = lastEventURL ?? ""
                     // Show confirmation dialog after API call completes
                     print("Onboarding: API lookup completed, showing confirmation dialog")
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
@@ -767,6 +801,14 @@ struct MeTabView: View {
     }
     
     private func completeSave() {
+        // Copy data from temporary variables to main variables
+        name = tempName
+        totalParkruns = tempTotalParkruns
+        lastParkrunDate = tempLastParkrunDate
+        lastParkrunTime = tempLastParkrunTime
+        lastParkrunEvent = tempLastParkrunEvent
+        lastParkrunEventURL = tempLastParkrunEventURL
+        
         print("DEBUG - SAVE: Starting complete save operation")
         
         if let existingInfo = defaultUser {

@@ -125,13 +125,38 @@ struct BarcodeEntryView: View {
         }
     }
     
+    private func normalizeInput(_ input: String) -> String {
+        let trimmed = input.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Only add "A" if it's just numbers (no "A" prefix already)
+        if trimmed.range(of: #"^\d+$"#, options: .regularExpression) != nil {
+            return "A" + trimmed
+        }
+        
+        // Handle "A 67982" format (A followed by space and numbers)
+        if trimmed.range(of: #"^[Aa]\s+\d+$"#, options: .regularExpression) != nil {
+            let numbersOnly = trimmed.replacingOccurrences(of: #"[Aa]\s+"#, with: "", options: .regularExpression)
+            return "A" + numbersOnly
+        }
+        
+        // Convert lowercase "a" to uppercase "A" (but don't add extra "A")
+        if trimmed.lowercased().hasPrefix("a") {
+            return "A" + String(trimmed.dropFirst())
+        }
+        
+        return trimmed.uppercased()
+    }
+    
     private func searchBarcode() {
         guard !barcodeText.isEmpty else { return }
+        
+        // Normalize the input before processing
+        let normalizedInput = normalizeInput(barcodeText)
         
         isLoading = true
         
         // Validate if it's a proper Parkrun ID format
-        if barcodeText.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
+        if normalizedInput.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
             // Valid Parkrun ID format - close onboarding and pass to main view with direct confirmation
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 isLoading = false
@@ -141,7 +166,7 @@ struct BarcodeEntryView: View {
                 // Post notification to main view to handle the barcode and show confirmation
                 NotificationCenter.default.post(
                     name: NSNotification.Name("SetParkrunIDWithConfirmation"), 
-                    object: barcodeText
+                    object: normalizedInput
                 )
             }
         } else {
