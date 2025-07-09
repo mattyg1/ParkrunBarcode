@@ -79,9 +79,22 @@
 		C9CB3B162E1E918700BD6009 /* Gemfile.lock */ = {isa = PBXFileReference; lastKnownFileType = text; path = Gemfile.lock; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		C94FAB322E1EAB1100285FF2 /* Exceptions for "PR Bar Code" folder in "5K QR Code" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = C9648A172D0DAFD900D43D7F /* 5K QR Code */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		C9648A1A2D0DAFD900D43D7F /* PR Bar Code */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				C94FAB322E1EAB1100285FF2 /* Exceptions for "PR Bar Code" folder in "5K QR Code" target */,
+			);
 			path = "PR Bar Code";
 			sourceTree = "<group>";
 		};
