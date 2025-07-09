@@ -55,7 +55,7 @@ struct ParkrunVisualizationsView: View {
                 }
             }
             .padding()
-            .background(Color.white)
+            .background(Color.adaptiveCardBackground)
             .cornerRadius(12, corners: isExpanded ? [.topLeft, .topRight] : .allCorners)
             
             if isExpanded {
@@ -79,7 +79,7 @@ struct ParkrunVisualizationsView: View {
                             .padding(.horizontal)
                         }
                         .padding(.vertical, 12)
-                        .background(Color.white)
+                        .background(Color.adaptiveCardBackground)
                         
                         // Content
                         ScrollView {
@@ -114,11 +114,11 @@ struct ParkrunVisualizationsView: View {
                         .padding(40)
                     }
                 }
-                .background(Color.white)
+                .background(Color.adaptiveCardBackground)
                 .cornerRadius(12, corners: [.bottomLeft, .bottomRight])
             }
         }
-        .background(Color.white)
+        .background(Color.adaptiveCardBackground)
         .cornerRadius(12)
         .shadow(radius: 2)
     }
