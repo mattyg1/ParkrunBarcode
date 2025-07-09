@@ -1,0 +1,118 @@
+default_platform(:ios)
+
+platform :ios do
+  
+  # Test automation lane
+  lane :test do
+    run_tests(
+      scheme: "PR Bar Code",
+      devices: ["iPhone 16"],
+      clean: true,
+      code_coverage: true,
+      result_bundle: true,
+      output_directory: "./test_output"
+    )
+  end
+
+  # Quick development check - build verification without archiving
+  lane :dev_check do
+    puts "🔍 Running development build check..."
+    
+    # iOS build check
+    build_app(
+      scheme: "PR Bar Code",
+      configuration: "Debug",
+      export_method: "development",
+      skip_archive: true,
+      destination: "generic/platform=iOS Simulator",
+      skip_codesigning: true
+    )
+    
+    # watchOS build check
+    build_app(
+      scheme: "5K QR Code Watch App Watch App",
+      configuration: "Debug",
+      skip_archive: true,
+      destination: "generic/platform=watchOS Simulator",
+      skip_codesigning: true
+    )
+    
+    puts "✅ Development build check completed successfully!"
+  end
+
+  # Pre-commit validation
+  lane :pre_commit do
+    puts "🚀 Running pre-commit checks..."
+    
+    # Ensure working directory is clean
+    ensure_git_status_clean
+    
+    # Quick build verification
+    dev_check
+    
+    puts "✅ Pre-commit checks passed!"
+  end
+
+  # Test and build verification
+  lane :test_and_build do
+    puts "🧪 Running comprehensive test and build verification..."
+    
+    # Clean previous builds
+    clean_build_artifacts
+    
+    # Run tests first
+    test
+    
+    # If tests pass, verify builds work
+    dev_check
+    
+    puts "✅ All tests passed and builds succeeded!"
+  end
+
+  # Version bump lane (existing)
+  lane :local_version_bump do |options|
+    bump_type = options[:bump] || "patch"
+    increment_version_number(
+      bump_type: bump_type,
+      xcodeproj: "PR Bar Code.xcodeproj"
+    )
+    increment_build_number(
+      build_number: Time.now.strftime("%Y%m%d%H%M"),
+      xcodeproj: "PR Bar Code.xcodeproj"
+    )
+    commit_version_bump(
+      message: "Local version bump to #{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj', target: '5K QR Code')} (#{get_build_number(xcodeproj: 'PR Bar Code.xcodeproj')})"
+    )
+    add_git_tag(tag: "v#{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj', target: '5K QR Code')}")
+    push_to_git_remote
+  end
+
+  # Release preparation (run before creating PR)
+  lane :prepare_release do |options|
+    puts "🚀 Preparing release..."
+    
+    # Ensure we're on a feature branch
+    ensure_git_branch(branch: '^(?!main|master)')
+    
+    # Run full test suite
+    test_and_build
+    
+    # Version bump based on option
+    bump_type = options[:bump] || "patch"
+    local_version_bump(bump: bump_type)
+    
+    puts "✅ Release preparation completed!"
+    puts "Now create your PR and merge to main."
+  end
+
+  # Before all lanes
+  before_all do
+    ensure_bundle_exec
+  end
+
+  # Error handling
+  error do |lane, exception|
+    puts "❌ Error in lane #{lane}: #{exception.message}"
+  end
+
+end
