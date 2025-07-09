@@ -179,7 +179,7 @@ struct MilestoneBadge: View {
                 .lineLimit(2)
         }
         .padding(8)
-        .background(Color.white.opacity(0.2))
+        .background(Color.adaptiveCardBackground.opacity(0.2))
         .cornerRadius(8)
     }
 }
@@ -199,7 +199,7 @@ struct CompactMilestoneBadge: View {
                 .lineLimit(1)
         }
         .frame(width: 40, height: 32)
-        .background(Color.white.opacity(0.2))
+        .background(Color.adaptiveCardBackground.opacity(0.2))
         .cornerRadius(6)
     }
 }

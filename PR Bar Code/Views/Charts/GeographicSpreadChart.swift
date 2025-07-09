@@ -103,7 +103,7 @@ struct GeographicSpreadChart: View {
                                 .fontWeight(.bold)
                                 .padding(.horizontal, 6)
                                 .padding(.vertical, 3)
-                                .background(Capsule().fill(Color.white.opacity(0.8)))
+                                .background(Capsule().fill(Color.adaptiveCardBackground.opacity(0.8)))
                                 .shadow(radius: 2)
                                 .position(x: xPosition, y: yPosition - 20) // Position above the bar
                         }
