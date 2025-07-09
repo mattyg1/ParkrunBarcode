@@ -73,6 +73,7 @@ struct BarcodeEntryView: View {
     @State private var isLoading: Bool = false
     @State private var showAlert: Bool = false
     @State private var alertMessage: String = ""
+    @FocusState private var isFocused: Bool
     
     var body: some View {
         NavigationView {
@@ -82,6 +83,7 @@ struct BarcodeEntryView: View {
                     TextField("Barcode number, which starts with an A", text: $barcodeText)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .font(.body)
+                        .focused($isFocused)
                 }
                 .padding(.horizontal)
                 .padding(.top, 20)
@@ -122,6 +124,12 @@ struct BarcodeEntryView: View {
         }
         .alert(isPresented: $showAlert) {
             Alert(title: Text("Search Result"), message: Text(alertMessage), dismissButton: .default(Text("OK")))
+        }
+        .onAppear {
+            // Auto-focus the text field to show keyboard
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isFocused = true
+            }
         }
     }
     

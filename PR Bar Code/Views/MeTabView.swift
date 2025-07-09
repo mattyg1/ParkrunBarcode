@@ -54,6 +54,15 @@ struct MeTabView: View {
         return parkrunInfoList.first
     }
     
+    // Helper to determine if we should show parkrun ID (only after Save, not during onboarding)
+    private var shouldShowParkrunID: Bool {
+        // If we have temp data but main data is empty, we're in onboarding flow - don't show ID
+        if !tempName.isEmpty && name.isEmpty {
+            return false
+        }
+        return true
+    }
+    
     private var confirmationMessage: String {
         var message = "Please confirm your details:\n\nParkrun ID: \(inputText)"
         
@@ -350,7 +359,7 @@ struct MeTabView: View {
                             .foregroundColor(.secondary)
                         
                         HStack {
-                            TextField("Parkrun ID (e.g., A12345)", text: $inputText)
+                            TextField("Parkrun ID (e.g., A12345)", text: shouldShowParkrunID ? $inputText : .constant(""))
                                 .textFieldStyle(RoundedBorderTextFieldStyle())
                                 .keyboardType(.asciiCapable)
                             
@@ -418,7 +427,7 @@ struct MeTabView: View {
                             openParkrunProfile()
                         }) {
                             HStack {
-                                Text(inputText.isEmpty ? "Not set" : inputText)
+                                Text(!shouldShowParkrunID ? "Not set" : (inputText.isEmpty ? "Not set" : inputText))
                                     .font(.body)
                                     .fontWeight(.semibold)
                                     .foregroundColor(.blue)
