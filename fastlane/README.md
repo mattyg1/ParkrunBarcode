@@ -15,10 +15,50 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
+### ios test
+
+```sh
+[bundle exec] fastlane ios test
+```
+
+
+
+### ios dev_check
+
+```sh
+[bundle exec] fastlane ios dev_check
+```
+
+
+
+### ios pre_commit
+
+```sh
+[bundle exec] fastlane ios pre_commit
+```
+
+
+
+### ios test_and_build
+
+```sh
+[bundle exec] fastlane ios test_and_build
+```
+
+
+
 ### ios local_version_bump
 
 ```sh
 [bundle exec] fastlane ios local_version_bump
+```
+
+
+
+### ios prepare_release
+
+```sh
+[bundle exec] fastlane ios prepare_release
 ```
 
 
