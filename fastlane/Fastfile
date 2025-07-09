@@ -1,0 +1,26 @@
+default_platform(:ios)
+
+platform :ios do
+  desc "Bump version, set build number, commit, tag"
+  lane :version_bump do |options|
+    bump_type = options[:bump] || "patch"
+    
+increment_version_number(
+  bump_type: bump_type,
+  xcodeproj: "PR Bar Code.xcodeproj",           # replace with exact name if different
+  target: "5K QR Code"   #"PR Bar Code",                        # your target name
+  plist_path: "PR Bar Code/Info.plist"          # path to Info.plist relative to project root
+)
+
+    increment_build_number(
+      build_number: Time.now.strftime("%Y%m%d%H%M")
+    )
+
+    commit_version_bump(
+      message: "Version bump to #{get_version_number} (#{get_build_number})"
+    )
+
+    add_git_tag(tag: "v#{get_version_number}")
+    push_to_git_remote
+  end
+end
