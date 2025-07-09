@@ -24,9 +24,50 @@ This is a SwiftUI iOS app called "PR Bar Code" that generates QR codes and barco
 4. Information is sent to Apple Watch if connected
 5. External event data can be fetched from `https://images.parkrun.com/events.json`
 
+## Workflow for Pull Requests
+
+**ALWAYS follow this workflow before raising a PR:**
+
+1. **Version bump** (patch by default):
+   ```bash
+   fastlane local_version_bump bump:patch
+   ```
+
+2. **Commit changes**:
+   ```bash
+   git add -A
+   git commit -m "your commit message"
+   ```
+
+3. **Create PR**:
+   ```bash
+   gh pr create --title "your title" --body "your description"
+   ```
+
+### Version Bump Types
+
+- `bump:patch` - Bug fixes (1.1.0 → 1.1.1) - **default**
+- `bump:minor` - New features (1.1.0 → 1.2.0)
+- `bump:major` - Breaking changes (1.1.0 → 2.0.0)
+
 ## Build Commands
 
 This is a standard SwiftUI iOS project. **IMPORTANT: Always run these build commands before committing code to ensure compatibility:**
+
+### Fastlane Commands (Recommended)
+```bash
+# Version bump and build verification
+fastlane local_version_bump bump:patch
+
+# Quick build verification
+fastlane dev_check
+
+# Run full test suite
+fastlane test
+
+# Comprehensive testing and build verification
+fastlane test_and_build
+```
 
 ### Required Pre-Commit Build Tests
 ```bash
