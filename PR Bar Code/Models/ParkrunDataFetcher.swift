@@ -8,16 +8,41 @@
 
 import Foundation
 
+public enum ParkrunDataError: LocalizedError {
+    case invalidURL
+    case networkError(Error)
+    case noData
+    case invalidResponse
+    case vpnOrConnectionIssue
+    
+    public var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid parkrun URL"
+        case .networkError(let error):
+            return "Network error: \(error.localizedDescription)"
+        case .noData:
+            return "No data received from parkrun.org. Please check your internet connection."
+        case .invalidResponse:
+            return "Unable to parse response from parkrun.org"
+        case .vpnOrConnectionIssue:
+            return "Unable to connect to parkrun.org. This may be due to VPN settings or network restrictions. Please try disconnecting your VPN or checking your internet connection."
+        }
+    }
+}
+
 public class ParkrunDataFetcher {
     public static let shared = ParkrunDataFetcher()
     private init() {}
     
-    public func fetchParkrunnerData(for parkrunID: String, completion: @escaping ((name: String?, totalRuns: String?, lastDate: String?, lastTime: String?, lastEvent: String?, lastEventURL: String?)) -> Void) {
+    public func fetchParkrunnerData(for parkrunID: String, completion: @escaping (Result<(name: String?, totalRuns: String?, lastDate: String?, lastTime: String?, lastEvent: String?, lastEventURL: String?), Error>) -> Void) {
         let numericId = String(parkrunID.dropFirst())
         let urlString = "https://www.parkrun.org.uk/parkrunner/\(numericId)/"
         
         guard let url = URL(string: urlString) else {
-            completion((nil, nil, nil, nil, nil, nil))
+            DispatchQueue.main.async {
+                completion(.failure(ParkrunDataError.invalidURL))
+            }
             return
         }
         
@@ -25,14 +50,51 @@ public class ParkrunDataFetcher {
         request.setValue("Mozilla/5.0 (iPhone; CPU iPhone OS 16_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1", forHTTPHeaderField: "User-Agent")
         
         URLSession.shared.dataTask(with: request) { data, response, error in
-            guard let data = data, let htmlString = String(data: data, encoding: .utf8) else {
-                completion((nil, nil, nil, nil, nil, nil))
+            // Check for network errors first
+            if let error = error {
+                DispatchQueue.main.async {
+                    // Check if it's a VPN/connection issue
+                    if let urlError = error as? URLError {
+                        switch urlError.code {
+                        case .notConnectedToInternet, .networkConnectionLost, .timedOut, .cannotConnectToHost:
+                            completion(.failure(ParkrunDataError.vpnOrConnectionIssue))
+                        default:
+                            completion(.failure(ParkrunDataError.networkError(error)))
+                        }
+                    } else {
+                        completion(.failure(ParkrunDataError.networkError(error)))
+                    }
+                }
+                return
+            }
+            
+            // Check for HTTP response status
+            if let httpResponse = response as? HTTPURLResponse {
+                if httpResponse.statusCode == 403 {
+                    DispatchQueue.main.async {
+                        completion(.failure(ParkrunDataError.vpnOrConnectionIssue))
+                    }
+                    return
+                }
+            }
+            
+            guard let data = data else {
+                DispatchQueue.main.async {
+                    completion(.failure(ParkrunDataError.noData))
+                }
+                return
+            }
+            
+            guard let htmlString = String(data: data, encoding: .utf8) else {
+                DispatchQueue.main.async {
+                    completion(.failure(ParkrunDataError.invalidResponse))
+                }
                 return
             }
             
             let extractedData = self.extractParkrunnerDataFromHTML(htmlString)
             DispatchQueue.main.async {
-                completion(extractedData)
+                completion(.success(extractedData))
             }
         }.resume()
     }

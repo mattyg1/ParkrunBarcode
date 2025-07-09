@@ -204,15 +204,21 @@ struct MeTabView: View {
                         Button("Save") {
                             withAnimation(AnimationConstants.springAnimation) {
                                 // Refresh user details and show confirmation dialog without saving
-                                ParkrunDataFetcher.shared.fetchParkrunnerData(for: inputText) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
-                                    self.name = name ?? ""
-                                    self.totalParkruns = totalRuns ?? ""
-                                    self.lastParkrunDate = lastDate ?? ""
-                                    self.lastParkrunTime = lastTime ?? ""
-                                    self.lastParkrunEvent = lastEvent ?? ""
-                                    self.lastParkrunEventURL = lastEventURL ?? ""
-                                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                                        self.showConfirmationDialog = true
+                                ParkrunDataFetcher.shared.fetchParkrunnerData(for: inputText) { [self] result in
+                                    switch result {
+                                    case .success(let data):
+                                        self.name = data.name ?? ""
+                                        self.totalParkruns = data.totalRuns ?? ""
+                                        self.lastParkrunDate = data.lastDate ?? ""
+                                        self.lastParkrunTime = data.lastTime ?? ""
+                                        self.lastParkrunEvent = data.lastEvent ?? ""
+                                        self.lastParkrunEventURL = data.lastEventURL ?? ""
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                                            self.showConfirmationDialog = true
+                                        }
+                                    case .failure(let error):
+                                        self.alertMessage = error.localizedDescription
+                                        self.showAlert = true
                                     }
                                 }
                             }
@@ -289,13 +295,19 @@ struct MeTabView: View {
                 isEditing = true
                 
                 // Fetch data for the ID
-                ParkrunDataFetcher.shared.fetchParkrunnerData(for: parkrunID) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
-                    self.name = name ?? ""
-                    self.totalParkruns = totalRuns ?? ""
-                    self.lastParkrunDate = lastDate ?? ""
-                    self.lastParkrunTime = lastTime ?? ""
-                    self.lastParkrunEvent = lastEvent ?? ""
-                    self.lastParkrunEventURL = lastEventURL ?? ""
+                ParkrunDataFetcher.shared.fetchParkrunnerData(for: parkrunID) { [self] result in
+                    switch result {
+                    case .success(let data):
+                        self.name = data.name ?? ""
+                        self.totalParkruns = data.totalRuns ?? ""
+                        self.lastParkrunDate = data.lastDate ?? ""
+                        self.lastParkrunTime = data.lastTime ?? ""
+                        self.lastParkrunEvent = data.lastEvent ?? ""
+                        self.lastParkrunEventURL = data.lastEventURL ?? ""
+                    case .failure(let error):
+                        self.alertMessage = error.localizedDescription
+                        self.showAlert = true
+                    }
                 }
             }
         }
@@ -322,18 +334,26 @@ struct MeTabView: View {
                 tempLastParkrunEventURL = ""
                 
                 // Fetch data for the ID and show confirmation dialog when done
-                ParkrunDataFetcher.shared.fetchParkrunnerData(for: parkrunID) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
-                    // Store in temporary variables instead of main variables
-                    self.tempName = name ?? ""
-                    self.tempTotalParkruns = totalRuns ?? ""
-                    self.tempLastParkrunDate = lastDate ?? ""
-                    self.tempLastParkrunTime = lastTime ?? ""
-                    self.tempLastParkrunEvent = lastEvent ?? ""
-                    self.tempLastParkrunEventURL = lastEventURL ?? ""
-                    // Show confirmation dialog after API call completes
-                    print("Onboarding: API lookup completed, showing confirmation dialog")
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                        self.showConfirmationDialog = true
+                ParkrunDataFetcher.shared.fetchParkrunnerData(for: parkrunID) { [self] result in
+                    switch result {
+                    case .success(let data):
+                        // Store in temporary variables instead of main variables
+                        self.tempName = data.name ?? ""
+                        self.tempTotalParkruns = data.totalRuns ?? ""
+                        self.tempLastParkrunDate = data.lastDate ?? ""
+                        self.tempLastParkrunTime = data.lastTime ?? ""
+                        self.tempLastParkrunEvent = data.lastEvent ?? ""
+                        self.tempLastParkrunEventURL = data.lastEventURL ?? ""
+                        // Show confirmation dialog after API call completes
+                        print("Onboarding: API lookup completed, showing confirmation dialog")
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
+                            self.showConfirmationDialog = true
+                        }
+                    case .failure(let error):
+                        // Handle error by showing alert
+                        print("Onboarding: API lookup failed with error: \(error.localizedDescription)")
+                        self.alertMessage = error.localizedDescription
+                        self.showAlert = true
                     }
                 }
             }
@@ -737,20 +757,29 @@ struct MeTabView: View {
         print("DEBUG - MeTab refreshEventDataIfNeeded: Refreshing event data for ID: \(inputText)")
         
         // Refresh the parkrun data in background without showing loading indicators
-        ParkrunDataFetcher.shared.fetchParkrunnerData(for: inputText) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
-            self.name = name ?? ""
-            self.totalParkruns = totalRuns ?? ""
-            self.lastParkrunDate = lastDate ?? ""
-            self.lastParkrunTime = lastTime ?? ""
-            self.lastParkrunEvent = lastEvent ?? ""
-            self.lastParkrunEventURL = lastEventURL ?? ""
-            print("DEBUG - MeTab refreshEventDataIfNeeded: Background refresh completed")
-            // Auto-save the updated data and refresh visualization data
-            DispatchQueue.main.async {
-                self.saveUpdatedDataSilently()
-                // Also update visualization data
-                if let user = self.defaultUser {
-                    self.fetchAndProcessVisualizationData(for: user)
+        ParkrunDataFetcher.shared.fetchParkrunnerData(for: inputText) { [self] result in
+            switch result {
+            case .success(let data):
+                self.name = data.name ?? ""
+                self.totalParkruns = data.totalRuns ?? ""
+                self.lastParkrunDate = data.lastDate ?? ""
+                self.lastParkrunTime = data.lastTime ?? ""
+                self.lastParkrunEvent = data.lastEvent ?? ""
+                self.lastParkrunEventURL = data.lastEventURL ?? ""
+                print("DEBUG - MeTab refreshEventDataIfNeeded: Background refresh completed")
+                // Auto-save the updated data and refresh visualization data
+                DispatchQueue.main.async {
+                    self.saveUpdatedDataSilently()
+                    // Also update visualization data
+                    if let user = self.defaultUser {
+                        self.fetchAndProcessVisualizationData(for: user)
+                    }
+                }
+            case .failure(let error):
+                print("DEBUG - MeTab refreshEventDataIfNeeded: Error fetching data: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.alertMessage = error.localizedDescription
+                    self.showAlert = true
                 }
             }
         }
@@ -1444,16 +1473,25 @@ struct MeTabView: View {
         print("DEBUG - VIZ: Starting visualization data update")
         
         // Fetch fresh data and extract visualization information
-        ParkrunDataFetcher.shared.fetchParkrunnerData(for: inputText) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
-            self.name = name ?? ""
-            self.totalParkruns = totalRuns ?? ""
-            self.lastParkrunDate = lastDate ?? ""
-            self.lastParkrunTime = lastTime ?? ""
-            self.lastParkrunEvent = lastEvent ?? ""
-            self.lastParkrunEventURL = lastEventURL ?? ""
-            // After basic data is fetched, we need to get the full HTML for visualization parsing
-            DispatchQueue.main.async {
-                self.fetchAndProcessVisualizationData(for: existingInfo)
+        ParkrunDataFetcher.shared.fetchParkrunnerData(for: inputText) { [self] result in
+            switch result {
+            case .success(let data):
+                self.name = data.name ?? ""
+                self.totalParkruns = data.totalRuns ?? ""
+                self.lastParkrunDate = data.lastDate ?? ""
+                self.lastParkrunTime = data.lastTime ?? ""
+                self.lastParkrunEvent = data.lastEvent ?? ""
+                self.lastParkrunEventURL = data.lastEventURL ?? ""
+                // After basic data is fetched, we need to get the full HTML for visualization parsing
+                DispatchQueue.main.async {
+                    self.fetchAndProcessVisualizationData(for: existingInfo)
+                }
+            case .failure(let error):
+                print("DEBUG - VIZ: Error fetching data: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.alertMessage = error.localizedDescription
+                    self.showAlert = true
+                }
             }
         }
     }
@@ -1993,18 +2031,27 @@ struct MeTabView: View {
         print("DEBUG - DUAL: Starting dual-source data refresh for user: \(defaultUser.parkrunID)")
         
         // First refresh basic summary data
-        ParkrunDataFetcher.shared.fetchParkrunnerData(for: defaultUser.parkrunID) { [self] (name, totalRuns, lastDate, lastTime, lastEvent, lastEventURL) in
-            self.name = name ?? ""
-            self.totalParkruns = totalRuns ?? ""
-            self.lastParkrunDate = lastDate ?? ""
-            self.lastParkrunTime = lastTime ?? ""
-            self.lastParkrunEvent = lastEvent ?? ""
-            self.lastParkrunEventURL = lastEventURL ?? ""
-            print("DEBUG - DUAL: Basic summary data refresh completed")
-            
-            // Then fetch comprehensive data from /all/ endpoint with WAF protection
-            DispatchQueue.main.async {
-                self.fetchAndProcessCompleteResultsData(for: defaultUser)
+        ParkrunDataFetcher.shared.fetchParkrunnerData(for: defaultUser.parkrunID) { [self] result in
+            switch result {
+            case .success(let data):
+                self.name = data.name ?? ""
+                self.totalParkruns = data.totalRuns ?? ""
+                self.lastParkrunDate = data.lastDate ?? ""
+                self.lastParkrunTime = data.lastTime ?? ""
+                self.lastParkrunEvent = data.lastEvent ?? ""
+                self.lastParkrunEventURL = data.lastEventURL ?? ""
+                print("DEBUG - DUAL: Basic summary data refresh completed")
+                
+                // Then fetch comprehensive data from /all/ endpoint with WAF protection
+                DispatchQueue.main.async {
+                    self.fetchAndProcessCompleteResultsData(for: defaultUser)
+                }
+            case .failure(let error):
+                print("DEBUG - DUAL: Error fetching data: \(error.localizedDescription)")
+                DispatchQueue.main.async {
+                    self.alertMessage = error.localizedDescription
+                    self.showAlert = true
+                }
             }
         }
     }
