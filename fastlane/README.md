@@ -15,26 +15,10 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 ## iOS
 
-### ios version_bump
-
-```sh
-[bundle exec] fastlane ios version_bump
-```
-
-Bump version, set build number, commit, tag
-
 ### ios local_version_bump
 
 ```sh
 [bundle exec] fastlane ios local_version_bump
-```
-
-
-
-### ios set_version
-
-```sh
-[bundle exec] fastlane ios set_version
 ```
 
 

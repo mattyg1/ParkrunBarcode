@@ -12,9 +12,9 @@ platform :ios do
       xcodeproj: "PR Bar Code.xcodeproj"
     )
     commit_version_bump(
-      message: "Local version bump to #{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj')} (#{get_build_number(xcodeproj: 'PR Bar Code.xcodeproj')})"
+      message: "Local version bump to #{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj', target: '5K QR Code')} (#{get_build_number(xcodeproj: 'PR Bar Code.xcodeproj', target: '5K QR Code')})"
     )
-    add_git_tag(tag: "v#{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj')}")
+    add_git_tag(tag: "v#{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj', target: '5K QR Code')}")
     push_to_git_remote
   end
 end
