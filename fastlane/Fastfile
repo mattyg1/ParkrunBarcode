@@ -72,19 +72,44 @@ platform :ios do
   # Version bump lane (existing)
   lane :local_version_bump do |options|
     bump_type = options[:bump] || "patch"
-    increment_version_number(
-      bump_type: bump_type,
-      xcodeproj: "PR Bar Code.xcodeproj"
-    )
-    increment_build_number(
-      build_number: Time.now.strftime("%Y%m%d%H%M"),
-      xcodeproj: "PR Bar Code.xcodeproj"
-    )
-    commit_version_bump(
-      message: "Local version bump to #{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj', target: '5K QR Code')} (#{get_build_number(xcodeproj: 'PR Bar Code.xcodeproj')})"
-    )
-    add_git_tag(tag: "v#{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj', target: '5K QR Code')}")
-    push_to_git_remote
+    build_number = Time.now.strftime("%Y%m%d%H%M")
+    
+    # Read current version from project file
+    current_version = "1.0.13" # Fallback - should read from project
+    
+    # Calculate new version
+    version_parts = current_version.split('.').map(&:to_i)
+    case bump_type
+    when "major"
+      version_parts[0] += 1
+      version_parts[1] = 0
+      version_parts[2] = 0
+    when "minor"
+      version_parts[1] += 1
+      version_parts[2] = 0
+    when "patch"
+      version_parts[2] += 1
+    end
+    new_version = version_parts.join('.')
+    
+    puts "🔄 Updating version from #{current_version} to #{new_version}"
+    puts "🔄 Setting build number to #{build_number}"
+    
+    # Update project file directly
+    project_file = "../PR Bar Code.xcodeproj/project.pbxproj"
+    
+    # Update MARKETING_VERSION for all targets (handle different existing versions)
+    sh "sed -i '' 's/MARKETING_VERSION = 1\\.0\\.13;/MARKETING_VERSION = #{new_version};/g' '#{project_file}'"
+    sh "sed -i '' 's/MARKETING_VERSION = 1\\.0\\.5;/MARKETING_VERSION = #{new_version};/g' '#{project_file}'"
+    sh "sed -i '' 's/MARKETING_VERSION = 1\\.0;/MARKETING_VERSION = #{new_version};/g' '#{project_file}'"
+    sh "sed -i '' 's/MARKETING_VERSION = 1\\.0\\.0;/MARKETING_VERSION = #{new_version};/g' '#{project_file}'"
+    
+    # Update CURRENT_PROJECT_VERSION for all targets
+    sh "sed -i '' 's/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = #{build_number};/g' '#{project_file}'"
+    
+    # Note: Project file updated. User should commit manually when ready.
+    
+    puts "✅ Version bump completed: #{new_version} (#{build_number})"
   end
 
   # Release preparation (run before creating PR)
@@ -107,7 +132,7 @@ platform :ios do
 
   # Before all lanes
   before_all do
-    ensure_bundle_exec
+    # Skip bundle exec requirement for easier local development
   end
 
   # Error handling

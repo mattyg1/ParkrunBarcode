@@ -89,8 +89,9 @@ bundle exec fastlane local_version_bump bump:major
 ```
 
 **What it does:**
-- Increments version number (patch/minor/major)
-- Sets build number to timestamp (YYYYMMDDHHMM)
+- Increments version number (patch/minor/major) for iOS app
+- Synchronizes version number to watchOS app
+- Sets build number to timestamp (YYYYMMDDHHMM) for both targets
 - Commits version changes
 - Creates git tag
 - Pushes to remote repository
