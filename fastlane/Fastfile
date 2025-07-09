@@ -75,7 +75,9 @@ platform :ios do
     build_number = Time.now.strftime("%Y%m%d%H%M")
     
     # Read current version from project file
-    current_version = "1.0.13" # Fallback - should read from project
+    project_file = "../PR Bar Code.xcodeproj/project.pbxproj"
+    current_version = sh("grep -m 1 'MARKETING_VERSION = ' '#{project_file}' | sed 's/.*MARKETING_VERSION = \\([^;]*\\);.*/\\1/'").strip
+    puts "📖 Current version detected: #{current_version}"
     
     # Calculate new version
     version_parts = current_version.split('.').map(&:to_i)
@@ -96,13 +98,10 @@ platform :ios do
     puts "🔄 Setting build number to #{build_number}"
     
     # Update project file directly
-    project_file = "../PR Bar Code.xcodeproj/project.pbxproj"
     
-    # Update MARKETING_VERSION for all targets (handle different existing versions)
-    sh "sed -i '' 's/MARKETING_VERSION = 1\\.0\\.13;/MARKETING_VERSION = #{new_version};/g' '#{project_file}'"
-    sh "sed -i '' 's/MARKETING_VERSION = 1\\.0\\.5;/MARKETING_VERSION = #{new_version};/g' '#{project_file}'"
-    sh "sed -i '' 's/MARKETING_VERSION = 1\\.0;/MARKETING_VERSION = #{new_version};/g' '#{project_file}'"
-    sh "sed -i '' 's/MARKETING_VERSION = 1\\.0\\.0;/MARKETING_VERSION = #{new_version};/g' '#{project_file}'"
+    # Update MARKETING_VERSION for all targets using current version
+    escaped_current = current_version.gsub('.', '\\.')
+    sh "sed -i '' 's/MARKETING_VERSION = #{escaped_current};/MARKETING_VERSION = #{new_version};/g' '#{project_file}'"
     
     # Update CURRENT_PROJECT_VERSION for all targets
     sh "sed -i '' 's/CURRENT_PROJECT_VERSION = [0-9]*;/CURRENT_PROJECT_VERSION = #{build_number};/g' '#{project_file}'"
