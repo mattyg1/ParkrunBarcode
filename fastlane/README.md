@@ -23,6 +23,22 @@ For _fastlane_ installation instructions, see [Installing _fastlane_](https://do
 
 Bump version, set build number, commit, tag
 
+### ios local_version_bump
+
+```sh
+[bundle exec] fastlane ios local_version_bump
+```
+
+
+
+### ios set_version
+
+```sh
+[bundle exec] fastlane ios set_version
+```
+
+
+
 ----
 
 This README.md is auto-generated and will be re-generated every time [_fastlane_](https://fastlane.tools) is run.
