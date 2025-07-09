@@ -235,6 +235,7 @@ struct MeTabView: View {
             Button("Save") {
                 saveParkrunInfo()
             }
+            .keyboardShortcut(.return)
             Button("Cancel", role: .cancel) {
                 // Clear temporary variables and return to add barcode screen
                 tempName = ""
@@ -256,6 +257,7 @@ struct MeTabView: View {
                 // Show onboarding again
                 showOnboarding = true
             }
+            .keyboardShortcut(.escape)
         } message: {
             Text(confirmationMessage)
         }

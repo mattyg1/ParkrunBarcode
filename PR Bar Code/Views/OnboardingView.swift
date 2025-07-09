@@ -84,6 +84,9 @@ struct BarcodeEntryView: View {
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .font(.body)
                         .focused($isFocused)
+                        .onSubmit {
+                            searchBarcode()
+                        }
                 }
                 .padding(.horizontal)
                 .padding(.top, 20)
