@@ -187,6 +187,7 @@ enum ParkrunMilestone: String, CaseIterable {
     case runs1000 = "1000 Club"
     
     // Volunteer milestones
+    case volunteer10 = "v10"
     case volunteer25 = "v25"
     case volunteer50 = "v50"
     case volunteer100 = "v100"
@@ -207,6 +208,7 @@ enum ParkrunMilestone: String, CaseIterable {
         case .runs250: return 250
         case .runs500: return 500
         case .runs1000: return 1000
+        case .volunteer10: return 10
         case .volunteer25: return 25
         case .volunteer50: return 50
         case .volunteer100: return 100
@@ -223,7 +225,7 @@ enum ParkrunMilestone: String, CaseIterable {
         switch self {
         case .runs25, .runs50, .runs100, .runs250, .runs500, .runs1000: 
             return "figure.run"
-        case .volunteer25, .volunteer50, .volunteer100, .volunteer250, .volunteer500, .volunteer1000: 
+        case .volunteer10, .volunteer25, .volunteer50, .volunteer100, .volunteer250, .volunteer500, .volunteer1000: 
             return "hands.and.sparkles"
         case .tourist10, .tourist25, .tourist50: 
             return "location"
@@ -234,10 +236,42 @@ enum ParkrunMilestone: String, CaseIterable {
         switch self {
         case .runs25, .runs50, .runs100, .runs250, .runs500, .runs1000:
             return "Running"
-        case .volunteer25, .volunteer50, .volunteer100, .volunteer250, .volunteer500, .volunteer1000:
+        case .volunteer10, .volunteer25, .volunteer50, .volunteer100, .volunteer250, .volunteer500, .volunteer1000:
             return "Volunteering"
         case .tourist10, .tourist25, .tourist50:
             return "Tourism"
+        }
+    }
+    
+    var milestoneColor: Color {
+        switch self.threshold {
+        case 10:
+            return .white
+        case 25:
+            return .purple
+        case 50:
+            return .red
+        case 100:
+            return .black
+        case 250:
+            return Color(.systemGreen).opacity(0.8) // Dark green
+        case 500:
+            return .blue
+        case 1000:
+            return Color(.systemIndigo) // Deep blue/indigo for 1000+
+        default:
+            return .gray
+        }
+    }
+    
+    var textColor: Color {
+        switch self.threshold {
+        case 10:
+            return .black // Black text on white background
+        case 100:
+            return .white // White text on black background
+        default:
+            return .white // White text on colored backgrounds
         }
     }
 }
@@ -361,6 +395,7 @@ class ParkrunVisualizationProcessor: ObservableObject {
         if volunteerCount >= 100 { achieved.append(.volunteer100) }
         if volunteerCount >= 50 { achieved.append(.volunteer50) }
         if volunteerCount >= 25 { achieved.append(.volunteer25) }
+        if volunteerCount >= 10 { achieved.append(.volunteer10) }
         
         // Tourist milestones - add all achieved milestones
         if venueCount >= 50 { achieved.append(.tourist50) }
