@@ -129,11 +129,6 @@ struct MeTabView: View {
                         .cardStyle()
                         .transition(AnimationConstants.cardTransition)
                         
-                        // parkrun Journey Visualizations (also show in editing mode)
-                        if let user = defaultUser {
-                            ParkrunVisualizationsView(parkrunInfo: user)
-                                .transition(AnimationConstants.cardTransition)
-                        }
                         
                     } else {
                         // Display Default User Data
@@ -175,11 +170,6 @@ struct MeTabView: View {
                             }
                             .cardStyle()
                             
-                            // parkrun Journey Visualizations
-                            if let user = defaultUser {
-                                ParkrunVisualizationsView(parkrunInfo: user)
-                                    .transition(AnimationConstants.cardTransition)
-                            }
                         }
                         .transition(AnimationConstants.slideTransition)
                     }
