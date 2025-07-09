@@ -152,6 +152,14 @@ struct QRCodeBarcodeView: View {
     @State private var showAddUser = false
     @State private var selectedUserID: String = ""
     @State private var currentlyViewingUserID: String = "" // Currently displayed user (can be different from default)
+    
+    // Temporary variables to hold fetched data until user hits Save
+    @State private var tempName: String = ""
+    @State private var tempTotalParkruns: String = ""
+    @State private var tempLastParkrunDate: String = ""
+    @State private var tempLastParkrunTime: String = ""
+    @State private var tempLastParkrunEvent: String = ""
+    @State private var tempLastParkrunEventURL: String = ""
 
     private let context = CIContext()
     private let qrCodeFilter = CIFilter.qrCodeGenerator()
@@ -189,19 +197,19 @@ struct QRCodeBarcodeView: View {
     private var confirmationMessage: String {
         var message = "Please confirm your details:\n\nParkrun ID: \(inputText)"
         
-        if !name.isEmpty {
-            message += "\nName: \(name)"
+        if !tempName.isEmpty {
+            message += "\nName: \(tempName)"
         }
         
-        print("DEBUG - confirmationMessage: totalParkruns='\(totalParkruns)', isEmpty=\(totalParkruns.isEmpty)")
-        if !totalParkruns.isEmpty {
-            message += "\nTotal Parkruns: \(totalParkruns)"
+        print("DEBUG - confirmationMessage: tempTotalParkruns='\(tempTotalParkruns)', isEmpty=\(tempTotalParkruns.isEmpty)")
+        if !tempTotalParkruns.isEmpty {
+            message += "\nTotal Parkruns: \(tempTotalParkruns)"
         }
         
-        print("DEBUG - confirmationMessage: lastParkrunDate='\(lastParkrunDate)', lastParkrunTime='\(lastParkrunTime)', lastParkrunEvent='\(lastParkrunEvent)'")
-        if !lastParkrunDate.isEmpty && !lastParkrunTime.isEmpty && !lastParkrunEvent.isEmpty {
-            message += "\nLast Parkrun: \(lastParkrunEvent)"
-            message += "\nDate: \(lastParkrunDate), Time: \(lastParkrunTime)"
+        print("DEBUG - confirmationMessage: tempLastParkrunDate='\(tempLastParkrunDate)', tempLastParkrunTime='\(tempLastParkrunTime)', tempLastParkrunEvent='\(tempLastParkrunEvent)'")
+        if !tempLastParkrunDate.isEmpty && !tempLastParkrunTime.isEmpty && !tempLastParkrunEvent.isEmpty {
+            message += "\nLast Parkrun: \(tempLastParkrunEvent)"
+            message += "\nDate: \(tempLastParkrunDate), Time: \(tempLastParkrunTime)"
         }
         
         print("DEBUG - Final confirmation message: '\(message)'")
@@ -398,14 +406,34 @@ struct QRCodeBarcodeView: View {
                 saveParkrunInfo()
             }
             Button("Cancel", role: .cancel) {
-                // Revert Parkrun details back to original
-                loadInitialData()
+                // Clear temporary variables and return to add barcode screen
+                tempName = ""
+                tempTotalParkruns = ""
+                tempLastParkrunDate = ""
+                tempLastParkrunTime = ""
+                tempLastParkrunEvent = ""
+                tempLastParkrunEventURL = ""
+                
+                // Clear main variables and return to onboarding
+                name = ""
+                totalParkruns = ""
+                lastParkrunDate = ""
+                lastParkrunTime = ""
+                lastParkrunEvent = ""
+                lastParkrunEventURL = ""
+                inputText = ""
+                
+                // Show onboarding again
+                showOnboarding = true
             }
         } message: {
             Text(confirmationMessage)
         }
         .onAppear {
-            loadInitialData()
+            // Only load initial data if we're not in the middle of onboarding flow
+            if !isEditing && tempName.isEmpty {
+                loadInitialData()
+            }
             WatchSessionManager.shared.startSession()
             checkForOnboarding()
             refreshEventDataIfNeeded()
@@ -441,7 +469,7 @@ struct QRCodeBarcodeView: View {
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunID"))) { notification in
             if let parkrunID = notification.object as? String {
                 inputText = parkrunID
-                // Clear existing data and trigger API lookup
+                // Clear existing data but don't fetch automatically - wait for user to trigger it
                 name = ""
                 totalParkruns = ""
                 lastParkrunDate = ""
@@ -449,30 +477,48 @@ struct QRCodeBarcodeView: View {
                 lastParkrunEvent = ""
                 lastParkrunEventURL = ""
                 
+                // Clear temporary variables
+                tempName = ""
+                tempTotalParkruns = ""
+                tempLastParkrunDate = ""
+                tempLastParkrunTime = ""
+                tempLastParkrunEvent = ""
+                tempLastParkrunEventURL = ""
+                
                 // Trigger edit mode to show the new ID
                 isEditing = true
-                
-                // Fetch data for the ID
-                fetchParkrunnerName(id: parkrunID)
             }
         }
         .onReceive(NotificationCenter.default.publisher(for: NSNotification.Name("SetParkrunIDWithConfirmation"))) { notification in
             if let parkrunID = notification.object as? String {
+                print("DEBUG: SetParkrunIDWithConfirmation received with ID: \(parkrunID)")
                 inputText = parkrunID
-                // Clear existing data and trigger API lookup
+                // Clear existing data (both main and temp variables)
                 name = ""
                 totalParkruns = ""
                 lastParkrunDate = ""
                 lastParkrunTime = ""
                 lastParkrunEvent = ""
                 lastParkrunEventURL = ""
+                print("DEBUG: Cleared main variables")
+                
+                // Clear temporary variables
+                tempName = ""
+                tempTotalParkruns = ""
+                tempLastParkrunDate = ""
+                tempLastParkrunTime = ""
+                tempLastParkrunEvent = ""
+                tempLastParkrunEventURL = ""
+                print("DEBUG: Cleared temp variables")
                 
                 // Trigger edit mode to show the new ID
                 isEditing = true
+                print("DEBUG: Set isEditing = true")
                 
                 // Fetch data for the ID and show confirmation dialog when done
                 fetchParkrunnerName(id: parkrunID) {
                     // Show confirmation dialog after API call completes
+                    print("DEBUG: API lookup completed, tempName='\(self.tempName)', name='\(self.name)'")
                     print("Onboarding: API lookup completed, showing confirmation dialog")
                     DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                         self.showConfirmationDialog = true
@@ -508,7 +554,7 @@ struct QRCodeBarcodeView: View {
                                 ProgressView()
                                     .scaleEffect(0.8)
                             } else if inputText.range(of: #"^A\d+$"#, options: .regularExpression) != nil {
-                                if !name.isEmpty {
+                                if !tempName.isEmpty {
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundColor(.green)
                                 } else {
@@ -526,9 +572,9 @@ struct QRCodeBarcodeView: View {
                         Text("Name")
                             .font(.caption)
                             .foregroundColor(.secondary)
-                        Text(name.isEmpty ? "Auto-filled from Parkrun ID" : name)
+                        Text(tempName.isEmpty ? "Auto-filled from Parkrun ID" : tempName)
                             .font(.body)
-                            .foregroundColor(name.isEmpty ? .secondary : .primary)
+                            .foregroundColor(tempName.isEmpty ? .secondary : .primary)
                             .padding(6)
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .background(Color(.tertiarySystemBackground))
@@ -536,12 +582,12 @@ struct QRCodeBarcodeView: View {
                     }
                     
                     // Show total parkruns if available
-                    if !totalParkruns.isEmpty {
+                    if !tempTotalParkruns.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Total Parkruns")
                                 .font(.caption)
                                 .foregroundColor(.secondary)
-                            Text(totalParkruns)
+                            Text(tempTotalParkruns)
                                 .font(.body)
                                 .padding(6)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -551,7 +597,7 @@ struct QRCodeBarcodeView: View {
                     }
                     
                     // Show last parkrun table if data is available
-                    if !lastParkrunDate.isEmpty && !lastParkrunTime.isEmpty && !lastParkrunEvent.isEmpty {
+                    if !tempLastParkrunDate.isEmpty && !tempLastParkrunTime.isEmpty && !tempLastParkrunEvent.isEmpty {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Last Parkrun")
                                 .font(.caption)
@@ -586,14 +632,14 @@ struct QRCodeBarcodeView: View {
                                         openEventResults()
                                     }) {
                                         HStack {
-                                            Text(lastParkrunEvent)
+                                            Text(tempLastParkrunEvent)
                                                 .font(.body)
                                                 .foregroundColor(.blue)
                                                 .lineLimit(2)
                                                 .minimumScaleFactor(0.7)
                                                 .fixedSize(horizontal: false, vertical: true)
                                             
-                                            if !lastParkrunEventURL.isEmpty {
+                                            if !tempLastParkrunEventURL.isEmpty {
                                                 Image(systemName: "safari")
                                                     .font(.caption2)
                                                     .foregroundColor(.blue)
@@ -602,16 +648,16 @@ struct QRCodeBarcodeView: View {
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     }
                                     .buttonStyle(PlainButtonStyle())
-                                    .disabled(lastParkrunEventURL.isEmpty)
+                                    .disabled(tempLastParkrunEventURL.isEmpty)
                                     .onAppear {
                                         print("DEBUG - Button 1 render: lastParkrunEvent='\(lastParkrunEvent)', lastParkrunEventURL='\(lastParkrunEventURL)', disabled=\(lastParkrunEventURL.isEmpty)")
                                     }
-                                    Text(lastParkrunDate)
+                                    Text(tempLastParkrunDate)
                                         .font(.caption)
                                         .frame(width: 75, alignment: .center)
                                         .lineLimit(1)
                                         .minimumScaleFactor(0.6)
-                                    Text(lastParkrunTime)
+                                    Text(tempLastParkrunTime)
                                         .font(.body)
                                         .fontWeight(.semibold)
                                         .foregroundColor(.primary)
@@ -1321,6 +1367,14 @@ struct QRCodeBarcodeView: View {
     }
     
     private func completeSave() {
+        // Copy data from temporary variables to main variables
+        name = tempName
+        totalParkruns = tempTotalParkruns
+        lastParkrunDate = tempLastParkrunDate
+        lastParkrunTime = tempLastParkrunTime
+        lastParkrunEvent = tempLastParkrunEvent
+        lastParkrunEventURL = tempLastParkrunEventURL
+        
         if let existingInfo = currentUser {
             existingInfo.parkrunID = inputText
             existingInfo.name = name
@@ -1581,31 +1635,31 @@ struct QRCodeBarcodeView: View {
             
             DispatchQueue.main.async {
                 if let name = extractedData.name {
-                    self.name = name
+                    self.tempName = name
                     print("Successfully extracted name: \(name)")
                 }
                 if let totalRuns = extractedData.totalRuns {
-                    self.totalParkruns = totalRuns
+                    self.tempTotalParkruns = totalRuns
                     print("Total parkruns: \(totalRuns)")
                 }
                 if let lastDate = extractedData.lastDate {
-                    self.lastParkrunDate = lastDate
+                    self.tempLastParkrunDate = lastDate
                     print("Last parkrun date: \(lastDate)")
                 }
                 if let lastTime = extractedData.lastTime {
-                    self.lastParkrunTime = lastTime
+                    self.tempLastParkrunTime = lastTime
                     print("Last parkrun time: \(lastTime)")
                 }
                 if let lastEvent = extractedData.lastEvent {
-                    self.lastParkrunEvent = lastEvent
+                    self.tempLastParkrunEvent = lastEvent
                     print("Last parkrun event: \(lastEvent)")
                 }
                 if let lastEventURL = extractedData.lastEventURL {
-                    self.lastParkrunEventURL = lastEventURL
+                    self.tempLastParkrunEventURL = lastEventURL
                     print("Last parkrun event URL: \(lastEventURL)")
-                    print("DEBUG - lastParkrunEventURL is now set to: '\(self.lastParkrunEventURL)'")
+                    print("DEBUG - tempLastParkrunEventURL is now set to: '\(self.tempLastParkrunEventURL)'")
                 } else {
-                    print("DEBUG - No lastEventURL found in extracted data, lastParkrunEventURL remains: '\(self.lastParkrunEventURL)'")
+                    print("DEBUG - No lastEventURL found in extracted data, tempLastParkrunEventURL remains: '\(self.tempLastParkrunEventURL)'")
                 }
                 completion?()
             }
