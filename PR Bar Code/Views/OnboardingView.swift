@@ -50,6 +50,17 @@ struct OnboardingView: View {
                             .foregroundColor(.primary)
                             .underline()
                     }
+                    
+                    Button(action: {
+                        if let url = URL(string: "https://support.parkrun.com/hc/en-us/articles/205632182-2-1-How-do-I-access-my-parkrun-profile") {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Text("I have forgotten my barcode")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .underline()
+                    }
                 }
                 .padding(.horizontal, 40)
                 .padding(.bottom, 40)
