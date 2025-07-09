@@ -7,9 +7,8 @@ platform :ios do
     
 increment_version_number(
   bump_type: bump_type,
-  xcodeproj: "PR Bar Code.xcodeproj",           # replace with exact name if different
-  target: "5K QR Code"   #"PR Bar Code",                        # your target name
-  plist_path: "PR Bar Code/Info.plist"          # path to Info.plist relative to project root
+  xcodeproj: "PR Bar Code.xcodeproj",
+  target: "5K QR Code"
 )
 
     increment_build_number(
@@ -22,5 +21,38 @@ increment_version_number(
 
     add_git_tag(tag: "v#{get_version_number}")
     push_to_git_remote
+  end
+
+  lane :local_version_bump do |options|
+    bump_type = options[:bump] || "patch"
+    increment_version_number(
+      bump_type: bump_type,
+      xcodeproj: "PR Bar Code.xcodeproj"
+    )
+    increment_build_number(
+      build_number: Time.now.strftime("%Y%m%d%H%M"),
+      xcodeproj: "PR Bar Code.xcodeproj"
+    )
+    commit_version_bump(
+      message: "Local version bump to #{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj')} (#{get_build_number(xcodeproj: 'PR Bar Code.xcodeproj')})"
+    )
+    push_to_git_remote
+  end
+
+  lane :set_version do |options|
+    version = options[:version] || "1.0.1"
+    build = options[:build] || Time.now.strftime("%Y%m%d%H%M")
+
+    set_info_plist_value(
+      path: "PR Bar Code/Info.plist",
+      key: "CFBundleShortVersionString",
+      value: version
+    )
+
+    set_info_plist_value(
+      path: "PR Bar Code/Info.plist",
+      key: "CFBundleVersion",
+      value: build
+    )
   end
 end
