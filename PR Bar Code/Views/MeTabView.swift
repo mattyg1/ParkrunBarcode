@@ -350,10 +350,35 @@ struct MeTabView: View {
                             self.showConfirmationDialog = true
                         }
                     case .failure(let error):
-                        // Handle error by showing alert
+                        // Handle error by showing alert and returning to onboarding
                         print("Onboarding: API lookup failed with error: \(error.localizedDescription)")
+                        
+                        // Clear all data
+                        self.name = ""
+                        self.totalParkruns = ""
+                        self.lastParkrunDate = ""
+                        self.lastParkrunTime = ""
+                        self.lastParkrunEvent = ""
+                        self.lastParkrunEventURL = ""
+                        self.inputText = ""
+                        
+                        // Clear temp variables
+                        self.tempName = ""
+                        self.tempTotalParkruns = ""
+                        self.tempLastParkrunDate = ""
+                        self.tempLastParkrunTime = ""
+                        self.tempLastParkrunEvent = ""
+                        self.tempLastParkrunEventURL = ""
+                        
+                        // Show error and return to onboarding
                         self.alertMessage = error.localizedDescription
                         self.showAlert = true
+                        
+                        // Return to onboarding after alert
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                            self.showOnboarding = true
+                            self.isEditing = false
+                        }
                     }
                 }
             }
