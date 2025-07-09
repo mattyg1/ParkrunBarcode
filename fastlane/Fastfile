@@ -1,0 +1,20 @@
+default_platform(:ios)
+
+platform :ios do
+  lane :local_version_bump do |options|
+    bump_type = options[:bump] || "patch"
+    increment_version_number(
+      bump_type: bump_type,
+      xcodeproj: "PR Bar Code.xcodeproj"
+    )
+    increment_build_number(
+      build_number: Time.now.strftime("%Y%m%d%H%M"),
+      xcodeproj: "PR Bar Code.xcodeproj"
+    )
+    commit_version_bump(
+      message: "Local version bump to #{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj', target: '5K QR Code')} (#{get_build_number(xcodeproj: 'PR Bar Code.xcodeproj')})"
+    )
+    add_git_tag(tag: "v#{get_version_number(xcodeproj: 'PR Bar Code.xcodeproj', target: '5K QR Code')}")
+    push_to_git_remote
+  end
+end
