@@ -24,31 +24,104 @@ This is a SwiftUI iOS app called "PR Bar Code" that generates QR codes and barco
 4. Information is sent to Apple Watch if connected
 5. External event data can be fetched from `https://images.parkrun.com/events.json`
 
+## Branching Strategy
+
+### Main Branches
+- **`main`** - Production-ready code (App Store releases)
+- **`develop`** - Integration branch for features (TestFlight releases)
+
+### Feature Branches
+- **`feature/*`** - Individual features (merge to `develop`)
+- **`hotfix/*`** - Critical fixes (merge to both `main` and `develop`)
+- **`release/*`** - Release preparation (merge to `main` and `develop`)
+
 ## Workflow for Pull Requests
 
-**ALWAYS follow this workflow before raising a PR:**
+### Feature Development (Standard Workflow)
 
-1. **Version bump** (patch by default):
+**ALWAYS follow this workflow when developing features:**
+
+1. **Create feature branch from develop**:
+   ```bash
+   git checkout develop
+   git pull origin develop
+   git checkout -b feature/my-feature
+   ```
+
+2. **Version bump** (patch by default):
    ```bash
    fastlane local_version_bump bump:patch
    ```
 
-2. **Commit changes**:
+3. **Commit changes**:
    ```bash
    git add -A
-   git commit -m "your commit message"
+   git commit -m "feat: your feature description"
    ```
 
-3. **Create PR**:
+4. **Create PR to develop**:
    ```bash
-   gh pr create --title "your title" --body "your description"
+   gh pr create --base develop --title "feat: your feature" --body "your description"
+   ```
+
+### Release Workflow
+
+**For releasing to TestFlight/App Store:**
+
+1. **Create release branch from develop**:
+   ```bash
+   git checkout develop
+   git checkout -b release/1.x.0
+   ```
+
+2. **Version bump for release**:
+   ```bash
+   fastlane local_version_bump bump:minor  # or major
+   ```
+
+3. **Test and finalize release**:
+   ```bash
+   git commit -m "chore: prepare release 1.x.0"
+   ```
+
+4. **Create PR to main**:
+   ```bash
+   gh pr create --base main --title "release: 1.x.0" --body "Release notes..."
+   ```
+
+5. **After merge, sync develop**:
+   ```bash
+   git checkout develop
+   git merge main
+   git push origin develop
+   ```
+
+### Hotfix Workflow
+
+**For critical production fixes:**
+
+1. **Create hotfix branch from main**:
+   ```bash
+   git checkout main
+   git checkout -b hotfix/critical-fix
+   ```
+
+2. **Version bump** (patch):
+   ```bash
+   fastlane local_version_bump bump:patch
+   ```
+
+3. **Create PRs to both main and develop**:
+   ```bash
+   gh pr create --base main --title "hotfix: critical fix"
+   gh pr create --base develop --title "hotfix: critical fix"
    ```
 
 ### Version Bump Types
 
-- `bump:patch` - Bug fixes (1.1.0 → 1.1.1) - **default**
-- `bump:minor` - New features (1.1.0 → 1.2.0)
-- `bump:major` - Breaking changes (1.1.0 → 2.0.0)
+- `bump:patch` - Bug fixes (1.1.0 → 1.1.1) - **default for features**
+- `bump:minor` - New features (1.1.0 → 1.2.0) - **for releases**
+- `bump:major` - Breaking changes (1.1.0 → 2.0.0) - **for major releases**
 
 ## Build Commands
 

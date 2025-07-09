@@ -19,7 +19,7 @@ struct OnboardingView: View {
                 
                 // Main content
                 VStack(spacing: 20) {
-                    Text("Enter your barcode to see personalised results")
+                    Text("Enter your parkrun ID to see your Barcode and personalised results")
                         .font(.title2)
                         .multilineTextAlignment(.center)
                         .foregroundColor(.secondary)
@@ -33,7 +33,7 @@ struct OnboardingView: View {
                     Button(action: {
                         showBarcodeEntry = true
                     }) {
-                        Text("Add barcode")
+                        Text("Add parkrun ID")
                             .font(.headline)
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
@@ -46,6 +46,17 @@ struct OnboardingView: View {
                         showCountrySelection = true
                     }) {
                         Text("I don't have a barcode")
+                            .font(.body)
+                            .foregroundColor(.primary)
+                            .underline()
+                    }
+                    
+                    Button(action: {
+                        if let url = URL(string: "https://support.parkrun.com/hc/en-us/articles/205632182-2-1-How-do-I-access-my-parkrun-profile") {
+                            UIApplication.shared.open(url)
+                        }
+                    }) {
+                        Text("I have forgotten my barcode")
                             .font(.body)
                             .foregroundColor(.primary)
                             .underline()
@@ -80,7 +91,7 @@ struct BarcodeEntryView: View {
             VStack(spacing: 20) {
                 // Input field
                 VStack(alignment: .leading, spacing: 8) {
-                    TextField("Barcode number, which starts with an A", text: $barcodeText)
+                    TextField("parkrun ID, which starts with an A", text: $barcodeText)
                         .textFieldStyle(RoundedBorderTextFieldStyle())
                         .font(.body)
                         .focused($isFocused)
