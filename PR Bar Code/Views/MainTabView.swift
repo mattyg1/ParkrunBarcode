@@ -32,11 +32,11 @@ struct MainTabView: View {
                 }
                 .tag(1)
             
-            // Events Tab - Placeholder for future features
-            EventsTabView()
+            // Journey Tab - parkrun journey visualizations
+            JourneyTabView()
                 .tabItem {
-                    Image(systemName: "calendar.circle")
-                    Text("Events")
+                    Image(systemName: "chart.line.uptrend.xyaxis.circle")
+                    Text("Journey")
                 }
                 .tag(2)
             

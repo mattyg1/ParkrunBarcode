@@ -10,7 +10,6 @@ import SwiftUI
 struct ParkrunVisualizationsView: View {
     let parkrunInfo: ParkrunInfo
     @State private var selectedTab = 0
-    @State private var isExpanded = false
     
     private let tabs = [
         ("Overview", "chart.bar"),
@@ -23,103 +22,64 @@ struct ParkrunVisualizationsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header with expand/collapse
-            HStack {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("parkrun Journey")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                    
-                    if parkrunInfo.totalParkrunsInt > 0 {
-                        Text("\(parkrunInfo.totalParkrunsInt) parkruns • \(parkrunInfo.uniqueVenuesCount) venues")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    } else {
-                        Text("Visualizations will appear once data is available")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                    }
-                }
-                
-                Spacer()
-                
-                Button(action: {
-                    withAnimation(.spring()) {
-                        isExpanded.toggle()
-                    }
-                }) {
-                    Image(systemName: isExpanded ? "chevron.up" : "chevron.down")
-                        .font(.title3)
-                        .foregroundColor(.adaptiveParkrunGreen)
-                }
-            }
-            .padding()
-            .background(Color.adaptiveCardBackground)
-            .cornerRadius(12, corners: isExpanded ? [.topLeft, .topRight] : .allCorners)
-            
-            if isExpanded {
-                VStack(spacing: 0) {
-                    if parkrunInfo.totalParkrunsInt > 0 {
-                        // Tab selector
-                        ScrollView(.horizontal, showsIndicators: false) {
-                            HStack(spacing: 8) {
-                                ForEach(tabs.indices, id: \.self) { index in
-                                    TabButton(
-                                        title: tabs[index].0,
-                                        icon: tabs[index].1,
-                                        isSelected: selectedTab == index
-                                    ) {
-                                        withAnimation(.easeInOut(duration: 0.3)) {
-                                            selectedTab = index
-                                        }
-                                    }
+            if parkrunInfo.totalParkrunsInt > 0 {
+                // Tab selector
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(tabs.indices, id: \.self) { index in
+                            TabButton(
+                                title: tabs[index].0,
+                                icon: tabs[index].1,
+                                isSelected: selectedTab == index
+                            ) {
+                                withAnimation(.easeInOut(duration: 0.3)) {
+                                    selectedTab = index
                                 }
                             }
-                            .padding(.horizontal)
                         }
-                        .padding(.vertical, 12)
-                        .background(Color.adaptiveCardBackground)
-                        
-                        // Content
-                        ScrollView {
-                            contentView
-                                .padding()
-                        }
-                        .frame(maxHeight: 600)
-                    } else {
-                        // Empty state
-                        VStack(spacing: 16) {
-                            Image(systemName: "chart.bar.xaxis")
-                                .font(.system(size: 48))
-                                .foregroundColor(.gray)
-                            
-                            VStack(spacing: 8) {
-                                Text("No Visualization Data")
-                                    .font(.headline)
-                                    .foregroundColor(.primary)
-                                
-                                Text("Complete your first parkrun or refresh your data to see detailed visualizations of your parkrun journey.")
-                                    .font(.body)
-                                    .foregroundColor(.secondary)
-                                    .multilineTextAlignment(.center)
-                            }
-                            
-                            Button("Refresh Data") {
-                                // Trigger data refresh
-                                refreshVisualizationData()
-                            }
-                            .buttonStyle(.borderedProminent)
-                        }
-                        .padding(40)
                     }
+                    .padding(.horizontal)
+                }
+                .padding(.vertical, 12)
+                .background(Color.adaptiveCardBackground)
+                .cornerRadius(12, corners: [.topLeft, .topRight])
+                
+                // Content
+                ScrollView {
+                    contentView
+                        .padding()
                 }
                 .background(Color.adaptiveCardBackground)
                 .cornerRadius(12, corners: [.bottomLeft, .bottomRight])
+            } else {
+                // Empty state
+                VStack(spacing: 16) {
+                    Image(systemName: "chart.bar.xaxis")
+                        .font(.system(size: 48))
+                        .foregroundColor(.gray)
+                    
+                    VStack(spacing: 8) {
+                        Text("No Visualization Data")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        Text("Complete your first parkrun or refresh your data to see detailed visualizations of your parkrun journey.")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    
+                    Button("Refresh Data") {
+                        // Trigger data refresh
+                        refreshVisualizationData()
+                    }
+                    .buttonStyle(.borderedProminent)
+                }
+                .padding(40)
+                .background(Color.adaptiveCardBackground)
+                .cornerRadius(12)
             }
         }
-        .background(Color.adaptiveCardBackground)
-        .cornerRadius(12)
         .shadow(radius: 2)
     }
     
