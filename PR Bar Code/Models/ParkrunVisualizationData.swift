@@ -8,6 +8,7 @@
 import SwiftUI
 import SwiftData
 import Foundation
+import CoreLocation
 
 
 // MARK: - Core Data Structures
@@ -115,6 +116,7 @@ struct VenueStats: Identifiable, Hashable {
     let bestTimeInMinutes: Double
     let percentage: Double
     let mostRecentDate: String?
+    let coordinate: CLLocationCoordinate2D?
     
     // Color coding based on frequency
     var frequencyColor: Color {
@@ -125,6 +127,39 @@ struct VenueStats: Identifiable, Hashable {
         case 2..<5: return Color(red: 0.96, green: 0.34, blue: 0.42) // Pink
         default: return Color(red: 0.31, green: 0.97, blue: 0.49) // Green
         }
+    }
+    
+    // Helper to check if venue has coordinate data
+    var hasCoordinate: Bool {
+        coordinate != nil
+    }
+    
+    // Custom Hashable implementation since CLLocationCoordinate2D doesn't conform to Hashable
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+        hasher.combine(name)
+        hasher.combine(runCount)
+        hasher.combine(bestTime)
+        hasher.combine(bestTimeInMinutes)
+        hasher.combine(percentage)
+        hasher.combine(mostRecentDate)
+        if let coordinate = coordinate {
+            hasher.combine(coordinate.latitude)
+            hasher.combine(coordinate.longitude)
+        }
+    }
+    
+    // Custom Equatable implementation
+    static func == (lhs: VenueStats, rhs: VenueStats) -> Bool {
+        lhs.id == rhs.id &&
+        lhs.name == rhs.name &&
+        lhs.runCount == rhs.runCount &&
+        lhs.bestTime == rhs.bestTime &&
+        lhs.bestTimeInMinutes == rhs.bestTimeInMinutes &&
+        lhs.percentage == rhs.percentage &&
+        lhs.mostRecentDate == rhs.mostRecentDate &&
+        lhs.coordinate?.latitude == rhs.coordinate?.latitude &&
+        lhs.coordinate?.longitude == rhs.coordinate?.longitude
     }
 }
 
@@ -324,7 +359,8 @@ class ParkrunVisualizationProcessor: ObservableObject {
                 bestTime: bestRun?.time ?? "00:00",
                 bestTimeInMinutes: bestRun?.timeInMinutes ?? 0.0,
                 percentage: Double(runs.count) / Double(totalRuns) * 100,
-                mostRecentDate: mostRecentRun?.date
+                mostRecentDate: mostRecentRun?.date,
+                coordinate: VenueCoordinateService.coordinate(for: venue)
             )
         }.sorted { ($0.runCount > $1.runCount) }
         
