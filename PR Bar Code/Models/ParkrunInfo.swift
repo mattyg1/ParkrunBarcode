@@ -9,6 +9,7 @@
 import SwiftUI
 import SwiftData
 
+
 @Model
 class ParkrunInfo: Identifiable {
     @Attribute(.unique) var parkrunID: String
@@ -37,6 +38,15 @@ class ParkrunInfo: Identifiable {
     var uniqueVenuesCount: Int = 0
     var lastDataRefresh: Date?
     
+    // Performance caching fields (excluded from persistence)
+    @Transient private var cachedVenueStats: [VenueStats]?
+    @Transient private var cachedRecentPerformanceData: [PerformanceData]?
+    @Transient private var cachedAllYearsActivityData: [Int: [ActivityDay]]?
+    @Transient private var cachedActivityData2025: [ActivityDay]?
+    @Transient private var cachedAchievedMilestones: [ParkrunMilestone]?
+    @Transient private var cacheTimestamp: Date?
+    @Transient private var cacheValidityDuration: TimeInterval = 300 // 5 minutes
+    
     var id: String { parkrunID } // Identifiable conformance
 
     init(parkrunID: String, name: String, homeParkrun: String, country: Int? = nil, totalParkruns: String? = nil, lastParkrunDate: String? = nil, lastParkrunTime: String? = nil, lastParkrunEvent: String? = nil, lastParkrunEventURL: String? = nil, isDefault: Bool = false) {
@@ -59,6 +69,26 @@ class ParkrunInfo: Identifiable {
         self.displayName = name.isEmpty ? parkrunID : "\(name) (\(parkrunID))"
     }
     
+    // MARK: - Cache Management
+    
+    private func isCacheValid() -> Bool {
+        guard let timestamp = cacheTimestamp else { return false }
+        return Date().timeIntervalSince(timestamp) < cacheValidityDuration
+    }
+    
+    private func updateCacheTimestamp() {
+        cacheTimestamp = Date()
+    }
+    
+    private func invalidateCache() {
+        cachedVenueStats = nil
+        cachedRecentPerformanceData = nil
+        cachedAllYearsActivityData = nil
+        cachedActivityData2025 = nil
+        cachedAchievedMilestones = nil
+        cacheTimestamp = nil
+    }
+    
     // MARK: - Computed Properties for Visualizations
     
     var totalParkrunsInt: Int {
@@ -66,15 +96,30 @@ class ParkrunInfo: Identifiable {
     }
     
     var achievedMilestones: [ParkrunMilestone] {
-        ParkrunVisualizationProcessor.checkMilestones(
+        if let cached = cachedAchievedMilestones, isCacheValid() {
+            return cached
+        }
+        
+        let milestones = ParkrunVisualizationProcessor.checkMilestones(
             totalRuns: totalParkrunsInt,
             volunteerCount: volunteerCount,
             venueCount: uniqueVenuesCount
         )
+        
+        cachedAchievedMilestones = milestones
+        updateCacheTimestamp()
+        return milestones
     }
     
     var venueStats: [VenueStats] {
-        ParkrunVisualizationProcessor.calculateVenueStats(from: venueRecords)
+        if let cached = cachedVenueStats, isCacheValid() {
+            return cached
+        }
+        
+        let stats = ParkrunVisualizationProcessor.calculateVenueStats(from: venueRecords)
+        cachedVenueStats = stats
+        updateCacheTimestamp()
+        return stats
     }
     
     var volunteerStats: [VolunteerStats] {
@@ -84,15 +129,33 @@ class ParkrunInfo: Identifiable {
     }
     
     var recentPerformanceData: [PerformanceData] {
+        if let cached = cachedRecentPerformanceData, isCacheValid() {
+            return cached
+        }
+        
         // Return all performance data for comprehensive timeline visualization
-        return venueRecords.map { PerformanceData(venueRecord: $0) }
+        let performanceData = venueRecords.map { PerformanceData(venueRecord: $0) }
+        cachedRecentPerformanceData = performanceData
+        updateCacheTimestamp()
+        return performanceData
     }
     
     var activityData2025: [ActivityDay] {
-        ParkrunVisualizationProcessor.calculateActivityDays(from: venueRecords, year: 2025)
+        if let cached = cachedActivityData2025, isCacheValid() {
+            return cached
+        }
+        
+        let activityData = ParkrunVisualizationProcessor.calculateActivityDays(from: venueRecords, year: 2025)
+        cachedActivityData2025 = activityData
+        updateCacheTimestamp()
+        return activityData
     }
     
     var allYearsActivityData: [Int: [ActivityDay]] {
+        if let cached = cachedAllYearsActivityData, isCacheValid() {
+            return cached
+        }
+        
         // Get all years from venue records
         let formatter = DateFormatter()
         formatter.dateFormat = "dd/MM/yyyy"
@@ -106,12 +169,17 @@ class ParkrunInfo: Identifiable {
             yearlyData[year] = ParkrunVisualizationProcessor.calculateActivityDays(from: venueRecords, year: year)
         }
         
+        cachedAllYearsActivityData = yearlyData
+        updateCacheTimestamp()
         return yearlyData
     }
     
     // MARK: - Data Management Methods
     
     func updateVisualizationData(venueRecords: [VenueRecord], volunteerRecords: [VolunteerRecord]) {
+        // Invalidate cache when data changes
+        invalidateCache()
+        
         self.venueRecords = venueRecords
         self.volunteerRecords = volunteerRecords
         self.volunteerCount = volunteerRecords.count
@@ -127,6 +195,9 @@ class ParkrunInfo: Identifiable {
     }
     
     func updateCompleteVisualizationData(venueRecords: [VenueRecord], volunteerRecords: [VolunteerRecord], annualPerformances: [AnnualPerformance], overallStats: OverallStats?) {
+        // Invalidate cache when data changes
+        invalidateCache()
+        
         // Update all visualization data with comprehensive dataset
         self.venueRecords = venueRecords
         self.volunteerRecords = volunteerRecords

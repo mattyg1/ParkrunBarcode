@@ -9,6 +9,7 @@ import SwiftUI
 import SwiftData
 import Foundation
 
+
 // MARK: - Core Data Structures
 
 @Model
@@ -280,11 +281,32 @@ enum ParkrunMilestone: String, CaseIterable {
 
 class ParkrunVisualizationProcessor: ObservableObject {
     
+    // MARK: - Static Caching
+    private static var venueStatsCache: [String: [VenueStats]] = [:]
+    private static var activityDaysCache: [String: [ActivityDay]] = [:]
+    private static var cacheTimestamps: [String: Date] = [:]
+    private static let cacheValidityDuration: TimeInterval = 600 // 10 minutes
+    
+    private static func isCacheValid(for key: String) -> Bool {
+        guard let timestamp = cacheTimestamps[key] else { return false }
+        return Date().timeIntervalSince(timestamp) < cacheValidityDuration
+    }
+    
+    private static func updateCacheTimestamp(for key: String) {
+        cacheTimestamps[key] = Date()
+    }
+    
     static func calculateVenueStats(from records: [VenueRecord]) -> [VenueStats] {
+        let cacheKey = "venueStats_\(records.count)_\(records.hashValue)"
+        
+        if let cached = venueStatsCache[cacheKey], isCacheValid(for: cacheKey) {
+            return cached
+        }
+        
         let venueGroups = Dictionary(grouping: records, by: { $0.venue })
         let totalRuns = records.count
         
-        return venueGroups.compactMap { venue, runs in
+        let stats: [VenueStats] = venueGroups.compactMap { venue, runs in
             guard !runs.isEmpty else { return nil }
             
             let bestRun = runs.min(by: { $0.timeInMinutes < $1.timeInMinutes })
@@ -304,7 +326,11 @@ class ParkrunVisualizationProcessor: ObservableObject {
                 percentage: Double(runs.count) / Double(totalRuns) * 100,
                 mostRecentDate: mostRecentRun?.date
             )
-        }.sorted { $0.runCount > $1.runCount }
+        }.sorted { ($0.runCount > $1.runCount) }
+        
+        venueStatsCache[cacheKey] = stats
+        updateCacheTimestamp(for: cacheKey)
+        return stats
     }
     
     static func calculateVolunteerStats(from records: [VolunteerRecord]) -> [VolunteerStats] {
@@ -343,6 +369,12 @@ class ParkrunVisualizationProcessor: ObservableObject {
     }
     
     static func calculateActivityDays(from records: [VenueRecord], year: Int) -> [ActivityDay] {
+        let cacheKey = "activityDays_\(year)_\(records.count)_\(records.hashValue)"
+        
+        if let cached = activityDaysCache[cacheKey], isCacheValid(for: cacheKey) {
+            return cached
+        }
+        
         let calendar = Calendar.current
         let startDate = calendar.date(from: DateComponents(year: year, month: 1, day: 1))!
         let endDate = calendar.date(from: DateComponents(year: year + 1, month: 1, day: 1))!
@@ -372,6 +404,8 @@ class ParkrunVisualizationProcessor: ObservableObject {
             currentDate = calendar.date(byAdding: .day, value: 1, to: currentDate)!
         }
         
+        activityDaysCache[cacheKey] = days
+        updateCacheTimestamp(for: cacheKey)
         return days
     }
     
