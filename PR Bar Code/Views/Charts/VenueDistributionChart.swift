@@ -26,7 +26,8 @@ struct VenueDistributionChart: View {
                 bestTime: "",
                 bestTimeInMinutes: 0,
                 percentage: otherPercentage,
-                mostRecentDate: nil
+                mostRecentDate: nil,
+                coordinate: nil
             )
             return topVenues + [otherStats]
         }
@@ -160,11 +161,11 @@ struct InsightRow: View {
 
 #Preview {
     let sampleStats = [
-        VenueStats(name: "Whiteley parkrun", runCount: 107, bestTime: "22:38", bestTimeInMinutes: 22.63, percentage: 37.8, mostRecentDate: "05/07/2025"),
-        VenueStats(name: "Netley Abbey parkrun", runCount: 105, bestTime: "21:37", bestTimeInMinutes: 21.62, percentage: 37.1, mostRecentDate: "28/06/2025"),
-        VenueStats(name: "Lee-on-the-Solent parkrun", runCount: 18, bestTime: "21:03", bestTimeInMinutes: 21.05, percentage: 6.4, mostRecentDate: "15/03/2025"),
-        VenueStats(name: "Eastleigh parkrun", runCount: 10, bestTime: "23:02", bestTimeInMinutes: 23.03, percentage: 3.5, mostRecentDate: "10/05/2025"),
-        VenueStats(name: "Portsmouth Lakeside parkrun", runCount: 9, bestTime: "22:97", bestTimeInMinutes: 22.97, percentage: 3.2, mostRecentDate: "26/04/2025")
+        VenueStats(name: "Whiteley parkrun", runCount: 107, bestTime: "22:38", bestTimeInMinutes: 22.63, percentage: 37.8, mostRecentDate: "05/07/2025", coordinate: nil),
+        VenueStats(name: "Netley Abbey parkrun", runCount: 105, bestTime: "21:37", bestTimeInMinutes: 21.62, percentage: 37.1, mostRecentDate: "28/06/2025", coordinate: nil),
+        VenueStats(name: "Lee-on-the-Solent parkrun", runCount: 18, bestTime: "21:03", bestTimeInMinutes: 21.05, percentage: 6.4, mostRecentDate: "15/03/2025", coordinate: nil),
+        VenueStats(name: "Eastleigh parkrun", runCount: 10, bestTime: "23:02", bestTimeInMinutes: 23.03, percentage: 3.5, mostRecentDate: "10/05/2025", coordinate: nil),
+        VenueStats(name: "Portsmouth Lakeside parkrun", runCount: 9, bestTime: "22:97", bestTimeInMinutes: 22.97, percentage: 3.2, mostRecentDate: "26/04/2025", coordinate: nil)
     ]
     
     VenueDistributionChart(venueStats: sampleStats)
