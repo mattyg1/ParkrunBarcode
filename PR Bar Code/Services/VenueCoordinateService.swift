@@ -8,72 +8,255 @@
 import Foundation
 import CoreLocation
 
+extension Notification.Name {
+    static let coordinatesLoaded = Notification.Name("coordinatesLoaded")
+}
+
 struct VenueCoordinateService {
     
-    // Static coordinate data for common UK parkrun venues
-    private static let venueCoordinates: [String: CLLocationCoordinate2D] = [
-        // Hampshire/South Coast
-        "Whiteley parkrun": CLLocationCoordinate2D(latitude: 50.8591, longitude: -1.2956),
-        "Netley Abbey parkrun": CLLocationCoordinate2D(latitude: 50.8572, longitude: -1.3584),
-        "Lee-on-the-Solent parkrun": CLLocationCoordinate2D(latitude: 50.8088, longitude: -1.2978),
-        "Southampton parkrun": CLLocationCoordinate2D(latitude: 50.9097, longitude: -1.4044),
-        "Eastleigh parkrun": CLLocationCoordinate2D(latitude: 50.9697, longitude: -1.3480),
-        "Ganger Farm parkrun": CLLocationCoordinate2D(latitude: 50.8847, longitude: -1.2958),
-        "Southsea parkrun": CLLocationCoordinate2D(latitude: 50.7859, longitude: -1.0875),
-        
-        // Wales
-        "Cardiff parkrun": CLLocationCoordinate2D(latitude: 51.4816, longitude: -3.1791),
-        "Roath parkrun": CLLocationCoordinate2D(latitude: 51.4925, longitude: -3.1569),
-        
-        // Lake District
-        "Keswick parkrun": CLLocationCoordinate2D(latitude: 54.6014, longitude: -3.1348),
-        "Windermere parkrun": CLLocationCoordinate2D(latitude: 54.3781, longitude: -2.9132),
-        
-        // Wiltshire
-        "Lydiard parkrun": CLLocationCoordinate2D(latitude: 51.5689, longitude: -1.8114),
-        
-        // International
-        "Crissy Field parkrun": CLLocationCoordinate2D(latitude: 37.8052, longitude: -122.4598), // San Francisco
-        
-        // London
-        "Bushy parkrun": CLLocationCoordinate2D(latitude: 51.4108, longitude: -0.3340),
-        "Richmond parkrun": CLLocationCoordinate2D(latitude: 51.4613, longitude: -0.2909),
-        "Wimbledon Common parkrun": CLLocationCoordinate2D(latitude: 51.4360, longitude: -0.2288),
-        "Regent's Park parkrun": CLLocationCoordinate2D(latitude: 51.5255, longitude: -0.1469),
-        
-        // Additional popular venues
-        "Brighton & Hove parkrun": CLLocationCoordinate2D(latitude: 50.8429, longitude: -0.1313),
-        "Oxford parkrun": CLLocationCoordinate2D(latitude: 51.7520, longitude: -1.2577),
-        "Cambridge parkrun": CLLocationCoordinate2D(latitude: 52.2043, longitude: 0.1218),
-        "Bath Skyline parkrun": CLLocationCoordinate2D(latitude: 51.3958, longitude: -2.3271),
-        "Poole parkrun": CLLocationCoordinate2D(latitude: 50.7156, longitude: -1.9872),
-        "Bournemouth parkrun": CLLocationCoordinate2D(latitude: 50.7192, longitude: -1.8808)
-    ]
+    // MARK: - Models for parsing events.json
+    private struct EventsData: Codable {
+        let events: EventsCollection
+    }
     
+    private struct EventsCollection: Codable {
+        let features: [EventFeature]
+    }
+    
+    private struct EventFeature: Codable {
+        let geometry: EventGeometry
+        let properties: EventProperties
+    }
+    
+    private struct EventGeometry: Codable {
+        let coordinates: [Double] // [longitude, latitude]
+    }
+    
+    private struct EventProperties: Codable {
+        let eventname: String
+        let EventLongName: String
+        let EventShortName: String
+    }
+    
+    // MARK: - Cached events data
+    private static var cachedEventsData: [String: CLLocationCoordinate2D]?
+    private static var lastLoadTime: Date?
+    private static let cacheExpiryInterval: TimeInterval = 3600 // 1 hour
+    private static let parkrunEventsURL = "https://images.parkrun.com/events.json"
+    
+    // MARK: - Public API
     static func coordinate(for venueName: String) -> CLLocationCoordinate2D? {
-        // First try exact match
-        if let coordinate = venueCoordinates[venueName] {
+        // Load events data if not cached or expired
+        loadEventsDataIfNeeded()
+        
+        guard let eventsData = cachedEventsData else {
+            print("DEBUG - COORDINATES: Events data not available, falling back to hardcoded coordinates")
+            return fallbackCoordinate(for: venueName)
+        }
+        
+        // Try exact match first
+        if let coordinate = eventsData[venueName] {
             return coordinate
         }
         
         // Try fuzzy matching for venues with slight name variations
-        let normalizedInput = venueName.lowercased().replacingOccurrences(of: " parkrun", with: "")
+        let normalizedInput = venueName.lowercased()
+            .replacingOccurrences(of: " parkrun", with: "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
         
-        for (venueName, coordinate) in venueCoordinates {
-            let normalizedVenue = venueName.lowercased().replacingOccurrences(of: " parkrun", with: "")
-            if normalizedVenue.contains(normalizedInput) || normalizedInput.contains(normalizedVenue) {
+        for (eventName, coordinate) in eventsData {
+            let normalizedEvent = eventName.lowercased()
+                .replacingOccurrences(of: " parkrun", with: "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            
+            // Check if names match closely
+            if normalizedEvent.contains(normalizedInput) || 
+               normalizedInput.contains(normalizedEvent) ||
+               levenshteinDistance(normalizedInput, normalizedEvent) <= 2 {
+                print("DEBUG - COORDINATES: Found fuzzy match '\(eventName)' for '\(venueName)'")
                 return coordinate
             }
         }
         
-        return nil
+        print("DEBUG - COORDINATES: No match found for '\(venueName)' in events.json, trying fallback")
+        return fallbackCoordinate(for: venueName)
     }
     
     static func hasCoordinate(for venueName: String) -> Bool {
         return coordinate(for: venueName) != nil
     }
     
-    // Calculate center point for map region from multiple venues
+    // MARK: - Data loading
+    private static var isLoading = false
+    
+    private static func loadEventsDataIfNeeded() {
+        // Check if we need to reload data
+        if let lastLoad = lastLoadTime,
+           let cached = cachedEventsData,
+           Date().timeIntervalSince(lastLoad) < cacheExpiryInterval {
+            return // Use cached data
+        }
+        
+        // Prevent multiple simultaneous loads
+        if isLoading {
+            return
+        }
+        
+        isLoading = true
+        print("DEBUG - COORDINATES: Loading events data...")
+        
+        // Try to load from network first (fresh data)
+        loadFromNetwork { success in
+            if !success {
+                // Fall back to bundled JSON
+                print("DEBUG - COORDINATES: Network failed, trying bundled events.json")
+                loadFromBundle()
+            }
+            isLoading = false
+        }
+    }
+    
+    private static func loadFromNetwork(completion: @escaping (Bool) -> Void) {
+        guard let url = URL(string: parkrunEventsURL) else {
+            print("DEBUG - COORDINATES: Invalid parkrun events URL")
+            completion(false)
+            return
+        }
+        
+        print("DEBUG - COORDINATES: Fetching fresh data from \(parkrunEventsURL)")
+        
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 5.0 // 5 second timeout
+        
+        let task = URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("DEBUG - COORDINATES: Network request failed: \(error)")
+                completion(false)
+                return
+            }
+            
+            guard let data = data else {
+                print("DEBUG - COORDINATES: No data received from network")
+                completion(false)
+                return
+            }
+            
+            do {
+                let coordinateMap = try parseEventsData(data)
+                
+                DispatchQueue.main.async {
+                    cachedEventsData = coordinateMap
+                    lastLoadTime = Date()
+                    print("DEBUG - COORDINATES: Loaded \(coordinateMap.count) venue coordinates from network")
+                    
+                    // Post notification that coordinates are available
+                    NotificationCenter.default.post(name: .coordinatesLoaded, object: nil)
+                    
+                    completion(true)
+                }
+                
+            } catch {
+                print("DEBUG - COORDINATES: Failed to parse network data: \(error)")
+                completion(false)
+            }
+        }
+        
+        task.resume()
+    }
+    
+    private static func loadFromBundle() {
+        guard let url = Bundle.main.url(forResource: "events", withExtension: "json") else {
+            print("DEBUG - COORDINATES: Could not find events.json in bundle")
+            return
+        }
+        
+        do {
+            let data = try Data(contentsOf: url)
+            let coordinateMap = try parseEventsData(data)
+            
+            cachedEventsData = coordinateMap
+            lastLoadTime = Date()
+            
+            print("DEBUG - COORDINATES: Loaded \(coordinateMap.count) venue coordinates from bundled events.json")
+            
+            // Post notification that coordinates are available
+            NotificationCenter.default.post(name: .coordinatesLoaded, object: nil)
+            
+        } catch {
+            print("DEBUG - COORDINATES: Failed to load bundled events.json: \(error)")
+        }
+    }
+    
+    private static func parseEventsData(_ data: Data) throws -> [String: CLLocationCoordinate2D] {
+        let eventsData = try JSONDecoder().decode(EventsData.self, from: data)
+        var coordinateMap: [String: CLLocationCoordinate2D] = [:]
+        
+        for feature in eventsData.events.features {
+            let coordinates = feature.geometry.coordinates
+            guard coordinates.count >= 2 else { continue }
+            
+            let longitude = coordinates[0]
+            let latitude = coordinates[1]
+            let coordinate = CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+            
+            // Store with multiple possible name formats
+            let longName = feature.properties.EventLongName
+            let shortName = feature.properties.EventShortName
+            
+            coordinateMap[longName] = coordinate
+            
+            // Also store variations without "parkrun" suffix for better matching
+            if longName.hasSuffix(" parkrun") {
+                let nameWithoutSuffix = String(longName.dropLast(8))
+                coordinateMap[nameWithoutSuffix] = coordinate
+            }
+            
+            // Store short name version
+            coordinateMap[shortName + " parkrun"] = coordinate
+            coordinateMap[shortName] = coordinate
+        }
+        
+        return coordinateMap
+    }
+    
+    // MARK: - Fallback coordinates for critical venues
+    private static func fallbackCoordinate(for venueName: String) -> CLLocationCoordinate2D? {
+        let fallbackCoordinates: [String: CLLocationCoordinate2D] = [
+            // Critical venues that should always work
+            "Whiteley parkrun": CLLocationCoordinate2D(latitude: 50.8591, longitude: -1.2956),
+            "Southampton parkrun": CLLocationCoordinate2D(latitude: 50.9097, longitude: -1.4044),
+            "Bushy parkrun": CLLocationCoordinate2D(latitude: 51.4108, longitude: -0.3340),
+            "Richmond parkrun": CLLocationCoordinate2D(latitude: 51.4613, longitude: -0.2909),
+        ]
+        
+        return fallbackCoordinates[venueName]
+    }
+    
+    // MARK: - Helper functions
+    private static func levenshteinDistance(_ s1: String, _ s2: String) -> Int {
+        let a = Array(s1)
+        let b = Array(s2)
+        
+        var dist = Array(0...b.count)
+        
+        for i in 1...a.count {
+            var newDist = [i]
+            
+            for j in 1...b.count {
+                if a[i-1] == b[j-1] {
+                    newDist.append(dist[j-1])
+                } else {
+                    newDist.append(1 + min(dist[j], dist[j-1], newDist[j-1]))
+                }
+            }
+            
+            dist = newDist
+        }
+        
+        return dist[b.count]
+    }
+    
+    // MARK: - Map region calculation
     static func calculateMapRegion(for venues: [String]) -> (center: CLLocationCoordinate2D, span: (latitude: Double, longitude: Double))? {
         let coordinates = venues.compactMap { coordinate(for: $0) }
         
@@ -112,5 +295,17 @@ struct VenueCoordinateService {
             center: CLLocationCoordinate2D(latitude: 52.3555, longitude: -1.1743), // UK center
             span: (latitude: 8.0, longitude: 8.0)
         )
+    }
+    
+    // MARK: - Cache management
+    static func clearCache() {
+        cachedEventsData = nil
+        lastLoadTime = nil
+        isLoading = false
+        print("DEBUG - COORDINATES: Cache cleared")
+    }
+    
+    static func preloadData() {
+        loadEventsDataIfNeeded()
     }
 }
