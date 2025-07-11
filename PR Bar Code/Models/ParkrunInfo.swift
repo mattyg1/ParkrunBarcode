@@ -89,6 +89,21 @@ class ParkrunInfo: Identifiable {
         cacheTimestamp = nil
     }
     
+    // Static method to invalidate all caches (useful when coordinates become available)
+    static func invalidateAllCaches(in context: ModelContext) {
+        do {
+            let allUsers = try context.fetch(FetchDescriptor<ParkrunInfo>())
+            for user in allUsers {
+                user.invalidateCache()
+            }
+            // Also clear the static venue stats cache since coordinates may now be available
+            ParkrunVisualizationProcessor.clearVenueStatsCache()
+            print("DEBUG - CACHE: Invalidated all ParkrunInfo caches and venue stats cache")
+        } catch {
+            print("DEBUG - CACHE: Failed to invalidate caches: \(error)")
+        }
+    }
+    
     // MARK: - Computed Properties for Visualizations
     
     var totalParkrunsInt: Int {
