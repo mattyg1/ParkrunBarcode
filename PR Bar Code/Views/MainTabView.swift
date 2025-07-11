@@ -49,6 +49,10 @@ struct MainTabView: View {
                 .tag(3)
         }
         .accentColor(.adaptiveParkrunGreen)
+        .onReceive(NotificationCenter.default.publisher(for: .coordinatesLoaded)) { _ in
+            // When coordinates are loaded, invalidate all caches so venues get coordinates
+            ParkrunInfo.invalidateAllCaches(in: modelContext)
+        }
     }
 }
 

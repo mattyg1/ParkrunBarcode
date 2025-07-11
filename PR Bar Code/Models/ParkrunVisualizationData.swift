@@ -369,6 +369,12 @@ class ParkrunVisualizationProcessor: ObservableObject {
         return stats
     }
     
+    // Clear venue stats cache (useful when coordinate data becomes available)
+    static func clearVenueStatsCache() {
+        venueStatsCache.removeAll()
+        print("DEBUG - CACHE: Cleared venue stats cache")
+    }
+    
     static func calculateVolunteerStats(from records: [VolunteerRecord]) -> [VolunteerStats] {
         let roleGroups = Dictionary(grouping: records, by: { $0.role })
         let totalVolunteering = records.count
