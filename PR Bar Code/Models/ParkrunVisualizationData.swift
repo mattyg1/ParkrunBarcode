@@ -482,30 +482,338 @@ class ParkrunVisualizationProcessor: ObservableObject {
     }
     
     private static func classifyVenueRegion(_ venueName: String) -> String {
-        let lowercased = venueName.lowercased()
-        
-        // International
-        if lowercased.contains("crissy") || lowercased.contains("san francisco") {
-            return "International"
+        // Try coordinate-based classification first
+        if let coordinate = VenueCoordinateService.coordinate(for: venueName) {
+            return classifyByCoordinate(coordinate)
         }
         
-        // Wales
-        if lowercased.contains("cardiff") {
+        // Fall back to enhanced pattern matching
+        return classifyByName(venueName)
+    }
+    
+    private static func classifyByCoordinate(_ coordinate: CLLocationCoordinate2D) -> String {
+        let lat = coordinate.latitude
+        let lon = coordinate.longitude
+        
+        // International (non-UK) - outside UK bounds
+        if lat < 49.5 || lat > 61.0 || lon < -8.5 || lon > 2.0 {
+            return classifyInternationalRegion(lat: lat, lon: lon)
+        }
+        
+        // UK regions based on geographic boundaries
+        
+        // Scotland (roughly north of 55.0°N)
+        if lat >= 55.0 {
+            return "Scotland"
+        }
+        
+        // Northern Ireland (roughly 54.0-55.5°N, 5.5-8.5°W)
+        if lat >= 54.0 && lat <= 55.5 && lon >= -8.5 && lon <= -5.5 {
+            return "Northern Ireland"
+        }
+        
+        // Wales (roughly 51.3-53.5°N, 2.7-5.3°W)
+        if lat >= 51.3 && lat <= 53.5 && lon >= -5.3 && lon <= -2.7 {
             return "Wales"
         }
         
-        // Lake District
-        if lowercased.contains("keswick") {
+        // England regions
+        
+        // North England (54.0-55.0°N)
+        if lat >= 54.0 && lat < 55.0 {
+            return "North England"
+        }
+        
+        // Yorkshire & Humber (53.3-54.0°N)
+        if lat >= 53.3 && lat < 54.0 {
+            return "Yorkshire & Humber"
+        }
+        
+        // Peak District / Derbyshire (53.0-53.6°N, 1.4-2.1°W)
+        if lat >= 53.0 && lat <= 53.6 && lon >= -2.1 && lon <= -1.4 {
+            return "Peak District"
+        }
+        
+        // Lake District (54.2-54.8°N, 2.7-3.3°W)
+        if lat >= 54.2 && lat <= 54.8 && lon >= -3.3 && lon <= -2.7 {
             return "Lake District"
         }
         
-        // Wiltshire
-        if lowercased.contains("lydiard") {
+        // Midlands (52.0-53.3°N)
+        if lat >= 52.0 && lat < 53.3 {
+            if lon <= -1.5 {
+                return "West Midlands"
+            } else {
+                return "East Midlands"
+            }
+        }
+        
+        // East England (52.0-53.0°N, east of 0°)
+        if lat >= 52.0 && lat < 53.0 && lon >= 0.0 {
+            return "East England"
+        }
+        
+        // London area (51.3-51.7°N, 0.5°W-0.3°E)
+        if lat >= 51.3 && lat <= 51.7 && lon >= -0.5 && lon <= 0.3 {
+            return "London"
+        }
+        
+        // South West England (50.0-51.5°N, west of -2.0°W)
+        if lat >= 50.0 && lat <= 51.5 && lon <= -2.0 {
+            return "South West England"
+        }
+        
+        // Hampshire (most of Hampshire county)
+        if lat >= 50.7 && lat <= 51.3 && lon >= -1.8 && lon <= -0.7 {
+            return "Hampshire"
+        }
+        
+        // Surrey (north of Hampshire)
+        if lat >= 51.1 && lat <= 51.5 && lon >= -0.8 && lon <= 0.1 {
+            return "Surrey"
+        }
+        
+        // West Sussex (east of Hampshire, south of Surrey)
+        if lat >= 50.7 && lat <= 51.2 && lon >= -0.7 && lon <= 0.2 {
+            return "West Sussex"
+        }
+        
+        // East Sussex & Kent (further east)
+        if lat >= 50.5 && lat <= 51.5 && lon >= 0.0 && lon <= 1.5 {
+            return "Kent & East Sussex"
+        }
+        
+        // South Coast (coastal Dorset, Hampshire coast, Sussex coast)
+        if lat >= 50.0 && lat < 50.9 {
+            return "South Coast"
+        }
+        
+        // Default fallback
+        return "England"
+    }
+    
+    private static func classifyInternationalRegion(lat: Double, lon: Double) -> String {
+        // Europe
+        if lat >= 35.0 && lat <= 72.0 && lon >= -25.0 && lon <= 45.0 {
+            // Scandinavia
+            if lat >= 55.0 && lon >= 4.0 && lon <= 32.0 {
+                return "Scandinavia"
+            }
+            // Western Europe
+            if lon >= -10.0 && lon <= 15.0 {
+                return "Europe"
+            }
+            // Eastern Europe
+            return "Eastern Europe"
+        }
+        
+        // North America
+        if lat >= 25.0 && lat <= 72.0 && lon >= -180.0 && lon <= -50.0 {
+            // Canada
+            if lat >= 45.0 {
+                return "Canada"
+            }
+            // USA - more specific regions
+            if lat >= 30.0 && lat <= 49.0 {
+                // West Coast
+                if lon <= -110.0 {
+                    return "USA West Coast"
+                }
+                // East Coast
+                if lon >= -85.0 {
+                    return "USA East Coast"
+                }
+                // Central
+                return "USA Central"
+            }
+            return "USA"
+        }
+        
+        // Australia & New Zealand
+        if lat >= -50.0 && lat <= -10.0 && lon >= 110.0 && lon <= 180.0 {
+            if lat >= -30.0 {
+                return "Australia"
+            }
+            return "New Zealand"
+        }
+        
+        // South Africa
+        if lat >= -35.0 && lat <= -22.0 && lon >= 16.0 && lon <= 33.0 {
+            return "South Africa"
+        }
+        
+        // Asia
+        if lat >= -10.0 && lat <= 55.0 && lon >= 60.0 && lon <= 150.0 {
+            return "Asia"
+        }
+        
+        // Default international
+        return "International"
+    }
+    
+    private static func classifyByName(_ venueName: String) -> String {
+        let lowercased = venueName.lowercased()
+        
+        // International patterns
+        if lowercased.contains("usa") || lowercased.contains("america") || 
+           lowercased.contains("california") || lowercased.contains("new york") ||
+           lowercased.contains("san francisco") || lowercased.contains("crissy") {
+            return "USA West Coast"
+        }
+        
+        if lowercased.contains("canada") || lowercased.contains("toronto") || 
+           lowercased.contains("vancouver") || lowercased.contains("montreal") {
+            return "Canada"
+        }
+        
+        if lowercased.contains("australia") || lowercased.contains("sydney") || 
+           lowercased.contains("melbourne") || lowercased.contains("brisbane") {
+            return "Australia"
+        }
+        
+        if lowercased.contains("new zealand") || lowercased.contains("auckland") || 
+           lowercased.contains("wellington") {
+            return "New Zealand"
+        }
+        
+        if lowercased.contains("south africa") || lowercased.contains("cape town") || 
+           lowercased.contains("johannesburg") {
+            return "South Africa"
+        }
+        
+        // European patterns
+        if lowercased.contains("ireland") || lowercased.contains("dublin") || 
+           lowercased.contains("cork") {
+            return "Ireland"
+        }
+        
+        if lowercased.contains("france") || lowercased.contains("paris") || 
+           lowercased.contains("lyon") {
+            return "Europe"
+        }
+        
+        if lowercased.contains("germany") || lowercased.contains("berlin") || 
+           lowercased.contains("munich") {
+            return "Europe"
+        }
+        
+        if lowercased.contains("norway") || lowercased.contains("sweden") || 
+           lowercased.contains("denmark") || lowercased.contains("finland") {
+            return "Scandinavia"
+        }
+        
+        // UK regions by name patterns
+        if lowercased.contains("scotland") || lowercased.contains("edinburgh") || 
+           lowercased.contains("glasgow") || lowercased.contains("aberdeen") {
+            return "Scotland"
+        }
+        
+        if lowercased.contains("wales") || lowercased.contains("cardiff") || 
+           lowercased.contains("swansea") || lowercased.contains("newport") ||
+           lowercased.contains("welsh") {
+            return "Wales"
+        }
+        
+        if lowercased.contains("belfast") || lowercased.contains("derry") || 
+           lowercased.contains("northern ireland") {
+            return "Northern Ireland"
+        }
+        
+        // England regions by city/area patterns
+        if lowercased.contains("london") || lowercased.contains("central") && lowercased.contains("london") {
+            return "London"
+        }
+        
+        if lowercased.contains("manchester") || lowercased.contains("liverpool") || 
+           lowercased.contains("preston") || lowercased.contains("blackpool") ||
+           lowercased.contains("lancashire") {
+            return "North England"
+        }
+        
+        if lowercased.contains("leeds") || lowercased.contains("sheffield") || 
+           lowercased.contains("york") || lowercased.contains("hull") ||
+           lowercased.contains("bradford") {
+            return "Yorkshire & Humber"
+        }
+        
+        if lowercased.contains("birmingham") || lowercased.contains("coventry") || 
+           lowercased.contains("wolverhampton") || lowercased.contains("warwick") {
+            return "West Midlands"
+        }
+        
+        if lowercased.contains("nottingham") || lowercased.contains("leicester") || 
+           lowercased.contains("derby") || lowercased.contains("lincoln") {
+            return "East Midlands"
+        }
+        
+        if lowercased.contains("keswick") || lowercased.contains("windermere") || 
+           lowercased.contains("ambleside") || lowercased.contains("kendal") {
+            return "Lake District"
+        }
+        
+        if lowercased.contains("peak district") || lowercased.contains("buxton") || 
+           lowercased.contains("matlock") {
+            return "Peak District"
+        }
+        
+        if lowercased.contains("bristol") || lowercased.contains("bath") || 
+           lowercased.contains("exeter") || lowercased.contains("plymouth") ||
+           lowercased.contains("cornwall") || lowercased.contains("devon") ||
+           lowercased.contains("somerset") {
+            return "South West England"
+        }
+        
+        if lowercased.contains("norwich") || lowercased.contains("cambridge") || 
+           lowercased.contains("ipswich") || lowercased.contains("norfolk") ||
+           lowercased.contains("suffolk") {
+            return "East England"
+        }
+        
+        if lowercased.contains("canterbury") || lowercased.contains("maidstone") || 
+           lowercased.contains("kent") || lowercased.contains("dover") ||
+           lowercased.contains("tunbridge") {
+            return "Kent & East Sussex"
+        }
+        
+        if lowercased.contains("brighton") || lowercased.contains("eastbourne") || 
+           lowercased.contains("hastings") || lowercased.contains("sussex") {
+            return "Kent & East Sussex"
+        }
+        
+        if lowercased.contains("southampton") || lowercased.contains("portsmouth") || 
+           lowercased.contains("winchester") || lowercased.contains("hampshire") ||
+           lowercased.contains("whiteley") || lowercased.contains("eastleigh") ||
+           lowercased.contains("netley") || lowercased.contains("lee-on-the-solent") ||
+           lowercased.contains("alton") || lowercased.contains("andover") ||
+           lowercased.contains("basingstoke") || lowercased.contains("fareham") {
+            return "Hampshire"
+        }
+        
+        if lowercased.contains("guildford") || lowercased.contains("woking") || 
+           lowercased.contains("surrey") || lowercased.contains("richmond") ||
+           lowercased.contains("wimbledon") || lowercased.contains("epsom") ||
+           lowercased.contains("kingston") || lowercased.contains("esher") {
+            return "Surrey"
+        }
+        
+        if lowercased.contains("crawley") || lowercased.contains("horsham") ||
+           lowercased.contains("chichester") || lowercased.contains("worthing") ||
+           lowercased.contains("west sussex") {
+            return "West Sussex"
+        }
+        
+        if lowercased.contains("bournemouth") || lowercased.contains("dorset") ||
+           lowercased.contains("poole") || lowercased.contains("weymouth") {
+            return "South Coast"
+        }
+        
+        if lowercased.contains("lydiard") || lowercased.contains("swindon") || 
+           lowercased.contains("wiltshire") {
             return "Wiltshire"
         }
         
-        // Default to Hampshire/South Coast for most venues
-        return "Hampshire/South Coast"
+        // Default to England for unmatched UK venues
+        return "England"
     }
 }
 
