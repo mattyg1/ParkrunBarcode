@@ -1648,9 +1648,12 @@ struct MeTabView: View {
             
             DispatchQueue.main.async {
                 // Update the user's complete visualization data
+                // Preserve existing volunteer data since /all/ endpoint doesn't contain volunteer info
+                let finalVolunteerRecords = user.volunteerRecords
+                
                 user.updateCompleteVisualizationData(
                     venueRecords: extractedData.venueRecords,
-                    volunteerRecords: extractedData.volunteerRecords,
+                    volunteerRecords: finalVolunteerRecords,
                     annualPerformances: extractedData.annualPerformances,
                     overallStats: extractedData.overallStats
                 )
