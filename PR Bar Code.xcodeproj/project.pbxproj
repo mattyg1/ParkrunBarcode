@@ -75,6 +75,11 @@
 		C9CB3B132E1E918700BD6009 /* Fastfile */ = {isa = PBXFileReference; lastKnownFileType = text; path = Fastfile; sourceTree = "<group>"; };
 		C9CB3B152E1E918700BD6009 /* Gemfile */ = {isa = PBXFileReference; lastKnownFileType = text; path = Gemfile; sourceTree = "<group>"; };
 		C9CB3B162E1E918700BD6009 /* Gemfile.lock */ = {isa = PBXFileReference; lastKnownFileType = text; path = Gemfile.lock; sourceTree = "<group>"; };
+		C9E46C692E22F01C00C642EF /* APP_STORE_RELEASE_PLAN.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = APP_STORE_RELEASE_PLAN.md; sourceTree = "<group>"; };
+		C9E46C6A2E22F14200C642EF /* TESTING_FRAMEWORK.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = TESTING_FRAMEWORK.md; sourceTree = "<group>"; };
+		C9E46C6B2E22F14C00C642EF /* DEBUG_LOGGING_STRATEGY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = DEBUG_LOGGING_STRATEGY.md; sourceTree = "<group>"; };
+		C9E46C6C2E22F32400C642EF /* CODE_QUALITY_STRATEGY.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = CODE_QUALITY_STRATEGY.md; sourceTree = "<group>"; };
+		C9E46C6D2E22F62800C642EF /* LOCAL_CICD_PIPELINE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = LOCAL_CICD_PIPELINE.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -191,6 +196,11 @@
 			isa = PBXGroup;
 			children = (
 				C98318E02E1EF11F003D95E1 /* FASTLANE_GUIDE.md */,
+				C9E46C692E22F01C00C642EF /* APP_STORE_RELEASE_PLAN.md */,
+				C9E46C6A2E22F14200C642EF /* TESTING_FRAMEWORK.md */,
+				C9E46C6B2E22F14C00C642EF /* DEBUG_LOGGING_STRATEGY.md */,
+				C9E46C6C2E22F32400C642EF /* CODE_QUALITY_STRATEGY.md */,
+				C9E46C6D2E22F62800C642EF /* LOCAL_CICD_PIPELINE.md */,
 			);
 			path = docs;
 			sourceTree = "<group>";
