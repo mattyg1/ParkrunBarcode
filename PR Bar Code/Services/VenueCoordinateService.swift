@@ -245,6 +245,9 @@ struct VenueCoordinateService {
             // Inactive venues - store with multiple name variants
             "Crissy Field parkrun": CLLocationCoordinate2D(latitude: 37.8055, longitude: -122.4662),
             "Crissy Field": CLLocationCoordinate2D(latitude: 37.8055, longitude: -122.4662),
+            
+            // Add more inactive venues as needed
+            // Format: "VenueName": CLLocationCoordinate2D(latitude: X.XXXX, longitude: Y.YYYY),
         ]
         
         return fallbackCoordinates[venueName]
