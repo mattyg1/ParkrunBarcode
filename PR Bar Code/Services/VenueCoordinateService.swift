@@ -40,6 +40,7 @@ struct VenueCoordinateService {
     
     // MARK: - Cached events data
     private static var cachedEventsData: [String: CLLocationCoordinate2D]?
+    private static var geocodedCoordinates: [String: CLLocationCoordinate2D] = [:]
     private static var lastLoadTime: Date?
     private static let cacheExpiryInterval: TimeInterval = 3600 // 1 hour
     private static let parkrunEventsURL = "https://images.parkrun.com/events.json"
@@ -79,7 +80,20 @@ struct VenueCoordinateService {
         }
         
         print("DEBUG - COORDINATES: No match found for '\(venueName)' in events.json, trying fallback")
-        return fallbackCoordinate(for: venueName)
+        
+        // Try hardcoded fallback first
+        if let fallback = fallbackCoordinate(for: venueName) {
+            return fallback
+        }
+        
+        // Check if we've already geocoded this venue
+        if let geocoded = geocodedCoordinates[venueName] {
+            return geocoded
+        }
+        
+        // For inactive venues, try geocoding as last resort
+        geocodeVenue(venueName)
+        return nil // Geocoding is async, will be available on next call
     }
     
     static func hasCoordinate(for venueName: String) -> Bool {
@@ -227,9 +241,74 @@ struct VenueCoordinateService {
             "Southampton parkrun": CLLocationCoordinate2D(latitude: 50.9097, longitude: -1.4044),
             "Bushy parkrun": CLLocationCoordinate2D(latitude: 51.4108, longitude: -0.3340),
             "Richmond parkrun": CLLocationCoordinate2D(latitude: 51.4613, longitude: -0.2909),
+            
+            // Inactive venues - store with multiple name variants
+            "Crissy Field parkrun": CLLocationCoordinate2D(latitude: 37.8055, longitude: -122.4662),
+            "Crissy Field": CLLocationCoordinate2D(latitude: 37.8055, longitude: -122.4662),
         ]
         
         return fallbackCoordinates[venueName]
+    }
+    
+    // MARK: - Geocoding for inactive venues
+    private static func geocodeVenue(_ venueName: String) {
+        let geocoder = CLGeocoder()
+        
+        // Create search query - try various formats with better geographic specificity
+        let baseSearchQueries = [
+            venueName.replacingOccurrences(of: " parkrun", with: ""), // Without "parkrun"
+            venueName.replacingOccurrences(of: " parkrun", with: " park"), // Replace with "park"
+            venueName, // Original name
+        ]
+        
+        // Add geographic specificity for known venues
+        var searchQueries = baseSearchQueries
+        if venueName.lowercased().contains("crissy") {
+            searchQueries = [
+                "Crissy Field San Francisco California",
+                "Crissy Field San Francisco",
+                "Crissy Field Golden Gate",
+            ] + baseSearchQueries
+        }
+        
+        func tryNextQuery(_ queries: [String]) {
+            guard !queries.isEmpty else {
+                print("DEBUG - COORDINATES: Geocoding failed for '\(venueName)' - no more queries to try")
+                return
+            }
+            
+            let query = queries.first!
+            let remainingQueries = Array(queries.dropFirst())
+            
+            print("DEBUG - COORDINATES: Attempting to geocode '\(query)'")
+            
+            geocoder.geocodeAddressString(query) { placemarks, error in
+                if let error = error {
+                    print("DEBUG - COORDINATES: Geocoding error for '\(query)': \(error)")
+                    tryNextQuery(remainingQueries)
+                    return
+                }
+                
+                guard let placemark = placemarks?.first,
+                      let location = placemark.location else {
+                    print("DEBUG - COORDINATES: No location found for '\(query)'")
+                    tryNextQuery(remainingQueries)
+                    return
+                }
+                
+                let coordinate = location.coordinate
+                
+                DispatchQueue.main.async {
+                    geocodedCoordinates[venueName] = coordinate
+                    print("DEBUG - COORDINATES: Geocoded '\(venueName)' to \(coordinate.latitude), \(coordinate.longitude)")
+                    
+                    // Post notification to refresh UI
+                    NotificationCenter.default.post(name: .coordinatesLoaded, object: nil)
+                }
+            }
+        }
+        
+        tryNextQuery(searchQueries)
     }
     
     // MARK: - Helper functions
@@ -300,6 +379,7 @@ struct VenueCoordinateService {
     // MARK: - Cache management
     static func clearCache() {
         cachedEventsData = nil
+        geocodedCoordinates.removeAll()
         lastLoadTime = nil
         isLoading = false
         print("DEBUG - COORDINATES: Cache cleared")
